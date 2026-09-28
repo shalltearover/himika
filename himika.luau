@@ -3,8 +3,6 @@ if _G.LostHubCleanup then
 	_G.LostHubCleanup = nil
 end
 
-_G.LostHubExecutionCount = (_G.LostHubExecutionCount or 0) + 1
-
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -17,6 +15,15 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ContentProvider = game:GetService("ContentProvider")
 
 local LocalPlayer = Players.LocalPlayer
+local previousExecutionCount = math.max(
+	tonumber(_G.LostHubExecutionCount) or 0,
+	tonumber(LocalPlayer:GetAttribute("LostHubExecutionCount")) or 0
+)
+_G.LostHubExecutionCount = previousExecutionCount + 1
+pcall(function()
+	LocalPlayer:SetAttribute("LostHubExecutionCount", _G.LostHubExecutionCount)
+end)
+
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 local Mouse = LocalPlayer:GetMouse()
 local Camera = Workspace.CurrentCamera
@@ -83,7 +90,7 @@ local Strings = {
 		note_performance_title = "Performance",
 		note_performance_body = "Options marked in red can increase GPU or CPU load and may cause stutters or freezes on large or generated rooms.",
 		note_menu_title = "Menu shortcut",
-		note_menu_body = "Left Shift opens or closes the menu. This shortcut is permanent.",
+		note_menu_body = "Backslash (\\) opens or closes the menu. This shortcut is permanent.",
 
 		main_title = "Session",
 		main_subtitle = "Server and spawn actions",
@@ -117,6 +124,8 @@ local Strings = {
 
 		graphics_title = "Graphics",
 		graphics_subtitle = "Visual quality and performance",
+		graphics_boost = "Enhanced Graphics",
+		graphics_boost_sub = "Strong preset for lighting, reflections, atmosphere and detail",
 		better_textures = "Better Textures",
 		better_textures_sub = "Precise mesh rendering and reduced model LOD",
 		better_lights = "Better Lights",
@@ -134,12 +143,14 @@ local Strings = {
 		heavy = "HIGH LOAD",
 
 		hotkeys_title = "Hotkeys",
-		hotkeys_subtitle = "Click a binding to replace it",
+		hotkeys_subtitle = "Choose a key or clear it",
 		hold_mode = "Hold",
 		toggle_mode = "Toggle",
+		hotkey_toggle = "Press a key · × clears",
+		hotkey_hold = "Hold key · × clears",
 
 		status_title = "Runtime Status",
-		status_subtitle = "Execution count and current feature states",
+		status_subtitle = "Executions and current options",
 		executions = "Executions",
 		active = "ACTIVE",
 		disabled = "DISABLED",
@@ -165,7 +176,7 @@ local Strings = {
 		rejoining = "REJOINING...",
 		rejoin_failed = "REJOIN FAILED",
 		press_key = "PRESS KEY",
-		set = "SET"
+		set = "..."
 	},
 	pt = {
 		tab_info = "Info",
@@ -186,7 +197,7 @@ local Strings = {
 		note_performance_title = "Desempenho",
 		note_performance_body = "Opções marcadas em vermelho podem aumentar o uso de GPU ou CPU e causar travamentos em salas grandes ou geradas.",
 		note_menu_title = "Atalho do menu",
-		note_menu_body = "Shift esquerdo abre ou fecha o menu. Esse atalho é permanente.",
+		note_menu_body = "A barra invertida (\\) abre ou fecha o menu. Esse atalho é permanente.",
 
 		main_title = "Sessão",
 		main_subtitle = "Ações de servidor e spawn",
@@ -220,6 +231,8 @@ local Strings = {
 
 		graphics_title = "Gráficos",
 		graphics_subtitle = "Qualidade visual e desempenho",
+		graphics_boost = "Gráficos Aprimorados",
+		graphics_boost_sub = "Preset forte para luzes, reflexos, ambiente e detalhes",
 		better_textures = "Texturas Melhores",
 		better_textures_sub = "Renderização precisa de meshes e menor LOD",
 		better_lights = "Luzes Melhores",
@@ -237,12 +250,14 @@ local Strings = {
 		heavy = "PESO ALTO",
 
 		hotkeys_title = "Atalhos",
-		hotkeys_subtitle = "Clique em um atalho para substituí-lo",
+		hotkeys_subtitle = "Escolha uma tecla ou limpe o atalho",
 		hold_mode = "Segurar",
-		toggle_mode = "Toggle",
+		toggle_mode = "Alternar",
+		hotkey_toggle = "Pressione uma tecla · × limpa",
+		hotkey_hold = "Segure a tecla · × limpa",
 
 		status_title = "Status de Execução",
-		status_subtitle = "Contagem de execuções e estados atuais",
+		status_subtitle = "Execuções e opções atuais",
 		executions = "Execuções",
 		active = "ATIVOS",
 		disabled = "DESATIVADOS",
@@ -268,7 +283,7 @@ local Strings = {
 		rejoining = "REENTRANDO...",
 		rejoin_failed = "FALHA AO REENTRAR",
 		press_key = "PRESSIONE UMA TECLA",
-		set = "DEFINIR"
+		set = "..."
 	}
 }
 
@@ -302,10 +317,7 @@ local State = {
 	speedManipulation = false,
 	fly = false,
 	playerEsp = false,
-	betterTextures = false,
-	betterLights = false,
-	reflections = false,
-	environment = false,
+	graphicsBoost = false,
 	lowGraphics = false,
 	fullBright = false,
 	fpsVisible = false,
@@ -327,10 +339,7 @@ local Bindings = {
 	},
 	fly = nil,
 	playerEsp = nil,
-	betterTextures = nil,
-	betterLights = nil,
-	reflections = nil,
-	environment = nil,
+	graphicsBoost = nil,
 	lowGraphics = nil,
 	fullBright = nil,
 	fpsVisible = {
@@ -502,6 +511,25 @@ local function BindingMatches(binding, input)
 	return false
 end
 
+local function IsForbiddenHotkey(keyCode)
+	local forbidden = {
+		Unknown = true,
+		Escape = true,
+		Tab = true,
+		CapsLock = true,
+		NumLock = true,
+		ScrollLock = true,
+		BackSlash = true,
+		LeftSuper = true,
+		RightSuper = true,
+		LeftMeta = true,
+		RightMeta = true,
+		Menu = true
+	}
+
+	return forbidden[keyCode.Name] == true
+end
+
 local ScreenGui = New("ScreenGui", {
 	Name = "LostHub",
 	ResetOnSpawn = false,
@@ -558,6 +586,7 @@ local Background = New("ImageLabel", {
 	ScaleType = Enum.ScaleType.Crop,
 	ZIndex = 20
 }, Main)
+Corner(Background, 12)
 
 local BlurLayers = {}
 
@@ -577,6 +606,7 @@ for _, offset in ipairs({
 		ScaleType = Enum.ScaleType.Crop,
 		ZIndex = 20
 	}, Main)
+	Corner(layer, 12)
 	table.insert(BlurLayers, {
 		image = layer,
 		offset = offset
@@ -590,6 +620,7 @@ local BackgroundShade = New("Frame", {
 	BorderSizePixel = 0,
 	ZIndex = 21
 }, Main)
+Corner(BackgroundShade, 12)
 
 local TopBar = New("Frame", {
 	Size = UDim2.new(1, 0, 0, 76),
@@ -624,7 +655,7 @@ local TopSubtitle = RegisterText(
 		Position = UDim2.fromOffset(74, 27),
 		BackgroundTransparency = 1,
 		TextColor3 = Theme.Muted,
-		TextSize = 9,
+		TextSize = 10,
 		Font = Enum.Font.GothamMedium,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ZIndex = 51
@@ -637,9 +668,9 @@ local ShortcutChip = New("TextLabel", {
 	Position = UDim2.new(1, -110, 0, 24),
 	BackgroundColor3 = Theme.Surface2,
 	BorderSizePixel = 0,
-	Text = "LSHIFT",
+	Text = "\\",
 	TextColor3 = Theme.Light,
-	TextSize = 8,
+	TextSize = 9,
 	Font = Enum.Font.GothamBold,
 	ZIndex = 51
 }, TopBar)
@@ -704,7 +735,7 @@ local ProfileName = New("TextLabel", {
 	BackgroundTransparency = 1,
 	Text = LocalPlayer.DisplayName,
 	TextColor3 = Theme.White,
-	TextSize = 9,
+	TextSize = 10,
 	Font = Enum.Font.GothamSemibold,
 	TextXAlignment = Enum.TextXAlignment.Left,
 	TextTruncate = Enum.TextTruncate.AtEnd,
@@ -717,7 +748,7 @@ local ProfileUser = New("TextLabel", {
 	BackgroundTransparency = 1,
 	Text = "@" .. LocalPlayer.Name,
 	TextColor3 = Theme.Muted,
-	TextSize = 8,
+	TextSize = 9,
 	Font = Enum.Font.Gotham,
 	TextXAlignment = Enum.TextXAlignment.Left,
 	TextTruncate = Enum.TextTruncate.AtEnd,
@@ -805,7 +836,7 @@ local function CreateTab(name, textKey, order)
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
 			TextColor3 = Theme.Muted,
-			TextSize = 10,
+			TextSize = 11,
 			Font = Enum.Font.GothamMedium,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			AutoButtonColor = false,
@@ -889,7 +920,7 @@ local function Section(parent, titleKey, subtitleKey, order)
 			Size = UDim2.new(1, 0, 0, 22),
 			BackgroundTransparency = 1,
 			TextColor3 = Theme.White,
-			TextSize = 15,
+			TextSize = 16,
 			Font = Enum.Font.GothamSemibold,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			ZIndex = 47
@@ -904,7 +935,7 @@ local function Section(parent, titleKey, subtitleKey, order)
 				Position = UDim2.fromOffset(0, 25),
 				BackgroundTransparency = 1,
 				TextColor3 = Theme.Muted,
-				TextSize = 9,
+				TextSize = 10,
 				Font = Enum.Font.Gotham,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				ZIndex = 47
@@ -940,7 +971,7 @@ local function NoteCard(parent, titleKey, bodyKey, order, red)
 			Position = UDim2.fromOffset(28, 10),
 			BackgroundTransparency = 1,
 			TextColor3 = red and Theme.Red or Theme.White,
-			TextSize = 10,
+			TextSize = 11,
 			Font = Enum.Font.GothamSemibold,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			ZIndex = 47
@@ -954,7 +985,7 @@ local function NoteCard(parent, titleKey, bodyKey, order, red)
 			Position = UDim2.fromOffset(28, 31),
 			BackgroundTransparency = 1,
 			TextColor3 = Theme.Muted,
-			TextSize = 8,
+			TextSize = 9,
 			Font = Enum.Font.Gotham,
 			TextWrapped = true,
 			TextXAlignment = Enum.TextXAlignment.Left,
@@ -995,7 +1026,7 @@ local function ActionButton(parent, titleKey, subtitleKey, order, callback)
 			Position = UDim2.fromOffset(14, 9),
 			BackgroundTransparency = 1,
 			TextColor3 = Theme.White,
-			TextSize = 10,
+			TextSize = 11,
 			Font = Enum.Font.GothamSemibold,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			ZIndex = 49
@@ -1009,7 +1040,7 @@ local function ActionButton(parent, titleKey, subtitleKey, order, callback)
 			Position = UDim2.fromOffset(14, 29),
 			BackgroundTransparency = 1,
 			TextColor3 = Theme.Muted,
-			TextSize = 8,
+			TextSize = 9,
 			Font = Enum.Font.Gotham,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			ZIndex = 49
@@ -1078,7 +1109,7 @@ local function CreateToggle(parent, config)
 			Position = UDim2.fromOffset(14, 11),
 			BackgroundTransparency = 1,
 			TextColor3 = Theme.White,
-			TextSize = 11,
+			TextSize = 12,
 			Font = Enum.Font.GothamSemibold,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			ZIndex = 48
@@ -1092,7 +1123,7 @@ local function CreateToggle(parent, config)
 			Position = UDim2.fromOffset(14, 32),
 			BackgroundTransparency = 1,
 			TextColor3 = Theme.Muted,
-			TextSize = 8,
+			TextSize = 9,
 			Font = Enum.Font.Gotham,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			ZIndex = 48
@@ -1109,7 +1140,7 @@ local function CreateToggle(parent, config)
 				BackgroundTransparency = 0.06,
 				BorderSizePixel = 0,
 				TextColor3 = Theme.Red,
-				TextSize = 7,
+				TextSize = 8,
 				Font = Enum.Font.GothamBold,
 				ZIndex = 49
 			}, row),
@@ -1196,7 +1227,7 @@ local function CreateSlider(row, y, minimum, maximum, initial, callback, percent
 		BorderSizePixel = 0,
 		Text = tostring(initial) .. (percent and "%" or ""),
 		TextColor3 = Theme.White,
-		TextSize = 9,
+		TextSize = 10,
 		Font = Enum.Font.GothamBold,
 		ClearTextOnFocus = false,
 		TextXAlignment = Enum.TextXAlignment.Center,
@@ -1320,9 +1351,9 @@ local function CreateSlider(row, y, minimum, maximum, initial, callback, percent
 	}
 end
 
-local function CreateHotkeyRow(parent, id, titleKey, subtitleText, order)
+local function CreateHotkeyRow(parent, id, titleKey, subtitleKey, order)
 	local row = New("Frame", {
-		Size = UDim2.new(1, 0, 0, 62),
+		Size = UDim2.new(1, 0, 0, 66),
 		BackgroundColor3 = Theme.Surface,
 		BackgroundTransparency = 0.08,
 		BorderSizePixel = 0,
@@ -1333,11 +1364,11 @@ local function CreateHotkeyRow(parent, id, titleKey, subtitleText, order)
 
 	RegisterText(
 		New("TextLabel", {
-			Size = UDim2.new(1, -160, 0, 18),
-			Position = UDim2.fromOffset(14, 11),
+			Size = UDim2.new(1, -185, 0, 20),
+			Position = UDim2.fromOffset(14, 10),
 			BackgroundTransparency = 1,
 			TextColor3 = Theme.White,
-			TextSize = 10,
+			TextSize = 12,
 			Font = Enum.Font.GothamSemibold,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			ZIndex = 47
@@ -1345,26 +1376,28 @@ local function CreateHotkeyRow(parent, id, titleKey, subtitleText, order)
 		titleKey
 	)
 
-	New("TextLabel", {
-		Size = UDim2.new(1, -160, 0, 16),
-		Position = UDim2.fromOffset(14, 31),
-		BackgroundTransparency = 1,
-		Text = subtitleText,
-		TextColor3 = Theme.Muted,
-		TextSize = 8,
-		Font = Enum.Font.Gotham,
-		TextXAlignment = Enum.TextXAlignment.Left,
-		ZIndex = 47
-	}, row)
+	RegisterText(
+		New("TextLabel", {
+			Size = UDim2.new(1, -185, 0, 18),
+			Position = UDim2.fromOffset(14, 34),
+			BackgroundTransparency = 1,
+			TextColor3 = Theme.Muted,
+			TextSize = 10,
+			Font = Enum.Font.Gotham,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			ZIndex = 47
+		}, row),
+		subtitleKey
+	)
 
 	local button = New("TextButton", {
-		Size = UDim2.fromOffset(128, 30),
-		Position = UDim2.new(1, -142, 0.5, -15),
+		Size = UDim2.fromOffset(94, 32),
+		Position = UDim2.new(1, -146, 0.5, -16),
 		BackgroundColor3 = Theme.Surface2,
 		BorderSizePixel = 0,
 		Text = FormatBinding(Bindings[id]),
 		TextColor3 = Theme.White,
-		TextSize = 8,
+		TextSize = 10,
 		Font = Enum.Font.GothamBold,
 		AutoButtonColor = false,
 		ZIndex = 48
@@ -1372,15 +1405,62 @@ local function CreateHotkeyRow(parent, id, titleKey, subtitleText, order)
 	Corner(button, 7)
 	Stroke(button, 0.55, 1, Theme.Stroke)
 
+	local reset = New("TextButton", {
+		Size = UDim2.fromOffset(36, 32),
+		Position = UDim2.new(1, -46, 0.5, -16),
+		BackgroundColor3 = Theme.Surface2,
+		BorderSizePixel = 0,
+		Text = "×",
+		TextColor3 = Theme.Muted,
+		TextSize = 14,
+		Font = Enum.Font.GothamBold,
+		AutoButtonColor = false,
+		ZIndex = 48
+	}, row)
+	Corner(reset, 7)
+	Stroke(reset, 0.55, 1, Theme.Stroke)
+
 	HotkeyButtons[id] = button
+
+	Bind(button.MouseEnter, function()
+		Tween(button, 0.12, {
+			BackgroundColor3 = Theme.Surface3
+		}, Enum.EasingStyle.Quad)
+	end)
+
+	Bind(button.MouseLeave, function()
+		Tween(button, 0.12, {
+			BackgroundColor3 = Theme.Surface2
+		}, Enum.EasingStyle.Quad)
+	end)
+
+	Bind(reset.MouseEnter, function()
+		Tween(reset, 0.12, {
+			BackgroundColor3 = Color3.fromRGB(45, 20, 25),
+			TextColor3 = Theme.Red
+		}, Enum.EasingStyle.Quad)
+	end)
+
+	Bind(reset.MouseLeave, function()
+		Tween(reset, 0.12, {
+			BackgroundColor3 = Theme.Surface2,
+			TextColor3 = Theme.Muted
+		}, Enum.EasingStyle.Quad)
+	end)
 
 	Bind(button.MouseButton1Click, function()
 		Capture = {
 			id = id,
 			button = button
 		}
-		button.Text = T("press_key")
+		button.Text = "..."
 		button.TextColor3 = Theme.PurpleBright
+	end)
+
+	Bind(reset.MouseButton1Click, function()
+		Bindings[id] = nil
+		button.Text = "..."
+		button.TextColor3 = Theme.White
 	end)
 end
 
@@ -1574,7 +1654,7 @@ local function EnsurePlayerEsp(player)
 			TextColor3 = Theme.White,
 			TextStrokeColor3 = Theme.PurpleBright,
 			TextStrokeTransparency = 0.25,
-			TextSize = 11,
+			TextSize = 12,
 			Font = Enum.Font.GothamSemibold,
 			ZIndex = 60
 		}, billboard)
@@ -1674,8 +1754,8 @@ local function ApplyBetterLightToObject(object)
 			shadows = object.Shadows
 		}
 
-		object.Brightness = math.min(object.Brightness * 1.18 + 0.1, 10)
-		object.Range = math.min(object.Range * 1.12 + 1, 100)
+		object.Brightness = math.min(object.Brightness * 1.32 + 0.2, 12)
+		object.Range = math.min(object.Range * 1.18 + 2, 120)
 		object.Shadows = true
 
 	elseif object:IsA("BasePart") then
@@ -1698,9 +1778,9 @@ local function EnableBetterLights()
 	end
 
 	Lighting.GlobalShadows = true
-	Lighting.ShadowSoftness = 0.06
-	Lighting.Brightness = math.max(Lighting.Brightness, 2.35)
-	Lighting.ExposureCompensation = 0.05
+	Lighting.ShadowSoftness = 0.035
+	Lighting.Brightness = math.max(Lighting.Brightness, 2.8)
+	Lighting.ExposureCompensation = 0.12
 
 	pcall(function()
 		if LightSaved._technology == nil then
@@ -1712,9 +1792,9 @@ local function EnableBetterLights()
 	if not LightsEffects.Color then
 		LightsEffects.Color = New("ColorCorrectionEffect", {
 			Name = "LostHubLightsColor",
-			Brightness = 0.02,
-			Contrast = 0.11,
-			Saturation = 0.07,
+			Brightness = 0.035,
+			Contrast = 0.18,
+			Saturation = 0.12,
 			TintColor = Color3.fromRGB(246, 243, 250)
 		}, Lighting)
 	end
@@ -1722,9 +1802,9 @@ local function EnableBetterLights()
 	if not LightsEffects.Bloom then
 		LightsEffects.Bloom = New("BloomEffect", {
 			Name = "LostHubLightsBloom",
-			Intensity = 0.30,
-			Size = 28,
-			Threshold = 1.1
+			Intensity = 0.48,
+			Size = 34,
+			Threshold = 0.95
 		}, Lighting)
 	end
 
@@ -1788,11 +1868,11 @@ local function ApplyReflectionToObject(object)
 		ReflectionSaved[object] = object.Reflectance
 
 		if object.Material == Enum.Material.Glass then
-			object.Reflectance = math.max(object.Reflectance, 0.28)
+			object.Reflectance = math.max(object.Reflectance, 0.38)
 		elseif object.Material == Enum.Material.Metal then
-			object.Reflectance = math.max(object.Reflectance, 0.20)
+			object.Reflectance = math.max(object.Reflectance, 0.28)
 		else
-			object.Reflectance = math.max(object.Reflectance, 0.14)
+			object.Reflectance = math.max(object.Reflectance, 0.18)
 		end
 	end
 end
@@ -1806,7 +1886,7 @@ local function EnableReflections()
 	end
 
 	Lighting.EnvironmentSpecularScale = 1
-	Lighting.EnvironmentDiffuseScale = math.max(Lighting.EnvironmentDiffuseScale, 0.9)
+	Lighting.EnvironmentDiffuseScale = 1
 
 	for _, object in ipairs(Workspace:GetDescendants()) do
 		ApplyReflectionToObject(object)
@@ -1842,8 +1922,8 @@ local function EnableEnvironment()
 	end
 
 	if not State.fullBright then
-		Lighting.Ambient = Color3.fromRGB(118, 121, 132)
-		Lighting.OutdoorAmbient = Color3.fromRGB(146, 149, 160)
+		Lighting.Ambient = Color3.fromRGB(126, 128, 140)
+		Lighting.OutdoorAmbient = Color3.fromRGB(164, 166, 178)
 	end
 
 	Lighting.ColorShift_Top = Color3.fromRGB(8, 6, 12)
@@ -1853,29 +1933,29 @@ local function EnableEnvironment()
 	if not EnvironmentEffects.Atmosphere then
 		EnvironmentEffects.Atmosphere = New("Atmosphere", {
 			Name = "LostHubEnvironmentAtmosphere",
-			Density = 0.18,
+			Density = 0.14,
 			Offset = 0.04,
 			Color = Color3.fromRGB(218, 220, 228),
 			Decay = Color3.fromRGB(85, 88, 98),
-			Glare = 0.08,
-			Haze = 0.42
+			Glare = 0.12,
+			Haze = 0.28
 		}, Lighting)
 	end
 
 	if not EnvironmentEffects.Sun then
 		EnvironmentEffects.Sun = New("SunRaysEffect", {
 			Name = "LostHubEnvironmentSun",
-			Intensity = 0.07,
-			Spread = 0.86
+			Intensity = 0.10,
+			Spread = 0.88
 		}, Lighting)
 	end
 
 	if not EnvironmentEffects.Depth then
 		EnvironmentEffects.Depth = New("DepthOfFieldEffect", {
 			Name = "LostHubEnvironmentDepth",
-			FarIntensity = 0.10,
-			FocusDistance = 75,
-			InFocusRadius = 58,
+			FarIntensity = 0.065,
+			FocusDistance = 80,
+			InFocusRadius = 62,
 			NearIntensity = 0
 		}, Lighting)
 	end
@@ -2005,7 +2085,7 @@ local function DisableFullBright()
 	end
 	table.clear(FullBrightSaved)
 
-	if State.environment then
+	if State.graphicsBoost then
 		EnableEnvironment()
 	end
 end
@@ -2032,25 +2112,23 @@ end
 
 local function ApplyPanelBackground()
 	local brightness = math.clamp(State.backgroundBrightness / 100, 0, 1)
-	local value = 0.32 + brightness * 0.68
-	local color = Color3.new(value, value, value)
+	local blur = math.clamp(State.panelBlur / 100, 0, 1)
+	local color = Color3.new(brightness, brightness, brightness)
 
 	Background.ImageColor3 = color
-
-	local blur = math.clamp(State.panelBlur / 100, 0, 1)
+	Background.ImageTransparency = 0.05 + (0.18 * blur)
 
 	for _, data in ipairs(BlurLayers) do
 		local layer = data.image
 		layer.ImageColor3 = color
-		layer.ImageTransparency = 1 - (0.17 * blur)
+		layer.ImageTransparency = 1 - (0.18 * blur)
 		layer.Position = UDim2.fromOffset(
-			data.offset.X * (0.5 + 1.4 * blur),
-			data.offset.Y * (0.5 + 1.4 * blur)
+			data.offset.X * (0.6 + 1.7 * blur),
+			data.offset.Y * (0.6 + 1.7 * blur)
 		)
 	end
 
-	Background.ImageTransparency = 0.28 + (0.12 * blur)
-	BackgroundShade.BackgroundTransparency = 0.14 - (0.03 * blur)
+	BackgroundShade.BackgroundTransparency = 0.04 + (0.50 * brightness)
 end
 
 local function GetPlaceId(kind)
@@ -2120,10 +2198,106 @@ local function FindSpawnInside(container, kind)
 	return spawn and spawn.CFrame or nil
 end
 
+local function ContainsAny(textValue, words)
+	local lower = string.lower(textValue or "")
+	for _, word in ipairs(words) do
+		if string.find(lower, word, 1, true) then
+			return true
+		end
+	end
+	return false
+end
+
+local function DestinationScore(object, kind)
+	local gameWords = {"game", "gameplay", "map", "arena", "match", "round", "start"}
+	local lobbyWords = {"lobby", "hub", "waiting", "spawn"}
+	local wanted = kind == "Game" and gameWords or lobbyWords
+	local unwanted = kind == "Game" and {"lobby", "hub", "waiting"} or {"game", "gameplay", "map", "arena", "match", "round"}
+
+	local score = 0
+
+	if object:IsA("SpawnLocation") then
+		score += 4
+	end
+
+	if ContainsAny(object.Name, wanted) then
+		score += 8
+	end
+
+	if ContainsAny(object.Name, unwanted) then
+		score -= 10
+	end
+
+	for _, attributeName in ipairs({
+		"Destination",
+		"TeleportDestination",
+		"Zone",
+		"SpawnType",
+		"Area",
+		"Room"
+	}) do
+		local value = object:GetAttribute(attributeName)
+		if value then
+			local asText = tostring(value)
+			if string.lower(asText) == string.lower(kind) then
+				score += 20
+			elseif ContainsAny(asText, wanted) then
+				score += 12
+			elseif ContainsAny(asText, unwanted) then
+				score -= 12
+			end
+		end
+	end
+
+	for _, tag in ipairs(CollectionService:GetTags(object)) do
+		if ContainsAny(tag, wanted) then
+			score += 12
+		elseif ContainsAny(tag, unwanted) then
+			score -= 12
+		end
+	end
+
+	local parent = object.Parent
+	local depth = 0
+	while parent and parent ~= Workspace and depth < 6 do
+		if ContainsAny(parent.Name, wanted) then
+			score += 5
+		end
+		if ContainsAny(parent.Name, unwanted) then
+			score -= 6
+		end
+		parent = parent.Parent
+		depth += 1
+	end
+
+	return score
+end
+
 local function FindDestinationSpawn(kind)
+	local bestObject = nil
+	local bestScore = -math.huge
+
+	for _, object in ipairs(Workspace:GetDescendants()) do
+		if object:IsA("SpawnLocation")
+			or object:IsA("BasePart")
+			or object:IsA("Attachment") then
+
+			local score = DestinationScore(object, kind)
+
+			if score > bestScore then
+				bestScore = score
+				bestObject = object
+			end
+		end
+	end
+
+	if bestObject and bestScore > 0 then
+		return SpawnCFrame(bestObject)
+	end
+
 	local containers = kind == "Game"
-		and {"Game", "Gameplay", "Map", "Arena", "Match"}
-		or {"Lobby", "Hub", "WaitingRoom"}
+		and {"Game", "Gameplay", "Map", "Arena", "Match", "Round"}
+		or {"Lobby", "Hub", "WaitingRoom", "Waiting"}
 
 	for _, containerName in ipairs(containers) do
 		local container = Workspace:FindFirstChild(containerName, true)
@@ -2135,7 +2309,31 @@ local function FindDestinationSpawn(kind)
 		end
 	end
 
-	return nil
+	local firstSpawn = Workspace:FindFirstChildWhichIsA("SpawnLocation", true)
+	return firstSpawn and firstSpawn.CFrame or nil
+end
+
+local function TeleportCharacterTo(cf)
+	local character = LocalPlayer.Character
+	if not character or not cf then
+		return false
+	end
+
+	local root = character:FindFirstChild("HumanoidRootPart")
+	if not root then
+		return false
+	end
+
+	local target = cf + Vector3.new(0, 4, 0)
+
+	for _ = 1, 3 do
+		character:PivotTo(target)
+		root.AssemblyLinearVelocity = Vector3.zero
+		root.AssemblyAngularVelocity = Vector3.zero
+		task.wait()
+	end
+
+	return true
 end
 
 local function TeleportTo(kind, card)
@@ -2160,14 +2358,13 @@ local function TeleportTo(kind, card)
 	end
 
 	local destination = FindDestinationSpawn(kind)
-	local character = LocalPlayer.Character
 
-	if destination and character then
-		character:PivotTo(destination + Vector3.new(0, 4, 0))
+	if TeleportCharacterTo(destination) then
 		return
 	end
 
 	card.title.Text = T("spawn_not_found")
+
 	task.delay(1.2, function()
 		if card.title and card.title.Parent then
 			card.title.Text = T(kind == "Game" and "game_tp" or "lobby_tp")
@@ -2205,7 +2402,7 @@ RegisterText(
 		Position = UDim2.fromOffset(14, 46),
 		BackgroundTransparency = 1,
 		TextColor3 = Theme.Muted,
-		TextSize = 9,
+		TextSize = 10,
 		Font = Enum.Font.GothamMedium,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ZIndex = 47
@@ -2219,7 +2416,7 @@ RegisterText(
 		Position = UDim2.fromOffset(14, 67),
 		BackgroundTransparency = 1,
 		TextColor3 = Theme.Muted2,
-		TextSize = 8,
+		TextSize = 9,
 		Font = Enum.Font.Gotham,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ZIndex = 47
@@ -2302,7 +2499,8 @@ CreateToggle(PlayerPage, {
 	id = "antiFling",
 	titleKey = "anti_fling",
 	subtitleKey = "anti_fling_sub",
-	order = 2
+	order = 2,
+	warning = true
 })
 
 CreateToggle(PlayerPage, {
@@ -2401,6 +2599,7 @@ CreateToggle(EspPage, {
 	titleKey = "player_esp",
 	subtitleKey = "player_esp_sub",
 	order = 2,
+	warning = true,
 	changed = function(enabled)
 		if not enabled then
 			ClearPlayerEsp()
@@ -2410,79 +2609,26 @@ CreateToggle(EspPage, {
 
 Section(GraphicsPage, "graphics_title", "graphics_subtitle", 1)
 
-local HighFeatureIds = {
-	"betterTextures",
-	"betterLights",
-	"reflections",
-	"environment"
-}
-
-local function DisableLowIfNeeded()
-	if State.lowGraphics and ToggleSetters.lowGraphics then
-		ToggleSetters.lowGraphics(false)
-	end
-end
-
 CreateToggle(GraphicsPage, {
-	id = "betterTextures",
-	titleKey = "better_textures",
-	subtitleKey = "better_textures_sub",
+	id = "graphicsBoost",
+	titleKey = "graphics_boost",
+	subtitleKey = "graphics_boost_sub",
 	order = 2,
 	warning = true,
 	changed = function(enabled)
 		if enabled then
-			DisableLowIfNeeded()
+			if State.lowGraphics and ToggleSetters.lowGraphics then
+				ToggleSetters.lowGraphics(false)
+			end
 			EnableBetterTextures()
-		else
-			DisableBetterTextures()
-		end
-	end
-})
-
-CreateToggle(GraphicsPage, {
-	id = "betterLights",
-	titleKey = "better_lights",
-	subtitleKey = "better_lights_sub",
-	order = 3,
-	warning = true,
-	changed = function(enabled)
-		if enabled then
-			DisableLowIfNeeded()
 			EnableBetterLights()
-		else
-			DisableBetterLights()
-		end
-	end
-})
-
-CreateToggle(GraphicsPage, {
-	id = "reflections",
-	titleKey = "reflections",
-	subtitleKey = "reflections_sub",
-	order = 4,
-	warning = true,
-	changed = function(enabled)
-		if enabled then
-			DisableLowIfNeeded()
 			EnableReflections()
-		else
-			DisableReflections()
-		end
-	end
-})
-
-CreateToggle(GraphicsPage, {
-	id = "environment",
-	titleKey = "environment",
-	subtitleKey = "environment_sub",
-	order = 5,
-	warning = true,
-	changed = function(enabled)
-		if enabled then
-			DisableLowIfNeeded()
 			EnableEnvironment()
 		else
 			DisableEnvironment()
+			DisableReflections()
+			DisableBetterLights()
+			DisableBetterTextures()
 		end
 	end
 })
@@ -2491,13 +2637,11 @@ CreateToggle(GraphicsPage, {
 	id = "lowGraphics",
 	titleKey = "low_graphics",
 	subtitleKey = "low_graphics_sub",
-	order = 6,
+	order = 3,
 	changed = function(enabled)
 		if enabled then
-			for _, id in ipairs(HighFeatureIds) do
-				if State[id] and ToggleSetters[id] then
-					ToggleSetters[id](false)
-				end
+			if State.graphicsBoost and ToggleSetters.graphicsBoost then
+				ToggleSetters.graphicsBoost(false)
 			end
 			EnableLowGraphics()
 		else
@@ -2510,7 +2654,7 @@ CreateToggle(GraphicsPage, {
 	id = "fullBright",
 	titleKey = "full_bright",
 	subtitleKey = "full_bright_sub",
-	order = 7,
+	order = 4,
 	changed = function(enabled)
 		if enabled then
 			EnableFullBright()
@@ -2524,7 +2668,7 @@ CreateToggle(GraphicsPage, {
 	id = "fpsVisible",
 	titleKey = "fps_display",
 	subtitleKey = "fps_display_sub",
-	order = 8,
+	order = 5,
 	changed = function(enabled)
 		if SetFpsVisible then
 			SetFpsVisible(enabled)
@@ -2535,22 +2679,18 @@ CreateToggle(GraphicsPage, {
 Section(HotkeysPage, "hotkeys_title", "hotkeys_subtitle", 1)
 
 local hotkeyRows = {
-	{"speedManipulation", "speed_manip", "V  ·  Hold", 2},
-	{"fly", "fly", "Toggle", 3},
-	{"antiFling", "anti_fling", "Toggle", 4},
-	{"noclip", "noclip", "Toggle", 5},
-	{"walkSpeed", "walk_speed", "Toggle", 6},
-	{"playerEsp", "player_esp", "Toggle", 7},
-	{"betterTextures", "better_textures", "Toggle", 8},
-	{"betterLights", "better_lights", "Toggle", 9},
-	{"reflections", "reflections", "Toggle", 10},
-	{"environment", "environment", "Toggle", 11},
-	{"lowGraphics", "low_graphics", "Toggle", 12},
-	{"fullBright", "full_bright", "Toggle", 13},
-	{"fpsVisible", "fps_display", "Toggle", 14},
-	{"instantInteract", "instant_interact", "Toggle", 15}
+	{"speedManipulation", "speed_manip", "hotkey_hold", 2},
+	{"fly", "fly", "hotkey_toggle", 3},
+	{"antiFling", "anti_fling", "hotkey_toggle", 4},
+	{"noclip", "noclip", "hotkey_toggle", 5},
+	{"walkSpeed", "walk_speed", "hotkey_toggle", 6},
+	{"playerEsp", "player_esp", "hotkey_toggle", 7},
+	{"graphicsBoost", "graphics_boost", "hotkey_toggle", 8},
+	{"lowGraphics", "low_graphics", "hotkey_toggle", 9},
+	{"fullBright", "full_bright", "hotkey_toggle", 10},
+	{"fpsVisible", "fps_display", "hotkey_toggle", 11},
+	{"instantInteract", "instant_interact", "hotkey_toggle", 12}
 }
-
 for _, config in ipairs(hotkeyRows) do
 	CreateHotkeyRow(
 		HotkeysPage,
@@ -2578,7 +2718,7 @@ local ExecutionsLabel = New("TextLabel", {
 	Position = UDim2.fromOffset(14, 13),
 	BackgroundTransparency = 1,
 	TextColor3 = Theme.White,
-	TextSize = 11,
+	TextSize = 12,
 	Font = Enum.Font.GothamSemibold,
 	TextXAlignment = Enum.TextXAlignment.Left,
 	ZIndex = 47
@@ -2589,14 +2729,14 @@ local ActiveCountLabel = New("TextLabel", {
 	Position = UDim2.fromOffset(14, 42),
 	BackgroundTransparency = 1,
 	TextColor3 = Theme.PurpleBright,
-	TextSize = 9,
+	TextSize = 10,
 	Font = Enum.Font.GothamBold,
 	TextXAlignment = Enum.TextXAlignment.Left,
 	ZIndex = 47
 }, StatusSummary)
 
 local ActiveCard = New("Frame", {
-	Size = UDim2.new(1, 0, 0, 110),
+	Size = UDim2.new(1, 0, 0, 84),
 	BackgroundColor3 = Theme.Surface,
 	BackgroundTransparency = 0.08,
 	BorderSizePixel = 0,
@@ -2605,26 +2745,12 @@ local ActiveCard = New("Frame", {
 }, StatusPage)
 Corner(ActiveCard, 9)
 
-RegisterText(
-	New("TextLabel", {
-		Size = UDim2.new(1, -28, 0, 18),
-		Position = UDim2.fromOffset(14, 12),
-		BackgroundTransparency = 1,
-		TextColor3 = Theme.PurpleBright,
-		TextSize = 9,
-		Font = Enum.Font.GothamBold,
-		TextXAlignment = Enum.TextXAlignment.Left,
-		ZIndex = 47
-	}, ActiveCard),
-	"active"
-)
-
 local ActiveList = New("TextLabel", {
-	Size = UDim2.new(1, -28, 0, 70),
-	Position = UDim2.fromOffset(14, 34),
+	Size = UDim2.new(1, -28, 0, 58),
+	Position = UDim2.fromOffset(14, 13),
 	BackgroundTransparency = 1,
 	TextColor3 = Theme.Light,
-	TextSize = 8,
+	TextSize = 9,
 	Font = Enum.Font.Gotham,
 	TextWrapped = true,
 	TextXAlignment = Enum.TextXAlignment.Left,
@@ -2648,7 +2774,7 @@ RegisterText(
 		Position = UDim2.fromOffset(14, 12),
 		BackgroundTransparency = 1,
 		TextColor3 = Theme.Muted,
-		TextSize = 9,
+		TextSize = 10,
 		Font = Enum.Font.GothamBold,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ZIndex = 47
@@ -2661,7 +2787,7 @@ local DisabledList = New("TextLabel", {
 	Position = UDim2.fromOffset(14, 34),
 	BackgroundTransparency = 1,
 	TextColor3 = Theme.Muted2,
-	TextSize = 8,
+	TextSize = 9,
 	Font = Enum.Font.Gotham,
 	TextWrapped = true,
 	TextXAlignment = Enum.TextXAlignment.Left,
@@ -2676,10 +2802,7 @@ local FeatureNameKeys = {
 	{"speedManipulation", "speed_manip"},
 	{"fly", "fly"},
 	{"playerEsp", "player_esp"},
-	{"betterTextures", "better_textures"},
-	{"betterLights", "better_lights"},
-	{"reflections", "reflections"},
-	{"environment", "environment"},
+	{"graphicsBoost", "graphics_boost"},
 	{"lowGraphics", "low_graphics"},
 	{"fullBright", "full_bright"},
 	{"fpsVisible", "fps_display"},
@@ -2748,7 +2871,7 @@ RegisterText(
 		Position = UDim2.fromOffset(14, 10),
 		BackgroundTransparency = 1,
 		TextColor3 = Theme.White,
-		TextSize = 11,
+		TextSize = 12,
 		Font = Enum.Font.GothamSemibold,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ZIndex = 47
@@ -2762,7 +2885,7 @@ RegisterText(
 		Position = UDim2.fromOffset(14, 29),
 		BackgroundTransparency = 1,
 		TextColor3 = Theme.Muted,
-		TextSize = 8,
+		TextSize = 9,
 		Font = Enum.Font.Gotham,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ZIndex = 47
@@ -2799,7 +2922,7 @@ RegisterText(
 		Position = UDim2.fromOffset(14, 10),
 		BackgroundTransparency = 1,
 		TextColor3 = Theme.White,
-		TextSize = 11,
+		TextSize = 12,
 		Font = Enum.Font.GothamSemibold,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ZIndex = 47
@@ -2813,7 +2936,7 @@ RegisterText(
 		Position = UDim2.fromOffset(14, 29),
 		BackgroundTransparency = 1,
 		TextColor3 = Theme.Muted,
-		TextSize = 8,
+		TextSize = 9,
 		Font = Enum.Font.Gotham,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ZIndex = 47
@@ -2850,7 +2973,7 @@ RegisterText(
 		Position = UDim2.fromOffset(14, 11),
 		BackgroundTransparency = 1,
 		TextColor3 = Theme.White,
-		TextSize = 11,
+		TextSize = 12,
 		Font = Enum.Font.GothamSemibold,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ZIndex = 47
@@ -2864,7 +2987,7 @@ RegisterText(
 		Position = UDim2.fromOffset(14, 32),
 		BackgroundTransparency = 1,
 		TextColor3 = Theme.Muted,
-		TextSize = 8,
+		TextSize = 9,
 		Font = Enum.Font.Gotham,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ZIndex = 47
@@ -2879,7 +3002,7 @@ local LanguageButton = New("TextButton", {
 	BorderSizePixel = 0,
 	Text = "English",
 	TextColor3 = Theme.White,
-	TextSize = 8,
+	TextSize = 9,
 	Font = Enum.Font.GothamBold,
 	AutoButtonColor = false,
 	ZIndex = 48
@@ -2936,7 +3059,7 @@ local FpsLabel = New("TextLabel", {
 	BackgroundTransparency = 1,
 	Text = "0",
 	TextColor3 = Theme.White,
-	TextSize = 11,
+	TextSize = 12,
 	Font = Enum.Font.GothamBold,
 	ZIndex = 701
 }, StatusHud)
@@ -2950,7 +3073,7 @@ local FlyNotice = RegisterText(
 		BackgroundTransparency = 0.05,
 		BorderSizePixel = 0,
 		TextColor3 = Theme.White,
-		TextSize = 9,
+		TextSize = 10,
 		Font = Enum.Font.GothamSemibold,
 		Visible = false,
 		TextTransparency = 1,
@@ -3053,37 +3176,83 @@ local function SetMenuVisible(visible)
 		PreviousMouseIconEnabled = UserInputService.MouseIconEnabled
 
 		Main.Visible = true
-		Main.GroupTransparency = 1
-		MainScale.Scale = 0.955
-		Background.ImageTransparency = 0.60
-
 		ApplyPanelBackground()
 
-		Tween(MainScale, 0.38, {
+		Main.GroupTransparency = 1
+		MainScale.Scale = 0.90
+		Main.Rotation = -0.35
+
+		TopBar.Position = UDim2.fromOffset(0, -8)
+		Sidebar.Position = UDim2.fromOffset(-14, 76)
+		Content.Position = UDim2.fromOffset(196, 76)
+
+		local targetBackgroundTransparency =
+			0.05 + (0.18 * math.clamp(State.panelBlur / 100, 0, 1))
+
+		Background.ImageTransparency = math.min(
+			0.88,
+			targetBackgroundTransparency + 0.48
+		)
+
+		Tween(MainScale, 0.46, {
 			Scale = 1
+		}, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+
+		Tween(Main, 0.30, {
+			GroupTransparency = 0,
+			Rotation = 0
 		}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
-		Tween(Main, 0.26, {
-			GroupTransparency = 0
-		}, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+		Tween(TopBar, 0.34, {
+			Position = UDim2.fromOffset(0, 0)
+		}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
-		Tween(Background, 0.44, {
-			ImageTransparency = 0.28 + (0.12 * State.panelBlur / 100)
+		Tween(Sidebar, 0.40, {
+			Position = UDim2.fromOffset(0, 76)
+		}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
+		Tween(Content, 0.40, {
+			Position = UDim2.fromOffset(180, 76)
+		}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
+		Tween(Background, 0.48, {
+			ImageTransparency = targetBackgroundTransparency
 		}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	else
 		StopSpeedManipulation()
 
-		Tween(MainScale, 0.22, {
-			Scale = 0.965
+		Tween(MainScale, 0.24, {
+			Scale = 0.93
 		}, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
 
-		local fade = Tween(Main, 0.21, {
-			GroupTransparency = 1
-		}, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
+		Tween(Main, 0.23, {
+			GroupTransparency = 1,
+			Rotation = 0.28
+		}, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
 
-		fade.Completed:Once(function()
+		Tween(TopBar, 0.20, {
+			Position = UDim2.fromOffset(0, -6)
+		}, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+
+		Tween(Sidebar, 0.22, {
+			Position = UDim2.fromOffset(-10, 76)
+		}, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+
+		Tween(Content, 0.22, {
+			Position = UDim2.fromOffset(190, 76)
+		}, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+
+		local fade = Tween(Background, 0.18, {
+			ImageTransparency = 0.82
+		}, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+
+		task.delay(0.24, function()
 			if id == MenuAnimationId and not State.menuVisible then
 				Main.Visible = false
+				Main.Rotation = 0
+				TopBar.Position = UDim2.fromOffset(0, 0)
+				Sidebar.Position = UDim2.fromOffset(0, 76)
+				Content.Position = UDim2.fromOffset(180, 76)
 				UserInputService.MouseBehavior = PreviousMouseBehavior
 				UserInputService.MouseIconEnabled = PreviousMouseIconEnabled
 			end
@@ -3136,21 +3305,20 @@ Bind(UserInputService.InputBegan, function(input, gameProcessed)
 			return
 		end
 
-		if input.UserInputType == Enum.UserInputType.Keyboard
-			and (
-				input.KeyCode == Enum.KeyCode.Backspace
-				or input.KeyCode == Enum.KeyCode.Delete
-			) then
+		if input.UserInputType == Enum.UserInputType.Keyboard then
+			if IsForbiddenHotkey(input.KeyCode) then
+				Tween(Capture.button, 0.10, {
+					TextColor3 = Theme.Red
+				}, Enum.EasingStyle.Quad)
 
-			Bindings[Capture.id] = nil
-			Capture.button.Text = T("set")
-			Capture.button.TextColor3 = Theme.White
-			Capture = nil
-			return
-		end
+				task.delay(0.25, function()
+					if Capture and Capture.button and Capture.button.Parent then
+						Capture.button.TextColor3 = Theme.PurpleBright
+					end
+				end)
 
-		if input.UserInputType == Enum.UserInputType.Keyboard
-			and input.KeyCode ~= Enum.KeyCode.Unknown then
+				return
+			end
 
 			Bindings[Capture.id] = {
 				kind = "KeyCode",
@@ -3176,7 +3344,7 @@ Bind(UserInputService.InputBegan, function(input, gameProcessed)
 	end
 
 	if input.UserInputType == Enum.UserInputType.Keyboard
-		and input.KeyCode == Enum.KeyCode.LeftShift then
+		and input.KeyCode == Enum.KeyCode.BackSlash then
 
 		SetMenuVisible(not State.menuVisible)
 		return
@@ -3299,25 +3467,11 @@ Bind(RunService.Heartbeat, function()
 end)
 
 Bind(Workspace.DescendantAdded, function(object)
-	if State.betterTextures then
+	if State.graphicsBoost then
 		task.defer(function()
 			if object.Parent then
 				ApplyBetterTextureToObject(object)
-			end
-		end)
-	end
-
-	if State.betterLights then
-		task.defer(function()
-			if object.Parent then
 				ApplyBetterLightToObject(object)
-			end
-		end)
-	end
-
-	if State.reflections then
-		task.defer(function()
-			if object.Parent then
 				ApplyReflectionToObject(object)
 			end
 		end)
@@ -3509,10 +3663,7 @@ local function Cleanup()
 	State.walkSpeed = false
 	State.fly = false
 	State.playerEsp = false
-	State.betterTextures = false
-	State.betterLights = false
-	State.reflections = false
-	State.environment = false
+	State.graphicsBoost = false
 	State.lowGraphics = false
 	State.fullBright = false
 	State.fpsVisible = false
@@ -3596,22 +3747,46 @@ task.spawn(function()
 	PreviousMouseIconEnabled = UserInputService.MouseIconEnabled
 
 	Main.Visible = true
-	Main.GroupTransparency = 1
-	MainScale.Scale = 0.955
-	Background.ImageTransparency = 0.62
-
 	ApplyPanelBackground()
 
-	Tween(MainScale, 0.42, {
+	Main.GroupTransparency = 1
+	MainScale.Scale = 0.90
+	Main.Rotation = -0.35
+	TopBar.Position = UDim2.fromOffset(0, -8)
+	Sidebar.Position = UDim2.fromOffset(-14, 76)
+	Content.Position = UDim2.fromOffset(196, 76)
+
+	local targetBackgroundTransparency =
+		0.05 + (0.18 * math.clamp(State.panelBlur / 100, 0, 1))
+
+	Background.ImageTransparency = math.min(
+		0.88,
+		targetBackgroundTransparency + 0.48
+	)
+
+	Tween(MainScale, 0.46, {
 		Scale = 1
+	}, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+
+	Tween(Main, 0.30, {
+		GroupTransparency = 0,
+		Rotation = 0
 	}, Enum.EasingStyle.Quint)
 
-	Tween(Main, 0.26, {
-		GroupTransparency = 0
-	}, Enum.EasingStyle.Sine)
+	Tween(TopBar, 0.34, {
+		Position = UDim2.fromOffset(0, 0)
+	}, Enum.EasingStyle.Quint)
 
-	Tween(Background, 0.44, {
-		ImageTransparency = 0.28 + (0.12 * State.panelBlur / 100)
+	Tween(Sidebar, 0.40, {
+		Position = UDim2.fromOffset(0, 76)
+	}, Enum.EasingStyle.Quint)
+
+	Tween(Content, 0.40, {
+		Position = UDim2.fromOffset(180, 76)
+	}, Enum.EasingStyle.Quint)
+
+	Tween(Background, 0.48, {
+		ImageTransparency = targetBackgroundTransparency
 	}, Enum.EasingStyle.Quint)
 end)
 
