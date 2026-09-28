@@ -50,22 +50,22 @@ for _, effectName in ipairs({
 end
 
 local Theme = {
-	Base = Color3.fromRGB(4, 5, 7),
-	Surface = Color3.fromRGB(10, 11, 14),
-	Surface2 = Color3.fromRGB(15, 17, 21),
-	Surface3 = Color3.fromRGB(21, 23, 28),
-	Surface4 = Color3.fromRGB(29, 31, 37),
-	White = Color3.fromRGB(244, 245, 247),
-	Light = Color3.fromRGB(203, 206, 212),
-	Muted = Color3.fromRGB(138, 142, 150),
-	Muted2 = Color3.fromRGB(92, 96, 104),
+	Base = Color3.fromRGB(7, 7, 10),
+	Surface = Color3.fromRGB(13, 13, 17),
+	Surface2 = Color3.fromRGB(19, 19, 24),
+	Surface3 = Color3.fromRGB(25, 25, 31),
+	Surface4 = Color3.fromRGB(34, 34, 42),
+	White = Color3.fromRGB(239, 239, 243),
+	Light = Color3.fromRGB(194, 194, 202),
+	Muted = Color3.fromRGB(132, 132, 143),
+	Muted2 = Color3.fromRGB(87, 87, 98),
 	Black = Color3.fromRGB(0, 0, 0),
-	Off = Color3.fromRGB(43, 46, 52),
-	Purple = Color3.fromRGB(119, 81, 190),
-	PurpleBright = Color3.fromRGB(153, 105, 231),
-	PurpleSoft = Color3.fromRGB(74, 52, 108),
-	Red = Color3.fromRGB(232, 66, 78),
-	Stroke = Color3.fromRGB(57, 60, 67)
+	Off = Color3.fromRGB(45, 45, 53),
+	Purple = Color3.fromRGB(111, 78, 165),
+	PurpleBright = Color3.fromRGB(151, 112, 211),
+	PurpleSoft = Color3.fromRGB(66, 48, 91),
+	Red = Color3.fromRGB(218, 79, 89),
+	Stroke = Color3.fromRGB(52, 52, 62)
 }
 
 local Language = "en"
@@ -77,205 +77,189 @@ local Strings = {
 		tab_player = "Player",
 		tab_esp = "ESP",
 		tab_graphics = "Graphics",
-		tab_hotkeys = "Hotkeys",
 		tab_status = "Status",
 		tab_settings = "Settings",
 
-		top_subtitle = "dark utility interface",
-		info_subtitle = "Project information and warnings",
+		top_subtitle = "utility panel",
+		info_subtitle = "Build notes and runtime warnings",
 		info_version = "Development build",
-		info_runtime = "All runtime features start disabled.",
+		info_runtime = "Runtime features start disabled.",
 		note_development_title = "Development",
-		note_development_body = "This script is still in development. Features can change while they are being tested.",
+		note_development_body = "This build is still being tested. Features and behavior may change.",
 		note_performance_title = "Performance",
-		note_performance_body = "Options marked in red can increase GPU or CPU load and may cause stutters or freezes on large or generated rooms.",
-		note_menu_title = "Menu shortcut",
-		note_menu_body = "Backslash (\\) opens or closes the menu. This shortcut is permanent.",
+		note_performance_body = "Red labels mark heavier options that may reduce performance in large or generated rooms.",
+		note_menu_title = "Menu key",
+		note_menu_body = "The ' key opens or closes the menu. This key is reserved.",
 
 		main_title = "Session",
-		main_subtitle = "Server and spawn actions",
-		rejoin = "REJOIN CURRENT SERVER",
-		rejoin_sub = "Reconnect to the same server instance",
-		game_tp = "TELEPORT TO GAME",
-		game_tp_sub = "Uses the Game SpawnLocation",
-		lobby_tp = "TELEPORT TO LOBBY",
-		lobby_tp_sub = "Uses the Lobby SpawnLocation",
+		main_subtitle = "Server and spawn controls",
+		rejoin = "REJOIN SERVER",
+		rejoin_sub = "Reconnect to this server instance",
+		game_tp = "GO TO GAME",
+		game_tp_sub = "Teleport to the Game SpawnLocation",
+		lobby_tp = "GO TO LOBBY",
+		lobby_tp_sub = "Teleport to the Lobby SpawnLocation",
 		respawn = "RESPAWN",
-		respawn_sub = "Respawn the local character",
+		respawn_sub = "Respawn your character",
 
 		player_title = "Player",
 		player_subtitle = "Movement and protection",
 		anti_fling = "Anti-Fling",
-		anti_fling_sub = "Velocity and collision protection",
+		anti_fling_sub = "Limits unwanted velocity and collision pushes",
 		noclip = "Noclip",
 		noclip_sub = "Disable collision on your character",
 		walk_speed = "Walk Speed",
-		walk_speed_sub = "Editable movement speed",
+		walk_speed_sub = "Set your movement speed",
 		fly = "Fly",
-		fly_sub = "Fly toward the mouse cursor",
+		fly_sub = "Move freely through the air",
 		fly_notice = "Fly enabled  ·  Q down  ·  E up",
 		speed_manip = "Speed Manipulation",
-		speed_manip_sub = "Hold V  ·  noclip + WalkSpeed 2",
+		speed_manip_sub = "Hold the assigned key for noclip + WalkSpeed 2",
 
 		esp_title = "Player ESP",
-		esp_subtitle = "Purple player overlay with name and distance",
+		esp_subtitle = "Player names and distance overlay",
 		player_esp = "Player ESP",
-		player_esp_sub = "Includes your own character",
+		player_esp_sub = "Show names and distance for players",
 
 		graphics_title = "Graphics",
 		graphics_subtitle = "Visual quality and performance",
 		graphics_boost = "Enhanced Graphics",
-		graphics_boost_sub = "Strong preset for lighting, reflections, atmosphere and detail",
+		graphics_boost_sub = "Boost lighting, reflections, atmosphere and detail",
 		better_textures = "Better Textures",
-		better_textures_sub = "Precise mesh rendering and reduced model LOD",
+		better_textures_sub = "Sharper mesh rendering and reduced model LOD",
 		better_lights = "Better Lights",
 		better_lights_sub = "Future lighting, shadows and stronger local lights",
 		reflections = "Reflections",
-		reflections_sub = "Stronger specular response on metal and glass",
+		reflections_sub = "Increase specular response on reflective materials",
 		environment = "Environment",
 		environment_sub = "Atmosphere, sun rays and depth effects",
 		low_graphics = "Low Graphics",
 		low_graphics_sub = "Reduce particles, materials and expensive effects",
 		full_bright = "Full Bright",
-		full_bright_sub = "Increase ambient visibility and remove distant fog",
-		fps_display = "FPS Display",
-		fps_display_sub = "Number-only counter updated at up to 30 Hz",
-		heavy = "HIGH LOAD",
-
-		hotkeys_title = "Hotkeys",
-		hotkeys_subtitle = "Choose a key or clear it",
-		hold_mode = "Hold",
-		toggle_mode = "Toggle",
-		hotkey_toggle = "Press a key · × clears",
-		hotkey_hold = "Hold key · × clears",
+		full_bright_sub = "Increase visibility and reduce distant fog",
+		fps_display = "FPS Counter",
+		fps_display_sub = "Numeric FPS counter updated at up to 30 Hz",
+		heavy = "HEAVY",
 
 		status_title = "Runtime Status",
-		status_subtitle = "Executions and current options",
+		status_subtitle = "Executions and current features",
 		executions = "Executions",
-		active = "ACTIVE",
+		active = "ENABLED",
 		disabled = "DISABLED",
 		none = "None",
 
 		settings_title = "Settings",
-		settings_subtitle = "Interface preferences",
+		settings_subtitle = "Interface and interaction",
 		panel_blur = "Panel Blur",
-		panel_blur_sub = "Softens only the background inside the menu",
+		panel_blur_sub = "Soften the artwork inside the menu",
 		background_brightness = "Background Brightness",
-		background_brightness_sub = "Brightness of the fixed menu artwork",
+		background_brightness_sub = "Adjust the menu artwork brightness",
 		language = "Language",
-		language_sub = "Choose the interface language",
-		english = "English",
-		portuguese = "Português",
+		language_sub = "Switch between ENG and PT-BR",
+		english = "ENG",
+		portuguese = "PT-BR",
 
 		instant_interact = "Instant Interact",
-		instant_interact_sub = "Set ProximityPrompt hold duration to zero",
+		instant_interact_sub = "Remove ProximityPrompt hold time",
 
 		teleporting = "TELEPORTING...",
 		teleport_failed = "TELEPORT FAILED",
 		spawn_not_found = "SPAWN NOT FOUND",
 		rejoining = "REJOINING...",
 		rejoin_failed = "REJOIN FAILED",
-		press_key = "PRESS KEY",
+		press_key = "PRESS A KEY",
 		set = "..."
 	},
-	pt = {
+	ptbr = {
 		tab_info = "Info",
 		tab_main = "Principal",
-		tab_player = "Player",
+		tab_player = "Jogador",
 		tab_esp = "ESP",
 		tab_graphics = "Gráficos",
-		tab_hotkeys = "Atalhos",
 		tab_status = "Status",
-		tab_settings = "Configurações",
+		tab_settings = "Ajustes",
 
-		top_subtitle = "interface utilitária dark",
-		info_subtitle = "Informações e avisos do projeto",
+		top_subtitle = "painel utilitário",
+		info_subtitle = "Notas da versão e avisos",
 		info_version = "Versão em desenvolvimento",
-		info_runtime = "Todos os recursos começam desativados.",
+		info_runtime = "Os recursos começam desativados.",
 		note_development_title = "Desenvolvimento",
-		note_development_body = "Este script ainda está em desenvolvimento. Recursos podem mudar durante os testes.",
+		note_development_body = "Esta versão ainda está em testes. Recursos e comportamentos podem mudar.",
 		note_performance_title = "Desempenho",
-		note_performance_body = "Opções marcadas em vermelho podem aumentar o uso de GPU ou CPU e causar travamentos em salas grandes ou geradas.",
-		note_menu_title = "Atalho do menu",
-		note_menu_body = "A barra invertida (\\) abre ou fecha o menu. Esse atalho é permanente.",
+		note_performance_body = "Rótulos vermelhos indicam opções mais pesadas, que podem reduzir o desempenho em salas grandes ou geradas.",
+		note_menu_title = "Tecla do menu",
+		note_menu_body = "A tecla ' abre ou fecha o menu. Essa tecla é reservada.",
 
 		main_title = "Sessão",
-		main_subtitle = "Ações de servidor e spawn",
+		main_subtitle = "Controles de servidor e spawn",
 		rejoin = "REENTRAR NO SERVIDOR",
-		rejoin_sub = "Reconecta à mesma instância do servidor",
-		game_tp = "TELEPORTAR PARA O JOGO",
-		game_tp_sub = "Usa o SpawnLocation do Game",
-		lobby_tp = "TELEPORTAR PARA O LOBBY",
-		lobby_tp_sub = "Usa o SpawnLocation do Lobby",
-		respawn = "RESPAWN",
-		respawn_sub = "Respawna o personagem local",
+		rejoin_sub = "Reconecta a esta mesma instância",
+		game_tp = "IR PARA O JOGO",
+		game_tp_sub = "Teleporta para o SpawnLocation do jogo",
+		lobby_tp = "IR PARA O LOBBY",
+		lobby_tp_sub = "Teleporta para o SpawnLocation do lobby",
+		respawn = "REAPARECER",
+		respawn_sub = "Faz seu personagem reaparecer",
 
-		player_title = "Player",
+		player_title = "Jogador",
 		player_subtitle = "Movimento e proteção",
 		anti_fling = "Anti-Fling",
-		anti_fling_sub = "Proteção de velocidade e colisão",
+		anti_fling_sub = "Limita impulsos de velocidade e colisões",
 		noclip = "Noclip",
-		noclip_sub = "Desativa colisão no personagem",
-		walk_speed = "Walk Speed",
-		walk_speed_sub = "Velocidade de movimento editável",
-		fly = "Fly",
-		fly_sub = "Voe na direção do cursor",
-		fly_notice = "Fly ativado  ·  Q desce  ·  E sobe",
-		speed_manip = "Speed Manipulation",
-		speed_manip_sub = "Segure V  ·  noclip + WalkSpeed 2",
+		noclip_sub = "Desativa a colisão do seu personagem",
+		walk_speed = "Velocidade",
+		walk_speed_sub = "Define a velocidade de movimento",
+		fly = "Voo",
+		fly_sub = "Permite se mover livremente pelo ar",
+		fly_notice = "Voo ativado  ·  Q desce  ·  E sobe",
+		speed_manip = "Manipulação de Velocidade",
+		speed_manip_sub = "Segure a tecla escolhida para noclip + WalkSpeed 2",
 
-		esp_title = "Player ESP",
-		esp_subtitle = "Overlay roxo com nome e distância",
-		player_esp = "Player ESP",
-		player_esp_sub = "Inclui o seu próprio personagem",
+		esp_title = "ESP de Jogadores",
+		esp_subtitle = "Nome e distância dos jogadores na tela",
+		player_esp = "ESP de Jogadores",
+		player_esp_sub = "Mostra nome e distância dos jogadores",
 
 		graphics_title = "Gráficos",
 		graphics_subtitle = "Qualidade visual e desempenho",
 		graphics_boost = "Gráficos Aprimorados",
-		graphics_boost_sub = "Preset forte para luzes, reflexos, ambiente e detalhes",
-		better_textures = "Texturas Melhores",
-		better_textures_sub = "Renderização precisa de meshes e menor LOD",
-		better_lights = "Luzes Melhores",
-		better_lights_sub = "Future lighting, sombras e luzes locais mais fortes",
+		graphics_boost_sub = "Melhora iluminação, reflexos, atmosfera e detalhes",
+		better_textures = "Texturas Aprimoradas",
+		better_textures_sub = "Melhora meshes e reduz a perda de detalhe por LOD",
+		better_lights = "Iluminação Aprimorada",
+		better_lights_sub = "Usa Future, sombras e luzes locais mais fortes",
 		reflections = "Reflexos",
-		reflections_sub = "Resposta especular mais forte em metal e vidro",
+		reflections_sub = "Aumenta o brilho especular de materiais reflexivos",
 		environment = "Ambiente",
-		environment_sub = "Atmosfera, raios solares e profundidade",
-		low_graphics = "Gráficos Baixos",
+		environment_sub = "Adiciona atmosfera, raios solares e profundidade",
+		low_graphics = "Gráficos Leves",
 		low_graphics_sub = "Reduz partículas, materiais e efeitos pesados",
-		full_bright = "Full Bright",
-		full_bright_sub = "Aumenta a visibilidade e remove neblina distante",
-		fps_display = "Display de FPS",
-		fps_display_sub = "Contador numérico atualizado em até 30 Hz",
-		heavy = "PESO ALTO",
+		full_bright = "Visibilidade Máxima",
+		full_bright_sub = "Aumenta a luz ambiente e reduz a neblina distante",
+		fps_display = "Contador de FPS",
+		fps_display_sub = "Mostra apenas o FPS, atualizado em até 30 Hz",
+		heavy = "PESADO",
 
-		hotkeys_title = "Atalhos",
-		hotkeys_subtitle = "Escolha uma tecla ou limpe o atalho",
-		hold_mode = "Segurar",
-		toggle_mode = "Alternar",
-		hotkey_toggle = "Pressione uma tecla · × limpa",
-		hotkey_hold = "Segure a tecla · × limpa",
-
-		status_title = "Status de Execução",
-		status_subtitle = "Execuções e opções atuais",
+		status_title = "Status da Execução",
+		status_subtitle = "Execuções e recursos atuais",
 		executions = "Execuções",
 		active = "ATIVOS",
 		disabled = "DESATIVADOS",
 		none = "Nenhum",
 
-		settings_title = "Configurações",
-		settings_subtitle = "Preferências da interface",
-		panel_blur = "Blur do Painel",
-		panel_blur_sub = "Suaviza apenas o background dentro do menu",
-		background_brightness = "Brilho do Background",
-		background_brightness_sub = "Brilho da arte fixa do menu",
+		settings_title = "Ajustes",
+		settings_subtitle = "Interface e interação",
+		panel_blur = "Desfoque do Painel",
+		panel_blur_sub = "Suaviza a arte dentro do menu",
+		background_brightness = "Brilho do Fundo",
+		background_brightness_sub = "Ajusta o brilho da arte do menu",
 		language = "Idioma",
-		language_sub = "Escolha o idioma da interface",
-		english = "English",
-		portuguese = "Português",
+		language_sub = "Alterna entre ENG e PT-BR",
+		english = "ENG",
+		portuguese = "PT-BR",
 
 		instant_interact = "Interação Instantânea",
-		instant_interact_sub = "Zera o tempo de segurar ProximityPrompt",
+		instant_interact_sub = "Remove o tempo de segurar do ProximityPrompt",
 
 		teleporting = "TELEPORTANDO...",
 		teleport_failed = "FALHA NO TELEPORTE",
@@ -325,7 +309,7 @@ local State = {
 	walkSpeedValue = 16,
 	flySpeed = 30,
 	panelBlur = 0,
-	backgroundBrightness = 55,
+	backgroundBrightness = 48,
 	menuVisible = true
 }
 
@@ -347,6 +331,20 @@ local Bindings = {
 		value = Enum.KeyCode.F4
 	},
 	instantInteract = nil
+}
+
+local HotkeyCapable = {
+	antiFling = true,
+	noclip = true,
+	walkSpeed = true,
+	speedManipulation = true,
+	fly = true,
+	playerEsp = true,
+	graphicsBoost = true,
+	lowGraphics = true,
+	fullBright = true,
+	fpsVisible = true,
+	instantInteract = true
 }
 
 local Connections = {}
@@ -511,20 +509,62 @@ local function BindingMatches(binding, input)
 	return false
 end
 
+local function SameBinding(a, b)
+	if not a or not b then
+		return false
+	end
+
+	return a.kind == b.kind and a.value == b.value
+end
+
+local function AssignBinding(id, binding)
+	if binding then
+		for otherId, otherBinding in pairs(Bindings) do
+			if otherId ~= id and SameBinding(otherBinding, binding) then
+				Bindings[otherId] = nil
+				local otherButton = HotkeyButtons[otherId]
+				if otherButton and otherButton.Parent then
+					otherButton.Text = FormatBinding(nil)
+					otherButton.TextColor3 = Theme.Light
+				end
+			end
+		end
+	end
+
+	Bindings[id] = binding
+
+	local button = HotkeyButtons[id]
+	if button and button.Parent then
+		button.Text = FormatBinding(binding)
+		button.TextColor3 = Theme.Light
+	end
+end
+
+local function BeginHotkeyCapture(id, button)
+	if Capture and Capture.button and Capture.button.Parent then
+		Capture.button.Text = FormatBinding(Bindings[Capture.id])
+		Capture.button.TextColor3 = Theme.Light
+	end
+
+	Capture = {
+		id = id,
+		button = button
+	}
+
+	button.Text = "..."
+	button.TextColor3 = Theme.PurpleBright
+end
+
 local function IsForbiddenHotkey(keyCode)
 	local forbidden = {
 		Unknown = true,
 		Escape = true,
 		Tab = true,
-		CapsLock = true,
-		NumLock = true,
-		ScrollLock = true,
-		BackSlash = true,
+		Quote = true,
 		LeftSuper = true,
 		RightSuper = true,
 		LeftMeta = true,
 		RightMeta = true,
-		Menu = true
 	}
 
 	return forbidden[keyCode.Name] == true
@@ -570,7 +610,7 @@ local Main = New("CanvasGroup", {
 	Visible = false,
 	ZIndex = 20
 }, ScreenGui)
-Corner(Main, 12)
+Corner(Main, 9)
 
 local MainScale = New("UIScale", {
 	Scale = 0.96
@@ -586,7 +626,7 @@ local Background = New("ImageLabel", {
 	ScaleType = Enum.ScaleType.Crop,
 	ZIndex = 20
 }, Main)
-Corner(Background, 12)
+Corner(Background, 9)
 
 local BlurLayers = {}
 
@@ -616,11 +656,11 @@ end
 local BackgroundShade = New("Frame", {
 	Size = UDim2.fromScale(1, 1),
 	BackgroundColor3 = Theme.Black,
-	BackgroundTransparency = 0.14,
+	BackgroundTransparency = 0.20,
 	BorderSizePixel = 0,
 	ZIndex = 21
 }, Main)
-Corner(BackgroundShade, 12)
+Corner(BackgroundShade, 9)
 
 local TopBar = New("Frame", {
 	Size = UDim2.new(1, 0, 0, 76),
@@ -649,14 +689,26 @@ local HubIcon = New("ImageLabel", {
 	ZIndex = 52
 }, HubIconBox)
 
+local TopTitle = New("TextLabel", {
+	Size = UDim2.fromOffset(310, 20),
+	Position = UDim2.fromOffset(74, 17),
+	BackgroundTransparency = 1,
+	Text = "LOST HUB",
+	TextColor3 = Theme.White,
+	TextSize = 13,
+	Font = Enum.Font.GothamBold,
+	TextXAlignment = Enum.TextXAlignment.Left,
+	ZIndex = 51
+}, TopBar)
+
 local TopSubtitle = RegisterText(
 	New("TextLabel", {
-		Size = UDim2.fromOffset(310, 20),
-		Position = UDim2.fromOffset(74, 27),
+		Size = UDim2.fromOffset(310, 18),
+		Position = UDim2.fromOffset(74, 37),
 		BackgroundTransparency = 1,
 		TextColor3 = Theme.Muted,
-		TextSize = 10,
-		Font = Enum.Font.GothamMedium,
+		TextSize = 9,
+		Font = Enum.Font.Gotham,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ZIndex = 51
 	}, TopBar),
@@ -664,11 +716,11 @@ local TopSubtitle = RegisterText(
 )
 
 local ShortcutChip = New("TextLabel", {
-	Size = UDim2.fromOffset(92, 28),
-	Position = UDim2.new(1, -110, 0, 24),
+	Size = UDim2.fromOffset(96, 28),
+	Position = UDim2.new(1, -114, 0, 24),
 	BackgroundColor3 = Theme.Surface2,
 	BorderSizePixel = 0,
-	Text = "\\",
+	Text = "MENU  '",
 	TextColor3 = Theme.Light,
 	TextSize = 9,
 	Font = Enum.Font.GothamBold,
@@ -894,7 +946,6 @@ local MainPage = CreatePage("Main")
 local PlayerPage = CreatePage("Player")
 local EspPage = CreatePage("ESP")
 local GraphicsPage = CreatePage("Graphics")
-local HotkeysPage = CreatePage("Hotkeys")
 local StatusPage = CreatePage("Status")
 local SettingsPage = CreatePage("Settings")
 
@@ -903,9 +954,8 @@ CreateTab("Main", "tab_main", 2)
 CreateTab("Player", "tab_player", 3)
 CreateTab("ESP", "tab_esp", 4)
 CreateTab("Graphics", "tab_graphics", 5)
-CreateTab("Hotkeys", "tab_hotkeys", 6)
-CreateTab("Status", "tab_status", 7)
-CreateTab("Settings", "tab_settings", 8)
+CreateTab("Status", "tab_status", 6)
+CreateTab("Settings", "tab_settings", 7)
 
 local function Section(parent, titleKey, subtitleKey, order)
 	local holder = New("Frame", {
@@ -1083,16 +1133,97 @@ local function ActionButton(parent, titleKey, subtitleKey, order, callback)
 	}
 end
 
+local function CreateInlineHotkey(row, id, options)
+	options = options or {}
+
+	local button = New("TextButton", {
+		Size = UDim2.fromOffset(options.width or 72, 28),
+		Position = UDim2.new(1, options.buttonOffset or -174, 0.5, -14),
+		BackgroundColor3 = Theme.Surface2,
+		BorderSizePixel = 0,
+		Text = FormatBinding(Bindings[id]),
+		TextColor3 = Theme.Light,
+		TextSize = 9,
+		Font = Enum.Font.GothamBold,
+		AutoButtonColor = false,
+		ZIndex = 50
+	}, row)
+	Corner(button, 6)
+	Stroke(button, 0.68, 1, Theme.Stroke)
+
+	local reset = New("TextButton", {
+		Size = UDim2.fromOffset(28, 28),
+		Position = UDim2.new(1, options.resetOffset or -96, 0.5, -14),
+		BackgroundColor3 = Theme.Surface2,
+		BorderSizePixel = 0,
+		Text = "×",
+		TextColor3 = Theme.Muted2,
+		TextSize = 13,
+		Font = Enum.Font.GothamBold,
+		AutoButtonColor = false,
+		ZIndex = 50
+	}, row)
+	Corner(reset, 6)
+	Stroke(reset, 0.68, 1, Theme.Stroke)
+
+	HotkeyButtons[id] = button
+
+	Bind(button.MouseEnter, function()
+		Tween(button, 0.10, {
+			BackgroundColor3 = Theme.Surface3,
+			TextColor3 = Theme.White
+		}, Enum.EasingStyle.Quad)
+	end)
+
+	Bind(button.MouseLeave, function()
+		if not Capture or Capture.id ~= id then
+			Tween(button, 0.10, {
+				BackgroundColor3 = Theme.Surface2,
+				TextColor3 = Theme.Light
+			}, Enum.EasingStyle.Quad)
+		end
+	end)
+
+	Bind(reset.MouseEnter, function()
+		Tween(reset, 0.10, {
+			BackgroundColor3 = Color3.fromRGB(43, 24, 29),
+			TextColor3 = Theme.Red
+		}, Enum.EasingStyle.Quad)
+	end)
+
+	Bind(reset.MouseLeave, function()
+		Tween(reset, 0.10, {
+			BackgroundColor3 = Theme.Surface2,
+			TextColor3 = Theme.Muted2
+		}, Enum.EasingStyle.Quad)
+	end)
+
+	Bind(button.MouseButton1Click, function()
+		BeginHotkeyCapture(id, button)
+	end)
+
+	Bind(reset.MouseButton1Click, function()
+		if Capture and Capture.id == id then
+			Capture = nil
+		end
+		AssignBinding(id, nil)
+	end)
+
+	return button, reset
+end
+
 local function CreateToggle(parent, config)
+	local hasHotkey = HotkeyCapable[config.id] == true
 	local row = New("Frame", {
 		Size = UDim2.new(1, 0, 0, config.height or 64),
 		BackgroundColor3 = Theme.Surface,
-		BackgroundTransparency = 0.08,
+		BackgroundTransparency = 0.04,
 		BorderSizePixel = 0,
 		LayoutOrder = config.order,
 		ZIndex = 46
 	}, parent)
-	Corner(row, 9)
+	Corner(row, 7)
+	Stroke(row, 0.82, 1, Theme.Stroke)
 
 	local overlay = New("Frame", {
 		Size = UDim2.fromScale(1, 1),
@@ -1101,17 +1232,23 @@ local function CreateToggle(parent, config)
 		BorderSizePixel = 0,
 		ZIndex = 46
 	}, row)
-	Corner(overlay, 9)
+	Corner(overlay, 7)
+
+	local rightReserve = hasHotkey and 225 or 82
+	if config.warning then
+		rightReserve += 92
+	end
 
 	RegisterText(
 		New("TextLabel", {
-			Size = UDim2.new(1, config.warning and -205 or -110, 0, 18),
+			Size = UDim2.new(1, -rightReserve, 0, 18),
 			Position = UDim2.fromOffset(14, 11),
 			BackgroundTransparency = 1,
 			TextColor3 = Theme.White,
 			TextSize = 12,
 			Font = Enum.Font.GothamSemibold,
 			TextXAlignment = Enum.TextXAlignment.Left,
+			TextTruncate = Enum.TextTruncate.AtEnd,
 			ZIndex = 48
 		}, row),
 		config.titleKey
@@ -1119,25 +1256,27 @@ local function CreateToggle(parent, config)
 
 	RegisterText(
 		New("TextLabel", {
-			Size = UDim2.new(1, -115, 0, 16),
+			Size = UDim2.new(1, -rightReserve, 0, 16),
 			Position = UDim2.fromOffset(14, 32),
 			BackgroundTransparency = 1,
 			TextColor3 = Theme.Muted,
 			TextSize = 9,
 			Font = Enum.Font.Gotham,
 			TextXAlignment = Enum.TextXAlignment.Left,
+			TextTruncate = Enum.TextTruncate.AtEnd,
 			ZIndex = 48
 		}, row),
 		config.subtitleKey
 	)
 
 	if config.warning then
+		local warningOffset = hasHotkey and -264 or -150
 		local warning = RegisterText(
 			New("TextLabel", {
-				Size = UDim2.fromOffset(82, 20),
-				Position = UDim2.new(1, -150, 0.5, -10),
-				BackgroundColor3 = Color3.fromRGB(54, 18, 23),
-				BackgroundTransparency = 0.06,
+				Size = UDim2.fromOffset(76, 20),
+				Position = UDim2.new(1, warningOffset, 0.5, -10),
+				BackgroundColor3 = Color3.fromRGB(46, 22, 27),
+				BackgroundTransparency = 0.08,
 				BorderSizePixel = 0,
 				TextColor3 = Theme.Red,
 				TextSize = 8,
@@ -1146,7 +1285,11 @@ local function CreateToggle(parent, config)
 			}, row),
 			"heavy"
 		)
-		Corner(warning, 6)
+		Corner(warning, 5)
+	end
+
+	if hasHotkey then
+		CreateInlineHotkey(row, config.id)
 	end
 
 	local switch = New("TextButton", {
@@ -1170,11 +1313,11 @@ local function CreateToggle(parent, config)
 	Corner(knob, 9)
 
 	local function Apply(enabled)
-		Tween(switch, 0.16, {
+		Tween(switch, 0.14, {
 			BackgroundColor3 = enabled and Theme.Purple or Theme.Off
 		}, Enum.EasingStyle.Quad)
 
-		Tween(knob, 0.16, {
+		Tween(knob, 0.14, {
 			Position = enabled
 				and UDim2.fromOffset(25, 3)
 				or UDim2.fromOffset(3, 3)
@@ -1197,13 +1340,13 @@ local function CreateToggle(parent, config)
 	ToggleSetters[config.id] = Set
 
 	Bind(row.MouseEnter, function()
-		Tween(overlay, 0.12, {
-			BackgroundTransparency = 0.72
+		Tween(overlay, 0.10, {
+			BackgroundTransparency = 0.78
 		}, Enum.EasingStyle.Quad)
 	end)
 
 	Bind(row.MouseLeave, function()
-		Tween(overlay, 0.12, {
+		Tween(overlay, 0.10, {
 			BackgroundTransparency = 1
 		}, Enum.EasingStyle.Quad)
 	end)
@@ -1353,14 +1496,15 @@ end
 
 local function CreateHotkeyRow(parent, id, titleKey, subtitleKey, order)
 	local row = New("Frame", {
-		Size = UDim2.new(1, 0, 0, 66),
+		Size = UDim2.new(1, 0, 0, 64),
 		BackgroundColor3 = Theme.Surface,
-		BackgroundTransparency = 0.08,
+		BackgroundTransparency = 0.04,
 		BorderSizePixel = 0,
 		LayoutOrder = order,
 		ZIndex = 46
 	}, parent)
-	Corner(row, 9)
+	Corner(row, 7)
+	Stroke(row, 0.82, 1, Theme.Stroke)
 
 	RegisterText(
 		New("TextLabel", {
@@ -1382,7 +1526,7 @@ local function CreateHotkeyRow(parent, id, titleKey, subtitleKey, order)
 			Position = UDim2.fromOffset(14, 34),
 			BackgroundTransparency = 1,
 			TextColor3 = Theme.Muted,
-			TextSize = 10,
+			TextSize = 9,
 			Font = Enum.Font.Gotham,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			ZIndex = 47
@@ -1391,8 +1535,8 @@ local function CreateHotkeyRow(parent, id, titleKey, subtitleKey, order)
 	)
 
 	local button = New("TextButton", {
-		Size = UDim2.fromOffset(94, 32),
-		Position = UDim2.new(1, -146, 0.5, -16),
+		Size = UDim2.fromOffset(72, 28),
+		Position = UDim2.new(1, -174, 0.5, -14),
 		BackgroundColor3 = Theme.Surface2,
 		BorderSizePixel = 0,
 		Text = FormatBinding(Bindings[id]),
@@ -1402,12 +1546,12 @@ local function CreateHotkeyRow(parent, id, titleKey, subtitleKey, order)
 		AutoButtonColor = false,
 		ZIndex = 48
 	}, row)
-	Corner(button, 7)
-	Stroke(button, 0.55, 1, Theme.Stroke)
+	Corner(button, 6)
+	Stroke(button, 0.68, 1, Theme.Stroke)
 
 	local reset = New("TextButton", {
-		Size = UDim2.fromOffset(36, 32),
-		Position = UDim2.new(1, -46, 0.5, -16),
+		Size = UDim2.fromOffset(28, 28),
+		Position = UDim2.new(1, -96, 0.5, -14),
 		BackgroundColor3 = Theme.Surface2,
 		BorderSizePixel = 0,
 		Text = "×",
@@ -1417,8 +1561,8 @@ local function CreateHotkeyRow(parent, id, titleKey, subtitleKey, order)
 		AutoButtonColor = false,
 		ZIndex = 48
 	}, row)
-	Corner(reset, 7)
-	Stroke(reset, 0.55, 1, Theme.Stroke)
+	Corner(reset, 6)
+	Stroke(reset, 0.68, 1, Theme.Stroke)
 
 	HotkeyButtons[id] = button
 
@@ -1449,18 +1593,14 @@ local function CreateHotkeyRow(parent, id, titleKey, subtitleKey, order)
 	end)
 
 	Bind(button.MouseButton1Click, function()
-		Capture = {
-			id = id,
-			button = button
-		}
-		button.Text = "..."
-		button.TextColor3 = Theme.PurpleBright
+		BeginHotkeyCapture(id, button)
 	end)
 
 	Bind(reset.MouseButton1Click, function()
-		Bindings[id] = nil
-		button.Text = "..."
-		button.TextColor3 = Theme.White
+		if Capture and Capture.id == id then
+			Capture = nil
+		end
+		AssignBinding(id, nil)
 	end)
 end
 
@@ -2592,6 +2732,14 @@ CreateSlider(
 	false
 )
 
+CreateHotkeyRow(
+	PlayerPage,
+	"speedManipulation",
+	"speed_manip",
+	"speed_manip_sub",
+	6
+)
+
 Section(EspPage, "esp_title", "esp_subtitle", 1)
 
 CreateToggle(EspPage, {
@@ -2675,31 +2823,6 @@ CreateToggle(GraphicsPage, {
 		end
 	end
 })
-
-Section(HotkeysPage, "hotkeys_title", "hotkeys_subtitle", 1)
-
-local hotkeyRows = {
-	{"speedManipulation", "speed_manip", "hotkey_hold", 2},
-	{"fly", "fly", "hotkey_toggle", 3},
-	{"antiFling", "anti_fling", "hotkey_toggle", 4},
-	{"noclip", "noclip", "hotkey_toggle", 5},
-	{"walkSpeed", "walk_speed", "hotkey_toggle", 6},
-	{"playerEsp", "player_esp", "hotkey_toggle", 7},
-	{"graphicsBoost", "graphics_boost", "hotkey_toggle", 8},
-	{"lowGraphics", "low_graphics", "hotkey_toggle", 9},
-	{"fullBright", "full_bright", "hotkey_toggle", 10},
-	{"fpsVisible", "fps_display", "hotkey_toggle", 11},
-	{"instantInteract", "instant_interact", "hotkey_toggle", 12}
-}
-for _, config in ipairs(hotkeyRows) do
-	CreateHotkeyRow(
-		HotkeysPage,
-		config[1],
-		config[2],
-		config[3],
-		config[4]
-	)
-end
 
 Section(StatusPage, "status_title", "status_subtitle", 1)
 
@@ -3000,7 +3123,7 @@ local LanguageButton = New("TextButton", {
 	Position = UDim2.new(1, -142, 0.5, -15),
 	BackgroundColor3 = Theme.Surface2,
 	BorderSizePixel = 0,
-	Text = "English",
+	Text = "ENG",
 	TextColor3 = Theme.White,
 	TextSize = 9,
 	Font = Enum.Font.GothamBold,
@@ -3015,7 +3138,7 @@ local function ApplyLanguage()
 
 	LanguageButton.Text = Language == "en"
 		and Strings.en.english
-		or Strings.pt.portuguese
+		or Strings.ptbr.portuguese
 
 	for id, button in pairs(HotkeyButtons) do
 		if button and button.Parent then
@@ -3027,7 +3150,7 @@ local function ApplyLanguage()
 end
 
 Bind(LanguageButton.MouseButton1Click, function()
-	Language = Language == "en" and "pt" or "en"
+	Language = Language == "en" and "ptbr" or "en"
 	ApplyLanguage()
 end)
 
@@ -3305,6 +3428,9 @@ Bind(UserInputService.InputBegan, function(input, gameProcessed)
 			return
 		end
 
+		local capturedId = Capture.id
+		local newBinding = nil
+
 		if input.UserInputType == Enum.UserInputType.Keyboard then
 			if IsForbiddenHotkey(input.KeyCode) then
 				Tween(Capture.button, 0.10, {
@@ -3320,7 +3446,7 @@ Bind(UserInputService.InputBegan, function(input, gameProcessed)
 				return
 			end
 
-			Bindings[Capture.id] = {
+			newBinding = {
 				kind = "KeyCode",
 				value = input.KeyCode
 			}
@@ -3329,7 +3455,7 @@ Bind(UserInputService.InputBegan, function(input, gameProcessed)
 			or input.UserInputType == Enum.UserInputType.MouseButton2
 			or input.UserInputType == Enum.UserInputType.MouseButton3 then
 
-			Bindings[Capture.id] = {
+			newBinding = {
 				kind = "InputType",
 				value = input.UserInputType
 			}
@@ -3337,20 +3463,19 @@ Bind(UserInputService.InputBegan, function(input, gameProcessed)
 			return
 		end
 
-		Capture.button.Text = FormatBinding(Bindings[Capture.id])
-		Capture.button.TextColor3 = Theme.White
+		AssignBinding(capturedId, newBinding)
 		Capture = nil
 		return
 	end
 
-	if input.UserInputType == Enum.UserInputType.Keyboard
-		and input.KeyCode == Enum.KeyCode.BackSlash then
-
-		SetMenuVisible(not State.menuVisible)
+	if UserInputService:GetFocusedTextBox() then
 		return
 	end
 
-	if UserInputService:GetFocusedTextBox() then
+	if input.UserInputType == Enum.UserInputType.Keyboard
+		and input.KeyCode == Enum.KeyCode.Quote then
+
+		SetMenuVisible(not State.menuVisible)
 		return
 	end
 
@@ -3789,4 +3914,5 @@ task.spawn(function()
 		ImageTransparency = targetBackgroundTransparency
 	}, Enum.EasingStyle.Quint)
 end)
+
 
