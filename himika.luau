@@ -1,4 +1,4 @@
-ckUI.Hud.Visible = true
+ockUI.Hud.Visible = true
 		ClockUI.Hud.GroupTransparency = 1
 		ClockUI.Scale.Scale = 0.96
 		Tween(ClockUI.Scale, 0.24, {Scale = 1}, Enum.EasingStyle.Quint)
@@ -627,13 +627,6 @@ task.spawn(function()
 	end
 end)
 
-
-from pathlib import Path
-code = Path("/mnt/data/KHub_v6.txt").read_text(encoding="utf-8")
-chunk_size = 24000
-chunks = [code[i:i+chunk_size] for i in range(0, len(code), chunk_size)]
-print("--[[ KHUB V6 - PARTE 1/" + str(len(chunks)) + " ]]")
-print(chunks[0])
 		anti_fling_sub = "Limits unwanted velocity and collision pushes",
 		noclip = "Noclip",
 		noclip_sub = "Disable collision on your character",
@@ -1255,19 +1248,6 @@ local function KeyName(keyCode)
 		LeftShift = "LSHIFT", RightShift = "RSHIFT",
 		LeftAlt = "LALT", RightAlt = "RALT",
 		Backquote = "`", Minus = "-", E
-from pathlib import Path
-from IPython.display import display, Code
-code = Path("/mnt/data/KHub_v6.txt").read_text(encoding="utf-8")
-display(Code(code, language="lua"))
-from pathlib import Path
-code=Path("/mnt/data/KHub_v6.txt").read_text(encoding="utf-8")
-lines=code.splitlines(True); chunks=[]; cur=''
-for line in lines:
-    if len(cur)+len(line)>11000 and cur: chunks.append(cur); cur=''
-    cur+=line
-if cur: chunks.append(cur)
-print("--[[ KHUB V6 1/15 ]]")
-print(chunks[0], end="")
 --[[ KHUB V6 1/15 ]]
 if _G.KHubCleanup then
 	pcall(_G.KHubCleanup)
@@ -1558,15 +1538,6 @@ local Strings = {
 		note_menu_body = "Ctrl abre ou fecha o menu por padrão. Você pode trocar a tecla nos Ajustes.",
 
 		main_title = "Sessão",
-from pathlib import Path
-code=Path("/mnt/data/KHub_v6.txt").read_text(encoding="utf-8")
-lines=code.splitlines(True); chunks=[]; cur=''
-for line in lines:
-    if len(cur)+len(line)>11000 and cur: chunks.append(cur); cur=''
-    cur+=line
-if cur: chunks.append(cur)
-print("--[[ KHUB V6 2/15 ]]")
-print(chunks[1], end="")
 --[[ KHUB V6 2/15 ]]
 		main_subtitle = "Controles de servidor e spawn",
 		rejoin = "REENTRAR NO SERVIDOR",
@@ -1933,15 +1904,6 @@ local RefreshStatusPage
 local ShowFlyNotice
 
 local function Bind(signal, callback)
-from pathlib import Path
-code=Path("/mnt/data/KHub_v6.txt").read_text(encoding="utf-8")
-lines=code.splitlines(True); chunks=[]; cur=''
-for line in lines:
-    if len(cur)+len(line)>11000 and cur: chunks.append(cur); cur=''
-    cur+=line
-if cur: chunks.append(cur)
-print("--[[ KHUB V6 3/15 ]]")
-print(chunks[2], end="")
 --[[ KHUB V6 3/15 ]]
 	local connection = signal:Connect(callback)
 	table.insert(Connections, connection)
@@ -2365,15 +2327,6 @@ IntroParts.K = New("TextLabel", {
 	TextXAlignment = Enum.TextXAlignment.Right,
 	ZIndex = 2004
 }, Intro)
-from pathlib import Path
-code=Path("/mnt/data/KHub_v6.txt").read_text(encoding="utf-8")
-lines=code.splitlines(True); chunks=[]; cur=''
-for line in lines:
-    if len(cur)+len(line)>11000 and cur: chunks.append(cur); cur=''
-    cur+=line
-if cur: chunks.append(cur)
-print("--[[ KHUB V6 4/15 ]]")
-print(chunks[3], end="")
 --[[ KHUB V6 4/15 ]]
 
 IntroParts.Hub = New("TextLabel", {
@@ -2754,15 +2707,6 @@ local function CreateTab(name, textKey, order)
 		}, TabsHolder),
 		textKey
 	)
-from pathlib import Path
-code=Path("/mnt/data/KHub_v6.txt").read_text(encoding="utf-8")
-lines=code.splitlines(True); chunks=[]; cur=''
-for line in lines:
-    if len(cur)+len(line)>11000 and cur: chunks.append(cur); cur=''
-    cur+=line
-if cur: chunks.append(cur)
-print("--[[ KHUB V6 5/15 ]]")
-print(chunks[4], end="")
 --[[ KHUB V6 5/15 ]]
 	Corner(button, 8)
 	Padding(button, 15, 8, 0, 0)
@@ -3214,15 +3158,6 @@ local function CreateToggle(parent, config)
 		if RefreshStatusPage then
 			RefreshStatusPage()
 		end
-from pathlib import Path
-code=Path("/mnt/data/KHub_v6.txt").read_text(encoding="utf-8")
-lines=code.splitlines(True); chunks=[]; cur=''
-for line in lines:
-    if len(cur)+len(line)>11000 and cur: chunks.append(cur); cur=''
-    cur+=line
-if cur: chunks.append(cur)
-print("--[[ KHUB V6 6/15 ]]")
-print(chunks[5], end="")
 --[[ KHUB V6 6/15 ]]
 		if Extra.SaveSettings then
 			Extra.SaveSettings()
@@ -3651,15 +3586,6 @@ local function EnsurePlayerEsp(player)
 	if data.highlight then
 		data.highlight.FillColor = tint
 		data.highlight.OutlineColor = tint
-from pathlib import Path
-code=Path("/mnt/data/KHub_v6.txt").read_text(encoding="utf-8")
-lines=code.splitlines(True); chunks=[]; cur=''
-for line in lines:
-    if len(cur)+len(line)>11000 and cur: chunks.append(cur); cur=''
-    cur+=line
-if cur: chunks.append(cur)
-print("--[[ KHUB V6 7/15 ]]")
-print(chunks[6], end="")
 --[[ KHUB V6 7/15 ]]
 		data.highlight.Enabled = State.espHighlight
 	end
@@ -3996,15 +3922,6 @@ Extra.EnsureGenericEsp = function(store, object, kind)
 	local distance = root and data.anchor and math.floor((root.Position - data.anchor.Position).Magnitude + 0.5) or 0
 	local pieces = {}
 	if State.espShowNames then table.insert(pieces, data.object.Name) end
-from pathlib import Path
-code=Path("/mnt/data/KHub_v6.txt").read_text(encoding="utf-8")
-lines=code.splitlines(True); chunks=[]; cur=''
-for line in lines:
-    if len(cur)+len(line)>11000 and cur: chunks.append(cur); cur=''
-    cur+=line
-if cur: chunks.append(cur)
-print("--[[ KHUB V6 8/15 ]]")
-print(chunks[7], end="")
 --[[ KHUB V6 8/15 ]]
 	if State.espShowDistance then table.insert(pieces, tostring(distance) .. "m") end
 	data.billboard.Enabled = #pieces > 0
@@ -4245,15 +4162,6 @@ Extra.StartAutoWalk = function()
 			if not target then task.wait(0.8) continue end
 
 			local path = PathfindingService:CreatePath({AgentCanJump = true, WaypointSpacing = 4})
-from pathlib import Path
-code=Path("/mnt/data/KHub_v6.txt").read_text(encoding="utf-8")
-lines=code.splitlines(True); chunks=[]; cur=''
-for line in lines:
-    if len(cur)+len(line)>11000 and cur: chunks.append(cur); cur=''
-    cur+=line
-if cur: chunks.append(cur)
-print("--[[ KHUB V6 9/15 ]]")
-print(chunks[8], end="")
 --[[ KHUB V6 9/15 ]]
 			local ok = pcall(function() path:ComputeAsync(root.Position, target.anchor.Position) end)
 			local waypoints = ok and path.Status == Enum.PathStatus.Success and path:GetWaypoints() or nil
@@ -4650,15 +4558,6 @@ local function FindDestinationSpawn(kind)
 	for _, object in ipairs(Workspace:GetDescendants()) do
 		if object:IsA("SpawnLocation")
 			or object:IsA("BasePart")
-from pathlib import Path
-code=Path("/mnt/data/KHub_v6.txt").read_text(encoding="utf-8")
-lines=code.splitlines(True); chunks=[]; cur=''
-for line in lines:
-    if len(cur)+len(line)>11000 and cur: chunks.append(cur); cur=''
-    cur+=line
-if cur: chunks.append(cur)
-print("--[[ KHUB V6 10/15 ]]")
-print(chunks[9], end="")
 --[[ KHUB V6 10/15 ]]
 			or object:IsA("Attachment") then
 
@@ -5051,15 +4950,6 @@ CreateToggle(EspPage, {id = "friendEsp", titleKey = "friend_esp", subtitleKey = 
 CreateToggle(EspPage, {id = "entityEsp", titleKey = "entity_esp", subtitleKey = "entity_esp_sub", order = 4, warning = true, changed = function(enabled) if enabled then task.spawn(RefreshEntityEsp) else ClearEntityEsp() end end})
 CreateToggle(EspPage, {id = "itemEsp", titleKey = "item_esp", subtitleKey = "item_esp_sub", order = 5, changed = function(enabled) if enabled then task.spawn(function() Extra.RefreshGenericEsp("item") end) else Extra.ClearGenericEsp("item") end end})
 CreateToggle(EspPage, {id = "objectiveEsp", titleKey = "objective_esp", subtitleKey = "objective_esp_sub", order = 6, changed = function(enabled) if enabled then task.spawn(function() Extra.RefreshGenericEsp("objective") end) else Extra.ClearGenericEsp("objective") end end})
-from pathlib import Path
-code=Path("/mnt/data/KHub_v6.txt").read_text(encoding="utf-8")
-lines=code.splitlines(True); chunks=[]; cur=''
-for line in lines:
-    if len(cur)+len(line)>11000 and cur: chunks.append(cur); cur=''
-    cur+=line
-if cur: chunks.append(cur)
-print("--[[ KHUB V6 11/15 ]]")
-print(chunks[10], end="")
 --[[ KHUB V6 11/15 ]]
 CreateToggle(EspPage, {id = "entityOnlyHostile", titleKey = "entity_hostile_only", subtitleKey = "entity_hostile_only_sub", order = 7, changed = function() if State.entityEsp then task.spawn(RefreshEntityEsp) end end})
 CreateToggle(EspPage, {id = "entitySpawnWarning", titleKey = "entity_spawn_warning", subtitleKey = "entity_spawn_warning_sub", order = 8})
@@ -5272,15 +5162,6 @@ StatusUI.DisabledCard = New("Frame", {
 	LayoutOrder = 4,
 	ZIndex = 46
 }, StatusPage)
-from pathlib import Path
-code=Path("/mnt/data/KHub_v6.txt").read_text(encoding="utf-8")
-lines=code.splitlines(True); chunks=[]; cur=''
-for line in lines:
-    if len(cur)+len(line)>11000 and cur: chunks.append(cur); cur=''
-    cur+=line
-if cur: chunks.append(cur)
-print("--[[ KHUB V6 12/15 ]]")
-print(chunks[11], end="")
 --[[ KHUB V6 12/15 ]]
 Corner(StatusUI.DisabledCard, 9)
 RegisterUITransparency(StatusUI.DisabledCard, 0.08)
@@ -5657,15 +5538,6 @@ Extra.SetDateVisible = function(visible)
 	else
 		local fade = Tween(Extra.DateUI.Hud, 0.16, {GroupTransparency = 1}, Enum.EasingStyle.Sine)
 		Tween(Extra.DateUI.Scale, 0.16, {Scale = 0.97}, Enum.EasingStyle.Quart)
-from pathlib import Path
-code=Path("/mnt/data/KHub_v6.txt").read_text(encoding="utf-8")
-lines=code.splitlines(True); chunks=[]; cur=''
-for line in lines:
-    if len(cur)+len(line)>11000 and cur: chunks.append(cur); cur=''
-    cur+=line
-if cur: chunks.append(cur)
-print("--[[ KHUB V6 13/15 ]]")
-print(chunks[12], end="")
 --[[ KHUB V6 13/15 ]]
 		fade.Completed:Once(function() if not State.dateVisible then Extra.DateUI.Hud.Visible = false end end)
 	end
@@ -6063,15 +5935,6 @@ Bind(RunService.Heartbeat, function()
 
 	if State.objectiveEsp then
 		for object in pairs(Extra.ObjectiveEspObjects) do if object and object.Parent then Extra.EnsureGenericEsp(Extra.ObjectiveEspObjects, object, "objective") else Extra.DestroyGenericEsp(Extra.ObjectiveEspObjects, object) end end
-from pathlib import Path
-code=Path("/mnt/data/KHub_v6.txt").read_text(encoding="utf-8")
-lines=code.splitlines(True); chunks=[]; cur=''
-for line in lines:
-    if len(cur)+len(line)>11000 and cur: chunks.append(cur); cur=''
-    cur+=line
-if cur: chunks.append(cur)
-print("--[[ KHUB V6 14/15 ]]")
-print(chunks[13], end="")
 --[[ KHUB V6 14/15 ]]
 	elseif next(Extra.ObjectiveEspObjects) then Extra.ClearGenericEsp("objective") end
 end)
@@ -6432,15 +6295,6 @@ task.spawn(function()
 		IntroParts.IconBox.BackgroundTransparency = 1
 		IntroParts.IconStroke.Transparency = 1
 		IntroParts.Icon.ImageTransparency = 1
-from pathlib import Path
-code=Path("/mnt/data/KHub_v6.txt").read_text(encoding="utf-8")
-lines=code.splitlines(True); chunks=[]; cur=''
-for line in lines:
-    if len(cur)+len(line)>11000 and cur: chunks.append(cur); cur=''
-    cur+=line
-if cur: chunks.append(cur)
-print("--[[ KHUB V6 15/15 ]]")
-print(chunks[14], end="")
 --[[ KHUB V6 15/15 ]]
 		IntroParts.K.TextTransparency = 1; IntroParts.Hub.TextTransparency = 1
 		IntroParts.Tagline.TextTransparency = 1; IntroParts.Status.TextTransparency = 1
