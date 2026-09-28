@@ -50,22 +50,22 @@ for _, effectName in ipairs({
 end
 
 local Theme = {
-	Base = Color3.fromRGB(7, 7, 10),
-	Surface = Color3.fromRGB(13, 13, 17),
-	Surface2 = Color3.fromRGB(19, 19, 24),
-	Surface3 = Color3.fromRGB(25, 25, 31),
-	Surface4 = Color3.fromRGB(34, 34, 42),
-	White = Color3.fromRGB(239, 239, 243),
-	Light = Color3.fromRGB(194, 194, 202),
-	Muted = Color3.fromRGB(132, 132, 143),
-	Muted2 = Color3.fromRGB(87, 87, 98),
+	Base = Color3.fromRGB(5, 5, 8),
+	Surface = Color3.fromRGB(12, 11, 16),
+	Surface2 = Color3.fromRGB(19, 17, 25),
+	Surface3 = Color3.fromRGB(29, 25, 39),
+	Surface4 = Color3.fromRGB(39, 34, 50),
+	White = Color3.fromRGB(244, 243, 248),
+	Light = Color3.fromRGB(207, 203, 216),
+	Muted = Color3.fromRGB(145, 139, 156),
+	Muted2 = Color3.fromRGB(96, 91, 106),
 	Black = Color3.fromRGB(0, 0, 0),
-	Off = Color3.fromRGB(45, 45, 53),
-	Purple = Color3.fromRGB(111, 78, 165),
-	PurpleBright = Color3.fromRGB(151, 112, 211),
-	PurpleSoft = Color3.fromRGB(66, 48, 91),
-	Red = Color3.fromRGB(218, 79, 89),
-	Stroke = Color3.fromRGB(52, 52, 62)
+	Off = Color3.fromRGB(49, 45, 58),
+	Purple = Color3.fromRGB(126, 82, 188),
+	PurpleBright = Color3.fromRGB(177, 126, 239),
+	PurpleSoft = Color3.fromRGB(73, 49, 101),
+	Red = Color3.fromRGB(222, 82, 94),
+	Stroke = Color3.fromRGB(61, 55, 72)
 }
 
 local Language = "en"
@@ -80,7 +80,7 @@ local Strings = {
 		tab_status = "Status",
 		tab_settings = "Settings",
 
-		top_subtitle = "utility panel",
+		top_subtitle = "K",
 		info_subtitle = "Build notes and runtime warnings",
 		info_version = "Development build",
 		info_runtime = "Runtime features start disabled.",
@@ -88,8 +88,8 @@ local Strings = {
 		note_development_body = "This build is still being tested. Features and behavior may change.",
 		note_performance_title = "Performance",
 		note_performance_body = "Red labels mark heavier options that may reduce performance in large or generated rooms.",
-		note_menu_title = "Menu key",
-		note_menu_body = "The ' key opens or closes the menu. This key is reserved.",
+		note_menu_title = "Menu shortcut",
+		note_menu_body = "Ctrl opens or closes the menu by default. You can change it in Settings.",
 
 		main_title = "Session",
 		main_subtitle = "Server and spawn controls",
@@ -150,10 +150,14 @@ local Strings = {
 
 		settings_title = "Settings",
 		settings_subtitle = "Interface and interaction",
+		menu_hotkey = "Menu Shortcut",
+		menu_hotkey_sub = "Key used to open and close the menu",
 		panel_blur = "Panel Blur",
 		panel_blur_sub = "Soften the artwork inside the menu",
 		background_brightness = "Background Brightness",
 		background_brightness_sub = "Adjust the menu artwork brightness",
+		ui_transparency = "Interface Transparency",
+		ui_transparency_sub = "Adjust cards, option surfaces and buttons",
 		language = "Language",
 		language_sub = "Switch between ENG and PT-BR",
 		english = "ENG",
@@ -187,8 +191,8 @@ local Strings = {
 		note_development_body = "Esta versão ainda está em testes. Recursos e comportamentos podem mudar.",
 		note_performance_title = "Desempenho",
 		note_performance_body = "Rótulos vermelhos indicam opções mais pesadas, que podem reduzir o desempenho em salas grandes ou geradas.",
-		note_menu_title = "Tecla do menu",
-		note_menu_body = "A tecla ' abre ou fecha o menu. Essa tecla é reservada.",
+		note_menu_title = "Atalho do menu",
+		note_menu_body = "Ctrl abre ou fecha o menu por padrão. Você pode trocar a tecla nos Ajustes.",
 
 		main_title = "Sessão",
 		main_subtitle = "Controles de servidor e spawn",
@@ -249,10 +253,14 @@ local Strings = {
 
 		settings_title = "Ajustes",
 		settings_subtitle = "Interface e interação",
+		menu_hotkey = "Atalho do Menu",
+		menu_hotkey_sub = "Tecla usada para abrir e fechar o menu",
 		panel_blur = "Desfoque do Painel",
 		panel_blur_sub = "Suaviza a arte dentro do menu",
 		background_brightness = "Brilho do Fundo",
 		background_brightness_sub = "Ajusta o brilho da arte do menu",
+		ui_transparency = "Transparência da Interface",
+		ui_transparency_sub = "Ajusta cartões, opções e botões",
 		language = "Idioma",
 		language_sub = "Alterna entre ENG e PT-BR",
 		english = "ENG",
@@ -310,10 +318,14 @@ local State = {
 	flySpeed = 30,
 	panelBlur = 0,
 	backgroundBrightness = 48,
+	uiTransparency = 8,
 	menuVisible = true
 }
 
 local Bindings = {
+	menu = {
+		kind = "Control"
+	},
 	antiFling = nil,
 	noclip = nil,
 	walkSpeed = nil,
@@ -476,6 +488,10 @@ local function FormatBinding(binding)
 		return T("set")
 	end
 
+	if binding.kind == "Control" then
+		return "CTRL"
+	end
+
 	if binding.kind == "KeyCode" then
 		return KeyName(binding.value)
 	end
@@ -497,6 +513,14 @@ local function BindingMatches(binding, input)
 		return false
 	end
 
+	if binding.kind == "Control" then
+		return input.UserInputType == Enum.UserInputType.Keyboard
+			and (
+				input.KeyCode == Enum.KeyCode.LeftControl
+				or input.KeyCode == Enum.KeyCode.RightControl
+			)
+	end
+
 	if binding.kind == "KeyCode" then
 		return input.UserInputType == Enum.UserInputType.Keyboard
 			and input.KeyCode == binding.value
@@ -514,21 +538,49 @@ local function SameBinding(a, b)
 		return false
 	end
 
+	if a.kind == "Control" and b.kind == "Control" then
+		return true
+	end
+
 	return a.kind == b.kind and a.value == b.value
 end
 
 local function AssignBinding(id, binding)
+	if id ~= "menu"
+		and binding
+		and Bindings.menu
+		and SameBinding(Bindings.menu, binding) then
+
+		local button = HotkeyButtons[id]
+		if button and button.Parent then
+			button.TextColor3 = Theme.Red
+			task.delay(0.28, function()
+				if button and button.Parent then
+					button.Text = FormatBinding(Bindings[id])
+					button.TextColor3 = Theme.Light
+				end
+			end)
+		end
+		return false
+	end
+
 	if binding then
 		for otherId, otherBinding in pairs(Bindings) do
 			if otherId ~= id and SameBinding(otherBinding, binding) then
-				Bindings[otherId] = nil
-				local otherButton = HotkeyButtons[otherId]
-				if otherButton and otherButton.Parent then
-					otherButton.Text = FormatBinding(nil)
-					otherButton.TextColor3 = Theme.Light
+				if id == "menu" or otherId ~= "menu" then
+					Bindings[otherId] = nil
+					local otherButton = HotkeyButtons[otherId]
+					if otherButton and otherButton.Parent then
+						otherButton.Text = FormatBinding(nil)
+						otherButton.TextColor3 = Theme.Light
+					end
 				end
 			end
 		end
+	end
+
+	if id == "menu" and not binding then
+		binding = {kind = "Control"}
 	end
 
 	Bindings[id] = binding
@@ -538,6 +590,8 @@ local function AssignBinding(id, binding)
 		button.Text = FormatBinding(binding)
 		button.TextColor3 = Theme.Light
 	end
+
+	return true
 end
 
 local function BeginHotkeyCapture(id, button)
@@ -560,14 +614,40 @@ local function IsForbiddenHotkey(keyCode)
 		Unknown = true,
 		Escape = true,
 		Tab = true,
-		Quote = true,
 		LeftSuper = true,
 		RightSuper = true,
 		LeftMeta = true,
 		RightMeta = true,
+		Menu = true,
 	}
 
 	return forbidden[keyCode.Name] == true
+end
+
+local UITransparencyTargets = {}
+
+local function ResolveUITransparency(baseTransparency)
+	local amount = math.clamp((State.uiTransparency or 0) / 100, 0, 0.92)
+	local base = math.clamp(baseTransparency or 0, 0, 1)
+	return math.clamp(base + ((1 - base) * amount), 0, 0.97)
+end
+
+local function RegisterUITransparency(instance, baseTransparency)
+	UITransparencyTargets[instance] = baseTransparency or 0
+	if instance and instance.Parent then
+		instance.BackgroundTransparency = ResolveUITransparency(baseTransparency or 0)
+	end
+	return instance
+end
+
+local function ApplyUITransparency()
+	for instance, baseTransparency in pairs(UITransparencyTargets) do
+		if instance and instance.Parent then
+			instance.BackgroundTransparency = ResolveUITransparency(baseTransparency)
+		else
+			UITransparencyTargets[instance] = nil
+		end
+	end
 end
 
 local ScreenGui = New("ScreenGui", {
@@ -580,29 +660,156 @@ local ScreenGui = New("ScreenGui", {
 
 local Intro = New("CanvasGroup", {
 	Size = UDim2.fromScale(1, 1),
-	BackgroundColor3 = Theme.Black,
+	BackgroundColor3 = Theme.Base,
 	BackgroundTransparency = 0,
 	GroupTransparency = 0,
 	ZIndex = 2000
 }, ScreenGui)
 
-local IntroScale = New("UIScale", {
-	Scale = 0.96
+local IntroBackdrop = New("Frame", {
+	Size = UDim2.fromScale(1, 1),
+	BackgroundColor3 = Color3.fromRGB(8, 7, 12),
+	BorderSizePixel = 0,
+	ZIndex = 2000
 }, Intro)
 
-local IntroLine = New("Frame", {
-	Size = UDim2.fromOffset(0, 1),
+local IntroGradient = New("UIGradient", {
+	Rotation = -35,
+	Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(6, 6, 9)),
+		ColorSequenceKeypoint.new(0.48, Color3.fromRGB(18, 13, 27)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(7, 7, 10))
+	})
+}, IntroBackdrop)
+
+local IntroGlow = New("Frame", {
+	Size = UDim2.fromOffset(250, 250),
 	AnchorPoint = Vector2.new(0.5, 0.5),
 	Position = UDim2.fromScale(0.5, 0.5),
-	BackgroundColor3 = Theme.PurpleBright,
+	BackgroundColor3 = Theme.Purple,
+	BackgroundTransparency = 0.88,
 	BorderSizePixel = 0,
 	ZIndex = 2001
 }, Intro)
+Corner(IntroGlow, 125)
+
+local IntroGlowGradient = New("UIGradient", {
+	Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.28),
+		NumberSequenceKeypoint.new(0.62, 0.74),
+		NumberSequenceKeypoint.new(1, 1)
+	})
+}, IntroGlow)
+
+local IntroRing = New("Frame", {
+	Size = UDim2.fromOffset(118, 118),
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Position = UDim2.fromScale(0.5, 0.5),
+	BackgroundTransparency = 1,
+	BorderSizePixel = 0,
+	Rotation = -18,
+	ZIndex = 2002
+}, Intro)
+Corner(IntroRing, 59)
+local IntroRingStroke = Stroke(IntroRing, 0.35, 1.4, Theme.PurpleBright)
+
+local IntroRingInner = New("Frame", {
+	Size = UDim2.fromOffset(94, 94),
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Position = UDim2.fromScale(0.5, 0.5),
+	BackgroundTransparency = 1,
+	BorderSizePixel = 0,
+	ZIndex = 2002
+}, Intro)
+Corner(IntroRingInner, 47)
+Stroke(IntroRingInner, 0.72, 1, Theme.Light)
+
+local IntroCenter = New("CanvasGroup", {
+	Size = UDim2.fromOffset(80, 80),
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Position = UDim2.fromScale(0.5, 0.5),
+	BackgroundColor3 = Theme.Surface2,
+	BackgroundTransparency = 0.04,
+	BorderSizePixel = 0,
+	GroupTransparency = 1,
+	ZIndex = 2004
+}, Intro)
+Corner(IntroCenter, 22)
+Stroke(IntroCenter, 0.34, 1, Theme.Stroke)
+
+local IntroIcon = New("ImageLabel", {
+	Size = UDim2.fromOffset(54, 54),
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Position = UDim2.fromScale(0.5, 0.5),
+	BackgroundTransparency = 1,
+	Image = AssetThumbnail(HUB_ICON_ASSET_ID),
+	ImageTransparency = 0,
+	ZIndex = 2005
+}, IntroCenter)
+
+local IntroIconScale = New("UIScale", {
+	Scale = 0.72
+}, IntroCenter)
+
+local IntroRingScale = New("UIScale", {
+	Scale = 0.76
+}, IntroRing)
+
+local IntroProgress = New("Frame", {
+	Size = UDim2.fromOffset(168, 3),
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Position = UDim2.new(0.5, 0, 0.5, 92),
+	BackgroundColor3 = Theme.Surface3,
+	BackgroundTransparency = 0.25,
+	BorderSizePixel = 0,
+	ZIndex = 2003
+}, Intro)
+Corner(IntroProgress, 2)
+
+local IntroProgressFill = New("Frame", {
+	Size = UDim2.fromScale(0, 1),
+	BackgroundColor3 = Theme.PurpleBright,
+	BorderSizePixel = 0,
+	ZIndex = 2004
+}, IntroProgress)
+Corner(IntroProgressFill, 2)
+
+local IntroDots = {}
+for index = 1, 3 do
+	local dot = New("Frame", {
+		Size = UDim2.fromOffset(5, 5),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.new(0.5, (index - 2) * 14, 0.5, 111),
+		BackgroundColor3 = index == 2 and Theme.PurpleBright or Theme.Light,
+		BackgroundTransparency = 0.45,
+		BorderSizePixel = 0,
+		ZIndex = 2004
+	}, Intro)
+	Corner(dot, 3)
+	table.insert(IntroDots, dot)
+end
+
+local IntroSparkles = {}
+for index = 1, 8 do
+	local angle = math.rad((index - 1) * 45)
+	local radius = index % 2 == 0 and 82 or 72
+	local dot = New("Frame", {
+		Size = UDim2.fromOffset(index % 3 == 0 and 4 or 3, index % 3 == 0 and 4 or 3),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.new(0.5, math.cos(angle) * radius, 0.5, math.sin(angle) * radius),
+		BackgroundColor3 = index % 2 == 0 and Theme.PurpleBright or Theme.White,
+		BackgroundTransparency = 0.72,
+		BorderSizePixel = 0,
+		ZIndex = 2003
+	}, Intro)
+	Corner(dot, 3)
+	table.insert(IntroSparkles, dot)
+end
 
 local Main = New("CanvasGroup", {
 	Name = "Main",
-	Size = UDim2.fromOffset(850, 555),
-	Position = UDim2.new(0.5, -425, 0.5, -278),
+	Size = UDim2.fromOffset(900, 580),
+	Position = UDim2.new(0.5, -450, 0.5, -290),
 	BackgroundColor3 = Theme.Base,
 	BorderSizePixel = 0,
 	ClipsDescendants = true,
@@ -663,25 +870,27 @@ local BackgroundShade = New("Frame", {
 Corner(BackgroundShade, 9)
 
 local TopBar = New("Frame", {
-	Size = UDim2.new(1, 0, 0, 76),
+	Size = UDim2.new(1, 0, 0, 68),
 	BackgroundColor3 = Theme.Surface,
 	BackgroundTransparency = 0.10,
 	BorderSizePixel = 0,
 	Active = true,
 	ZIndex = 50
 }, Main)
+RegisterUITransparency(TopBar, 0.10)
 
 local HubIconBox = New("Frame", {
-	Size = UDim2.fromOffset(42, 42),
-	Position = UDim2.fromOffset(18, 17),
+	Size = UDim2.fromOffset(46, 46),
+	Position = UDim2.fromOffset(14, 11),
 	BackgroundColor3 = Theme.Surface2,
 	BorderSizePixel = 0,
 	ZIndex = 51
 }, TopBar)
 Corner(HubIconBox, 10)
+RegisterUITransparency(HubIconBox, 0)
 
 local HubIcon = New("ImageLabel", {
-	Size = UDim2.fromOffset(32, 32),
+	Size = UDim2.fromOffset(34, 34),
 	AnchorPoint = Vector2.new(0.5, 0.5),
 	Position = UDim2.fromScale(0.5, 0.5),
 	BackgroundTransparency = 1,
@@ -689,54 +898,15 @@ local HubIcon = New("ImageLabel", {
 	ZIndex = 52
 }, HubIconBox)
 
-local TopTitle = New("TextLabel", {
-	Size = UDim2.fromOffset(310, 20),
-	Position = UDim2.fromOffset(74, 17),
-	BackgroundTransparency = 1,
-	Text = "LOST HUB",
-	TextColor3 = Theme.White,
-	TextSize = 13,
-	Font = Enum.Font.GothamBold,
-	TextXAlignment = Enum.TextXAlignment.Left,
-	ZIndex = 51
-}, TopBar)
-
-local TopSubtitle = RegisterText(
-	New("TextLabel", {
-		Size = UDim2.fromOffset(310, 18),
-		Position = UDim2.fromOffset(74, 37),
-		BackgroundTransparency = 1,
-		TextColor3 = Theme.Muted,
-		TextSize = 9,
-		Font = Enum.Font.Gotham,
-		TextXAlignment = Enum.TextXAlignment.Left,
-		ZIndex = 51
-	}, TopBar),
-	"top_subtitle"
-)
-
-local ShortcutChip = New("TextLabel", {
-	Size = UDim2.fromOffset(96, 28),
-	Position = UDim2.new(1, -114, 0, 24),
-	BackgroundColor3 = Theme.Surface2,
-	BorderSizePixel = 0,
-	Text = "MENU  '",
-	TextColor3 = Theme.Light,
-	TextSize = 9,
-	Font = Enum.Font.GothamBold,
-	ZIndex = 51
-}, TopBar)
-Corner(ShortcutChip, 8)
-Stroke(ShortcutChip, 0.65, 1, Theme.Stroke)
-
 local Sidebar = New("Frame", {
-	Size = UDim2.new(0, 180, 1, -76),
-	Position = UDim2.fromOffset(0, 76),
+	Size = UDim2.new(0, 190, 1, -68),
+	Position = UDim2.fromOffset(0, 68),
 	BackgroundColor3 = Theme.Surface,
 	BackgroundTransparency = 0.09,
 	BorderSizePixel = 0,
 	ZIndex = 45
 }, Main)
+RegisterUITransparency(Sidebar, 0.09)
 
 local SidebarSeparator = New("Frame", {
 	Size = UDim2.new(0, 1, 1, 0),
@@ -770,6 +940,9 @@ local Profile = New("TextButton", {
 	ZIndex = 46
 }, Sidebar)
 Corner(Profile, 9)
+RegisterUITransparency(Profile, 0.25)
+
+local ProfileScale = New("UIScale", {Scale = 1}, Profile)
 
 local Avatar = New("ImageLabel", {
 	Size = UDim2.fromOffset(36, 36),
@@ -787,7 +960,7 @@ local ProfileName = New("TextLabel", {
 	BackgroundTransparency = 1,
 	Text = LocalPlayer.DisplayName,
 	TextColor3 = Theme.White,
-	TextSize = 10,
+	TextSize = 12,
 	Font = Enum.Font.GothamSemibold,
 	TextXAlignment = Enum.TextXAlignment.Left,
 	TextTruncate = Enum.TextTruncate.AtEnd,
@@ -800,7 +973,7 @@ local ProfileUser = New("TextLabel", {
 	BackgroundTransparency = 1,
 	Text = "@" .. LocalPlayer.Name,
 	TextColor3 = Theme.Muted,
-	TextSize = 9,
+	TextSize = 10,
 	Font = Enum.Font.Gotham,
 	TextXAlignment = Enum.TextXAlignment.Left,
 	TextTruncate = Enum.TextTruncate.AtEnd,
@@ -817,22 +990,34 @@ local UsernameCover = New("Frame", {
 Corner(UsernameCover, 3)
 
 Bind(Profile.MouseEnter, function()
-	Tween(UsernameCover, 0.15, {
+	Tween(UsernameCover, 0.20, {
 		Size = UDim2.new(0, 0, 0, 10),
 		BackgroundTransparency = 1
-	}, Enum.EasingStyle.Quart)
+	}, Enum.EasingStyle.Quint)
+	Tween(ProfileScale, 0.20, {Scale = 1.018}, Enum.EasingStyle.Quint)
+	Tween(Profile, 0.20, {BackgroundColor3 = Theme.Surface3}, Enum.EasingStyle.Quart)
 end)
 
 Bind(Profile.MouseLeave, function()
-	Tween(UsernameCover, 0.15, {
+	Tween(UsernameCover, 0.20, {
 		Size = UDim2.new(1, -64, 0, 10),
 		BackgroundTransparency = 0
-	}, Enum.EasingStyle.Quart)
+	}, Enum.EasingStyle.Quint)
+	Tween(ProfileScale, 0.20, {Scale = 1}, Enum.EasingStyle.Quint)
+	Tween(Profile, 0.20, {BackgroundColor3 = Theme.Surface2}, Enum.EasingStyle.Quart)
+end)
+
+Bind(Profile.MouseButton1Down, function()
+	Tween(ProfileScale, 0.07, {Scale = 0.975}, Enum.EasingStyle.Quart)
+end)
+
+Bind(Profile.MouseButton1Up, function()
+	Tween(ProfileScale, 0.16, {Scale = 1.018}, Enum.EasingStyle.Back)
 end)
 
 local Content = New("Frame", {
-	Size = UDim2.new(1, -180, 1, -76),
-	Position = UDim2.fromOffset(180, 76),
+	Size = UDim2.new(1, -190, 1, -68),
+	Position = UDim2.fromOffset(190, 68),
 	BackgroundTransparency = 1,
 	ZIndex = 45
 }, Main)
@@ -864,31 +1049,73 @@ local function CreatePage(name)
 	return page
 end
 
+local CurrentPageName = nil
+local PageAnimationId = 0
+
 local function SelectPage(name)
-	for pageName, page in pairs(Pages) do
-		page.Visible = pageName == name
+	local target = Pages[name]
+	if not target then
+		return
 	end
+
+	PageAnimationId += 1
+	local animationId = PageAnimationId
+	local previousName = CurrentPageName
+	local previous = previousName and Pages[previousName] or nil
+
+	if previous and previous ~= target then
+		Tween(previous, 0.16, {
+			Position = UDim2.fromOffset(-10, 0)
+		}, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+
+		task.delay(0.14, function()
+			if animationId == PageAnimationId and previous ~= Pages[CurrentPageName] then
+				previous.Visible = false
+				previous.Position = UDim2.fromOffset(0, 0)
+			end
+		end)
+	end
+
+	target.Visible = true
+	target.Position = previous == target
+		and target.Position
+		or UDim2.fromOffset(12, 0)
+
+	Tween(target, 0.24, {
+		Position = UDim2.fromOffset(0, 0)
+	}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
+	CurrentPageName = name
 
 	for tabName, data in pairs(Tabs) do
 		local selected = tabName == name
 
-		Tween(data.button, 0.15, {
-			BackgroundTransparency = selected and 0.10 or 1,
+		Tween(data.button, 0.18, {
+			BackgroundTransparency = selected
+				and ResolveUITransparency(0.10)
+				or 1,
 			BackgroundColor3 = selected and Theme.Surface3 or Theme.Surface2,
 			TextColor3 = selected and Theme.White or Theme.Muted
-		}, Enum.EasingStyle.Quad)
+		}, Enum.EasingStyle.Quart)
+
+		Tween(data.indicator, 0.22, {
+			Size = selected
+				and UDim2.fromOffset(3, 18)
+				or UDim2.fromOffset(3, 0),
+			BackgroundTransparency = selected and 0 or 1
+		}, Enum.EasingStyle.Quint)
 	end
 end
 
 local function CreateTab(name, textKey, order)
 	local button = RegisterText(
 		New("TextButton", {
-			Size = UDim2.new(1, 0, 0, 36),
+			Size = UDim2.new(1, 0, 0, 38),
 			BackgroundColor3 = Theme.Surface2,
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
 			TextColor3 = Theme.Muted,
-			TextSize = 11,
+			TextSize = 12,
 			Font = Enum.Font.GothamMedium,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			AutoButtonColor = false,
@@ -898,38 +1125,49 @@ local function CreateTab(name, textKey, order)
 		textKey
 	)
 	Corner(button, 8)
-	Padding(button, 14, 8, 0, 0)
+	Padding(button, 15, 8, 0, 0)
+
+	local indicator = New("Frame", {
+		Size = UDim2.fromOffset(3, 0),
+		AnchorPoint = Vector2.new(0, 0.5),
+		Position = UDim2.new(0, 5, 0.5, 0),
+		BackgroundColor3 = Theme.PurpleBright,
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		ZIndex = 48
+	}, button)
+	Corner(indicator, 2)
 
 	local scale = New("UIScale", {
 		Scale = 1
 	}, button)
 
 	Bind(button.MouseEnter, function()
-		Tween(scale, 0.12, {Scale = 1.014}, Enum.EasingStyle.Quad)
+		Tween(scale, 0.16, {Scale = 1.022}, Enum.EasingStyle.Quint)
 		if not Pages[name].Visible then
-			Tween(button, 0.12, {
-				BackgroundTransparency = 0.48,
+			Tween(button, 0.16, {
+				BackgroundTransparency = ResolveUITransparency(0.42),
 				TextColor3 = Theme.Light
-			}, Enum.EasingStyle.Quad)
+			}, Enum.EasingStyle.Quart)
 		end
 	end)
 
 	Bind(button.MouseLeave, function()
-		Tween(scale, 0.12, {Scale = 1}, Enum.EasingStyle.Quad)
+		Tween(scale, 0.18, {Scale = 1}, Enum.EasingStyle.Quint)
 		if not Pages[name].Visible then
-			Tween(button, 0.12, {
+			Tween(button, 0.16, {
 				BackgroundTransparency = 1,
 				TextColor3 = Theme.Muted
-			}, Enum.EasingStyle.Quad)
+			}, Enum.EasingStyle.Quart)
 		end
 	end)
 
 	Bind(button.MouseButton1Down, function()
-		Tween(scale, 0.06, {Scale = 0.986}, Enum.EasingStyle.Quad)
+		Tween(scale, 0.07, {Scale = 0.975}, Enum.EasingStyle.Quart)
 	end)
 
 	Bind(button.MouseButton1Up, function()
-		Tween(scale, 0.08, {Scale = 1.014}, Enum.EasingStyle.Quad)
+		Tween(scale, 0.16, {Scale = 1.018}, Enum.EasingStyle.Back)
 	end)
 
 	Bind(button.MouseButton1Click, function()
@@ -937,7 +1175,8 @@ local function CreateTab(name, textKey, order)
 	end)
 
 	Tabs[name] = {
-		button = button
+		button = button,
+		indicator = indicator
 	}
 end
 
@@ -954,8 +1193,7 @@ CreateTab("Main", "tab_main", 2)
 CreateTab("Player", "tab_player", 3)
 CreateTab("ESP", "tab_esp", 4)
 CreateTab("Graphics", "tab_graphics", 5)
-CreateTab("Status", "tab_status", 6)
-CreateTab("Settings", "tab_settings", 7)
+CreateTab("Settings", "tab_settings", 6)
 
 local function Section(parent, titleKey, subtitleKey, order)
 	local holder = New("Frame", {
@@ -970,7 +1208,7 @@ local function Section(parent, titleKey, subtitleKey, order)
 			Size = UDim2.new(1, 0, 0, 22),
 			BackgroundTransparency = 1,
 			TextColor3 = Theme.White,
-			TextSize = 16,
+			TextSize = 18,
 			Font = Enum.Font.GothamSemibold,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			ZIndex = 47
@@ -985,7 +1223,7 @@ local function Section(parent, titleKey, subtitleKey, order)
 				Position = UDim2.fromOffset(0, 25),
 				BackgroundTransparency = 1,
 				TextColor3 = Theme.Muted,
-				TextSize = 10,
+				TextSize = 11,
 				Font = Enum.Font.Gotham,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				ZIndex = 47
@@ -1005,6 +1243,7 @@ local function NoteCard(parent, titleKey, bodyKey, order, red)
 		ZIndex = 46
 	}, parent)
 	Corner(card, 9)
+	RegisterUITransparency(card, 0.08)
 
 	local dot = New("Frame", {
 		Size = UDim2.fromOffset(6, 6),
@@ -1021,7 +1260,7 @@ local function NoteCard(parent, titleKey, bodyKey, order, red)
 			Position = UDim2.fromOffset(28, 10),
 			BackgroundTransparency = 1,
 			TextColor3 = red and Theme.Red or Theme.White,
-			TextSize = 11,
+			TextSize = 13,
 			Font = Enum.Font.GothamSemibold,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			ZIndex = 47
@@ -1035,7 +1274,7 @@ local function NoteCard(parent, titleKey, bodyKey, order, red)
 			Position = UDim2.fromOffset(28, 31),
 			BackgroundTransparency = 1,
 			TextColor3 = Theme.Muted,
-			TextSize = 9,
+			TextSize = 10,
 			Font = Enum.Font.Gotham,
 			TextWrapped = true,
 			TextXAlignment = Enum.TextXAlignment.Left,
@@ -1060,6 +1299,7 @@ local function ActionButton(parent, titleKey, subtitleKey, order, callback)
 	}, parent)
 	Corner(button, 9)
 	Stroke(button, 0.58, 1, Theme.Stroke)
+	RegisterUITransparency(button, 0.02)
 
 	local overlay = New("Frame", {
 		Size = UDim2.fromScale(1, 1),
@@ -1076,7 +1316,7 @@ local function ActionButton(parent, titleKey, subtitleKey, order, callback)
 			Position = UDim2.fromOffset(14, 9),
 			BackgroundTransparency = 1,
 			TextColor3 = Theme.White,
-			TextSize = 11,
+			TextSize = 13,
 			Font = Enum.Font.GothamSemibold,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			ZIndex = 49
@@ -1090,7 +1330,7 @@ local function ActionButton(parent, titleKey, subtitleKey, order, callback)
 			Position = UDim2.fromOffset(14, 29),
 			BackgroundTransparency = 1,
 			TextColor3 = Theme.Muted,
-			TextSize = 9,
+			TextSize = 10,
 			Font = Enum.Font.Gotham,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			ZIndex = 49
@@ -1101,25 +1341,25 @@ local function ActionButton(parent, titleKey, subtitleKey, order, callback)
 	local scale = New("UIScale", {Scale = 1}, button)
 
 	Bind(button.MouseEnter, function()
-		Tween(overlay, 0.14, {
-			BackgroundTransparency = 0.91
-		}, Enum.EasingStyle.Quad)
-		Tween(scale, 0.14, {Scale = 1.005}, Enum.EasingStyle.Quad)
+		Tween(overlay, 0.18, {
+			BackgroundTransparency = ResolveUITransparency(0.87)
+		}, Enum.EasingStyle.Quart)
+		Tween(scale, 0.18, {Scale = 1.012}, Enum.EasingStyle.Quint)
 	end)
 
 	Bind(button.MouseLeave, function()
-		Tween(overlay, 0.14, {
+		Tween(overlay, 0.18, {
 			BackgroundTransparency = 1
-		}, Enum.EasingStyle.Quad)
-		Tween(scale, 0.14, {Scale = 1}, Enum.EasingStyle.Quad)
+		}, Enum.EasingStyle.Quart)
+		Tween(scale, 0.20, {Scale = 1}, Enum.EasingStyle.Quint)
 	end)
 
 	Bind(button.MouseButton1Down, function()
-		Tween(scale, 0.06, {Scale = 0.988}, Enum.EasingStyle.Quad)
+		Tween(scale, 0.07, {Scale = 0.974}, Enum.EasingStyle.Quart)
 	end)
 
 	Bind(button.MouseButton1Up, function()
-		Tween(scale, 0.08, {Scale = 1.005}, Enum.EasingStyle.Quad)
+		Tween(scale, 0.16, {Scale = 1.012}, Enum.EasingStyle.Back)
 	end)
 
 	Bind(button.MouseButton1Click, callback)
@@ -1143,13 +1383,14 @@ local function CreateInlineHotkey(row, id, options)
 		BorderSizePixel = 0,
 		Text = FormatBinding(Bindings[id]),
 		TextColor3 = Theme.Light,
-		TextSize = 9,
+		TextSize = 10,
 		Font = Enum.Font.GothamBold,
 		AutoButtonColor = false,
 		ZIndex = 50
 	}, row)
 	Corner(button, 6)
 	Stroke(button, 0.68, 1, Theme.Stroke)
+	RegisterUITransparency(button, 0)
 
 	local reset = New("TextButton", {
 		Size = UDim2.fromOffset(28, 28),
@@ -1165,11 +1406,12 @@ local function CreateInlineHotkey(row, id, options)
 	}, row)
 	Corner(reset, 6)
 	Stroke(reset, 0.68, 1, Theme.Stroke)
+	RegisterUITransparency(reset, 0)
 
 	HotkeyButtons[id] = button
 
 	Bind(button.MouseEnter, function()
-		Tween(button, 0.10, {
+		Tween(button, 0.16, {
 			BackgroundColor3 = Theme.Surface3,
 			TextColor3 = Theme.White
 		}, Enum.EasingStyle.Quad)
@@ -1177,7 +1419,7 @@ local function CreateInlineHotkey(row, id, options)
 
 	Bind(button.MouseLeave, function()
 		if not Capture or Capture.id ~= id then
-			Tween(button, 0.10, {
+			Tween(button, 0.16, {
 				BackgroundColor3 = Theme.Surface2,
 				TextColor3 = Theme.Light
 			}, Enum.EasingStyle.Quad)
@@ -1185,14 +1427,14 @@ local function CreateInlineHotkey(row, id, options)
 	end)
 
 	Bind(reset.MouseEnter, function()
-		Tween(reset, 0.10, {
+		Tween(reset, 0.16, {
 			BackgroundColor3 = Color3.fromRGB(43, 24, 29),
 			TextColor3 = Theme.Red
 		}, Enum.EasingStyle.Quad)
 	end)
 
 	Bind(reset.MouseLeave, function()
-		Tween(reset, 0.10, {
+		Tween(reset, 0.16, {
 			BackgroundColor3 = Theme.Surface2,
 			TextColor3 = Theme.Muted2
 		}, Enum.EasingStyle.Quad)
@@ -1224,6 +1466,7 @@ local function CreateToggle(parent, config)
 	}, parent)
 	Corner(row, 7)
 	Stroke(row, 0.82, 1, Theme.Stroke)
+	RegisterUITransparency(row, 0.04)
 
 	local overlay = New("Frame", {
 		Size = UDim2.fromScale(1, 1),
@@ -1245,7 +1488,7 @@ local function CreateToggle(parent, config)
 			Position = UDim2.fromOffset(14, 11),
 			BackgroundTransparency = 1,
 			TextColor3 = Theme.White,
-			TextSize = 12,
+			TextSize = 14,
 			Font = Enum.Font.GothamSemibold,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			TextTruncate = Enum.TextTruncate.AtEnd,
@@ -1260,7 +1503,7 @@ local function CreateToggle(parent, config)
 			Position = UDim2.fromOffset(14, 32),
 			BackgroundTransparency = 1,
 			TextColor3 = Theme.Muted,
-			TextSize = 9,
+			TextSize = 10,
 			Font = Enum.Font.Gotham,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			TextTruncate = Enum.TextTruncate.AtEnd,
@@ -1279,7 +1522,7 @@ local function CreateToggle(parent, config)
 				BackgroundTransparency = 0.08,
 				BorderSizePixel = 0,
 				TextColor3 = Theme.Red,
-				TextSize = 8,
+				TextSize = 9,
 				Font = Enum.Font.GothamBold,
 				ZIndex = 49
 			}, row),
@@ -1302,6 +1545,7 @@ local function CreateToggle(parent, config)
 		ZIndex = 49
 	}, row)
 	Corner(switch, 12)
+	RegisterUITransparency(switch, 0)
 
 	local knob = New("Frame", {
 		Size = UDim2.fromOffset(18, 18),
@@ -1312,16 +1556,23 @@ local function CreateToggle(parent, config)
 	}, switch)
 	Corner(knob, 9)
 
-	local function Apply(enabled)
-		Tween(switch, 0.14, {
-			BackgroundColor3 = enabled and Theme.Purple or Theme.Off
-		}, Enum.EasingStyle.Quad)
+	local knobScale = New("UIScale", {Scale = 1}, knob)
 
-		Tween(knob, 0.14, {
+	local function Apply(enabled)
+		Tween(switch, 0.20, {
+			BackgroundColor3 = enabled and Theme.Purple or Theme.Off
+		}, Enum.EasingStyle.Quart)
+
+		Tween(knob, 0.22, {
 			Position = enabled
 				and UDim2.fromOffset(25, 3)
 				or UDim2.fromOffset(3, 3)
-		}, Enum.EasingStyle.Quad)
+		}, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+
+		knobScale.Scale = 0.82
+		Tween(knobScale, 0.22, {
+			Scale = 1
+		}, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 	end
 
 	local function Set(enabled)
@@ -1340,15 +1591,15 @@ local function CreateToggle(parent, config)
 	ToggleSetters[config.id] = Set
 
 	Bind(row.MouseEnter, function()
-		Tween(overlay, 0.10, {
-			BackgroundTransparency = 0.78
-		}, Enum.EasingStyle.Quad)
+		Tween(overlay, 0.18, {
+			BackgroundTransparency = ResolveUITransparency(0.76)
+		}, Enum.EasingStyle.Quart)
 	end)
 
 	Bind(row.MouseLeave, function()
-		Tween(overlay, 0.10, {
+		Tween(overlay, 0.18, {
 			BackgroundTransparency = 1
-		}, Enum.EasingStyle.Quad)
+		}, Enum.EasingStyle.Quart)
 	end)
 
 	Bind(switch.MouseButton1Click, function()
@@ -1370,7 +1621,7 @@ local function CreateSlider(row, y, minimum, maximum, initial, callback, percent
 		BorderSizePixel = 0,
 		Text = tostring(initial) .. (percent and "%" or ""),
 		TextColor3 = Theme.White,
-		TextSize = 10,
+		TextSize = 11,
 		Font = Enum.Font.GothamBold,
 		ClearTextOnFocus = false,
 		TextXAlignment = Enum.TextXAlignment.Center,
@@ -1378,6 +1629,7 @@ local function CreateSlider(row, y, minimum, maximum, initial, callback, percent
 	}, row)
 	Corner(valueBox, 7)
 	Stroke(valueBox, 0.65, 1, Theme.Stroke)
+	RegisterUITransparency(valueBox, 0)
 
 	local track = New("Frame", {
 		Size = UDim2.new(1, -140, 0, 4),
@@ -1430,8 +1682,12 @@ local function CreateSlider(row, y, minimum, maximum, initial, callback, percent
 		current = numeric
 
 		local alpha = (numeric - minimum) / (maximum - minimum)
-		fill.Size = UDim2.fromScale(alpha, 1)
-		knob.Position = UDim2.new(alpha, 0, 0.5, 0)
+		Tween(fill, 0.10, {
+			Size = UDim2.fromScale(alpha, 1)
+		}, Enum.EasingStyle.Quart)
+		Tween(knob, 0.10, {
+			Position = UDim2.new(alpha, 0, 0.5, 0)
+		}, Enum.EasingStyle.Quart)
 		valueBox.Text = tostring(numeric) .. (percent and "%" or "")
 		callback(numeric)
 	end
@@ -1505,6 +1761,7 @@ local function CreateHotkeyRow(parent, id, titleKey, subtitleKey, order)
 	}, parent)
 	Corner(row, 7)
 	Stroke(row, 0.82, 1, Theme.Stroke)
+	RegisterUITransparency(row, 0.04)
 
 	RegisterText(
 		New("TextLabel", {
@@ -1512,7 +1769,7 @@ local function CreateHotkeyRow(parent, id, titleKey, subtitleKey, order)
 			Position = UDim2.fromOffset(14, 10),
 			BackgroundTransparency = 1,
 			TextColor3 = Theme.White,
-			TextSize = 12,
+			TextSize = 14,
 			Font = Enum.Font.GothamSemibold,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			ZIndex = 47
@@ -1526,7 +1783,7 @@ local function CreateHotkeyRow(parent, id, titleKey, subtitleKey, order)
 			Position = UDim2.fromOffset(14, 34),
 			BackgroundTransparency = 1,
 			TextColor3 = Theme.Muted,
-			TextSize = 9,
+			TextSize = 10,
 			Font = Enum.Font.Gotham,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			ZIndex = 47
@@ -1548,6 +1805,7 @@ local function CreateHotkeyRow(parent, id, titleKey, subtitleKey, order)
 	}, row)
 	Corner(button, 6)
 	Stroke(button, 0.68, 1, Theme.Stroke)
+	RegisterUITransparency(button, 0)
 
 	local reset = New("TextButton", {
 		Size = UDim2.fromOffset(28, 28),
@@ -1563,6 +1821,7 @@ local function CreateHotkeyRow(parent, id, titleKey, subtitleKey, order)
 	}, row)
 	Corner(reset, 6)
 	Stroke(reset, 0.68, 1, Theme.Stroke)
+	RegisterUITransparency(reset, 0)
 
 	HotkeyButtons[id] = button
 
@@ -1600,7 +1859,11 @@ local function CreateHotkeyRow(parent, id, titleKey, subtitleKey, order)
 		if Capture and Capture.id == id then
 			Capture = nil
 		end
-		AssignBinding(id, nil)
+		if id == "menu" then
+			AssignBinding(id, {kind = "Control"})
+		else
+			AssignBinding(id, nil)
+		end
 	end)
 end
 
@@ -1827,300 +2090,347 @@ local function ClearPlayerEsp()
 	end
 end
 
-local function ApplyBetterTextureToObject(object)
-	if TextureSaved[object] then
-		return
+local UltraGraphicsSaved = {
+	lighting = nil,
+	terrain = nil,
+	objects = {},
+	effects = {},
+	replacedEffects = {},
+	atmosphere = nil,
+	createdAtmosphere = false
+}
+local UltraGraphicsConnection = nil
+
+local function SaveObjectProperty(object, property)
+	if not UltraGraphicsSaved.objects[object] then
+		UltraGraphicsSaved.objects[object] = {}
 	end
 
-	if object:IsA("MeshPart") then
-		local saved = {}
-		local ok = pcall(function()
-			saved.RenderFidelity = object.RenderFidelity
-			object.RenderFidelity = Enum.RenderFidelity.Precise
+	local saved = UltraGraphicsSaved.objects[object]
+	if saved[property] == nil then
+		local ok, value = pcall(function()
+			return object[property]
 		end)
-
 		if ok then
-			TextureSaved[object] = saved
-		end
-
-	elseif object:IsA("Model") then
-		local saved = {}
-		local ok = pcall(function()
-			saved.LevelOfDetail = object.LevelOfDetail
-			object.LevelOfDetail = Enum.ModelLevelOfDetail.Disabled
-		end)
-
-		if ok then
-			TextureSaved[object] = saved
+			saved[property] = value
 		end
 	end
 end
 
-local function EnableBetterTextures()
-	for _, object in ipairs(Workspace:GetDescendants()) do
-		ApplyBetterTextureToObject(object)
-	end
-end
+local function ApplyUltraGraphicsToObject(object)
+	if object:IsA("BasePart") then
+		SaveObjectProperty(object, "CastShadow")
+		object.CastShadow = true
 
-local function DisableBetterTextures()
-	for object, saved in pairs(TextureSaved) do
-		if object and object.Parent then
-			pcall(function()
-				if saved.RenderFidelity then
-					object.RenderFidelity = saved.RenderFidelity
-				end
-				if saved.LevelOfDetail then
-					object.LevelOfDetail = saved.LevelOfDetail
-				end
-			end)
+		if object.Material == Enum.Material.Metal then
+			SaveObjectProperty(object, "Reflectance")
+			object.Reflectance = math.max(object.Reflectance, 0.08)
+		elseif object.Material == Enum.Material.Glass then
+			SaveObjectProperty(object, "Reflectance")
+			object.Reflectance = math.max(object.Reflectance, 0.05)
 		end
-	end
-	table.clear(TextureSaved)
-end
-
-local function ApplyBetterLightToObject(object)
-	if LightSaved[object] then
-		return
 	end
 
 	if object:IsA("PointLight")
 		or object:IsA("SpotLight")
 		or object:IsA("SurfaceLight") then
 
-		LightSaved[object] = {
-			type = "light",
-			brightness = object.Brightness,
-			range = object.Range,
-			shadows = object.Shadows
-		}
-
-		object.Brightness = math.min(object.Brightness * 1.32 + 0.2, 12)
-		object.Range = math.min(object.Range * 1.18 + 2, 120)
+		SaveObjectProperty(object, "Enabled")
+		SaveObjectProperty(object, "Shadows")
+		object.Enabled = true
 		object.Shadows = true
+	end
 
-	elseif object:IsA("BasePart") then
-		LightSaved[object] = {
-			type = "part",
-			castShadow = object.CastShadow
-		}
-		object.CastShadow = true
+	if object:IsA("ParticleEmitter") then
+		SaveObjectProperty(object, "Enabled")
+		SaveObjectProperty(object, "LightEmission")
+		object.Enabled = true
+		object.LightEmission = math.max(object.LightEmission, 0.1)
+	end
+
+	if object:IsA("Beam") then
+		SaveObjectProperty(object, "Enabled")
+		object.Enabled = true
+	end
+
+	if object:IsA("Trail") then
+		SaveObjectProperty(object, "Enabled")
+		object.Enabled = true
+	end
+
+	if object:IsA("SurfaceAppearance") then
+		SaveObjectProperty(object, "AlphaMode")
+		object.AlphaMode = Enum.AlphaMode.Overlay
 	end
 end
 
-local function EnableBetterLights()
-	if not LightSaved._lighting then
-		LightSaved._lighting = {
+local function SaveEffectProperties(effect, properties)
+	local saved = {}
+	for _, property in ipairs(properties) do
+		saved[property] = effect[property]
+	end
+	return saved
+end
+
+local function GetOrCreateUltraEffect(className, name, properties)
+	local tracked = UltraGraphicsSaved.effects[name]
+	if tracked and tracked.object and tracked.object.Parent then
+		return tracked.object
+	end
+
+	local object = Lighting:FindFirstChild(name)
+
+	if object and object.ClassName ~= className then
+		local ok, clone = pcall(function()
+			return object:Clone()
+		end)
+		if ok and clone then
+			UltraGraphicsSaved.replacedEffects[name] = clone
+		end
+		object:Destroy()
+		object = nil
+	end
+
+	if not object then
+		object = Instance.new(className)
+		object.Name = name
+		object.Parent = Lighting
+		UltraGraphicsSaved.effects[name] = {
+			object = object,
+			created = true
+		}
+	else
+		UltraGraphicsSaved.effects[name] = {
+			object = object,
+			created = false,
+			properties = SaveEffectProperties(object, properties)
+		}
+	end
+
+	return object
+end
+
+local function EnableUltraGraphics()
+	if not UltraGraphicsSaved.lighting then
+		UltraGraphicsSaved.lighting = {
 			GlobalShadows = Lighting.GlobalShadows,
+			EnvironmentDiffuseScale = Lighting.EnvironmentDiffuseScale,
+			EnvironmentSpecularScale = Lighting.EnvironmentSpecularScale,
+			PrioritizeLightingQuality = Lighting.PrioritizeLightingQuality,
 			ShadowSoftness = Lighting.ShadowSoftness,
 			Brightness = Lighting.Brightness,
-			ExposureCompensation = Lighting.ExposureCompensation
+			ExposureCompensation = Lighting.ExposureCompensation,
+			Ambient = Lighting.Ambient,
+			OutdoorAmbient = Lighting.OutdoorAmbient
 		}
 	end
 
 	Lighting.GlobalShadows = true
-	Lighting.ShadowSoftness = 0.035
-	Lighting.Brightness = math.max(Lighting.Brightness, 2.8)
-	Lighting.ExposureCompensation = 0.12
+	Lighting.EnvironmentDiffuseScale = 1
+	Lighting.EnvironmentSpecularScale = 1
+	Lighting.PrioritizeLightingQuality = true
+	Lighting.ShadowSoftness = 0.2
+	Lighting.Brightness = 2.5
+	Lighting.ExposureCompensation = 0.05
 
-	pcall(function()
-		if LightSaved._technology == nil then
-			LightSaved._technology = Lighting.Technology
+	Lighting.Ambient = Color3.fromRGB(25, 25, 30)
+	Lighting.OutdoorAmbient = Color3.fromRGB(125, 125, 135)
+
+	local bloom = GetOrCreateUltraEffect(
+		"BloomEffect",
+		"UltraBloom",
+		{"Enabled", "Intensity", "Size", "Threshold"}
+	)
+	bloom.Enabled = true
+	bloom.Intensity = 0.35
+	bloom.Size = 32
+	bloom.Threshold = 1.1
+
+	local color = GetOrCreateUltraEffect(
+		"ColorCorrectionEffect",
+		"UltraColor",
+		{"Enabled", "Brightness", "Contrast", "Saturation", "TintColor"}
+	)
+	color.Enabled = true
+	color.Brightness = 0.01
+	color.Contrast = 0.08
+	color.Saturation = 0.08
+	color.TintColor = Color3.fromRGB(255, 250, 245)
+
+	local rays = GetOrCreateUltraEffect(
+		"SunRaysEffect",
+		"UltraSunRays",
+		{"Enabled", "Intensity", "Spread"}
+	)
+	rays.Enabled = true
+	rays.Intensity = 0.075
+	rays.Spread = 0.85
+
+	local depth = GetOrCreateUltraEffect(
+		"DepthOfFieldEffect",
+		"UltraDepthOfField",
+		{"Enabled", "FocusDistance", "InFocusRadius", "NearIntensity", "FarIntensity"}
+	)
+	depth.Enabled = true
+	depth.FocusDistance = 25
+	depth.InFocusRadius = 70
+	depth.NearIntensity = 0.04
+	depth.FarIntensity = 0.08
+
+	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
+	if not atmosphere then
+		atmosphere = Instance.new("Atmosphere")
+		atmosphere.Parent = Lighting
+		UltraGraphicsSaved.createdAtmosphere = true
+	elseif not UltraGraphicsSaved.atmosphere then
+		UltraGraphicsSaved.atmosphere = {
+			object = atmosphere,
+			Density = atmosphere.Density,
+			Offset = atmosphere.Offset,
+			Glare = atmosphere.Glare,
+			Haze = atmosphere.Haze,
+			Color = atmosphere.Color,
+			Decay = atmosphere.Decay
+		}
+	end
+
+	atmosphere.Density = 0.22
+	atmosphere.Offset = 0.1
+	atmosphere.Glare = 0.15
+	atmosphere.Haze = 1.2
+	atmosphere.Color = Color3.fromRGB(220, 225, 235)
+	atmosphere.Decay = Color3.fromRGB(100, 105, 120)
+
+	local terrain = Workspace:FindFirstChildOfClass("Terrain")
+	if terrain then
+		if not UltraGraphicsSaved.terrain then
+			UltraGraphicsSaved.terrain = {
+				object = terrain,
+				WaterReflectance = terrain.WaterReflectance,
+				WaterTransparency = terrain.WaterTransparency,
+				WaterWaveSize = terrain.WaterWaveSize,
+				WaterWaveSpeed = terrain.WaterWaveSpeed
+			}
 		end
-		Lighting.Technology = Enum.Technology.Future
-	end)
 
-	if not LightsEffects.Color then
-		LightsEffects.Color = New("ColorCorrectionEffect", {
-			Name = "LostHubLightsColor",
-			Brightness = 0.035,
-			Contrast = 0.18,
-			Saturation = 0.12,
-			TintColor = Color3.fromRGB(246, 243, 250)
-		}, Lighting)
+		terrain.WaterReflectance = 1
+		terrain.WaterTransparency = 0.25
+		terrain.WaterWaveSize = 0.15
+		terrain.WaterWaveSpeed = 12
 	end
 
-	if not LightsEffects.Bloom then
-		LightsEffects.Bloom = New("BloomEffect", {
-			Name = "LostHubLightsBloom",
-			Intensity = 0.48,
-			Size = 34,
-			Threshold = 0.95
-		}, Lighting)
+	local descendants = Workspace:GetDescendants()
+	for i, object in ipairs(descendants) do
+		pcall(ApplyUltraGraphicsToObject, object)
+
+		if i % 250 == 0 then
+			task.wait()
+		end
 	end
 
-	for _, object in ipairs(Workspace:GetDescendants()) do
-		ApplyBetterLightToObject(object)
+	if not UltraGraphicsConnection then
+		UltraGraphicsConnection = Workspace.DescendantAdded:Connect(function(object)
+			task.defer(function()
+				if State.graphicsBoost and object.Parent then
+					pcall(ApplyUltraGraphicsToObject, object)
+				end
+			end)
+		end)
+		table.insert(Connections, UltraGraphicsConnection)
 	end
 end
 
-local function DisableBetterLights()
-	for _, effect in pairs(LightsEffects) do
-		if effect then
-			effect:Destroy()
-		end
+local function DisableUltraGraphics()
+	if UltraGraphicsConnection then
+		pcall(function()
+			UltraGraphicsConnection:Disconnect()
+		end)
+		UltraGraphicsConnection = nil
 	end
-	table.clear(LightsEffects)
 
-	local lightingSaved = LightSaved._lighting
-	local technologySaved = LightSaved._technology
-
-	for object, saved in pairs(LightSaved) do
-		if typeof(object) == "Instance" and object.Parent then
-			if saved.type == "light" then
-				object.Brightness = saved.brightness
-				object.Range = saved.range
-				object.Shadows = saved.shadows
-			elseif saved.type == "part" then
-				object.CastShadow = saved.castShadow
+	for object, properties in pairs(UltraGraphicsSaved.objects) do
+		if object and object.Parent then
+			for property, value in pairs(properties) do
+				pcall(function()
+					object[property] = value
+				end)
 			end
 		end
 	end
+	table.clear(UltraGraphicsSaved.objects)
 
-	if lightingSaved then
-		Lighting.GlobalShadows = lightingSaved.GlobalShadows
-		Lighting.ShadowSoftness = lightingSaved.ShadowSoftness
-		Lighting.Brightness = lightingSaved.Brightness
-		Lighting.ExposureCompensation = lightingSaved.ExposureCompensation
-	end
-
-	if technologySaved then
-		pcall(function()
-			Lighting.Technology = technologySaved
-		end)
-	end
-
-	table.clear(LightSaved)
-end
-
-local function ApplyReflectionToObject(object)
-	if ReflectionSaved[object] then
-		return
-	end
-
-	if object:IsA("BasePart")
-		and (
-			object.Material == Enum.Material.Metal
-			or object.Material == Enum.Material.Glass
-			or object.Material == Enum.Material.DiamondPlate
-			or object.Material == Enum.Material.Foil
-		) then
-
-		ReflectionSaved[object] = object.Reflectance
-
-		if object.Material == Enum.Material.Glass then
-			object.Reflectance = math.max(object.Reflectance, 0.38)
-		elseif object.Material == Enum.Material.Metal then
-			object.Reflectance = math.max(object.Reflectance, 0.28)
-		else
-			object.Reflectance = math.max(object.Reflectance, 0.18)
+	if UltraGraphicsSaved.terrain then
+		local terrain = UltraGraphicsSaved.terrain.object
+		if terrain and terrain.Parent then
+			for _, property in ipairs({
+				"WaterReflectance",
+				"WaterTransparency",
+				"WaterWaveSize",
+				"WaterWaveSpeed"
+			}) do
+				pcall(function()
+					terrain[property] = UltraGraphicsSaved.terrain[property]
+				end)
+			end
 		end
 	end
-end
+	UltraGraphicsSaved.terrain = nil
 
-local function EnableReflections()
-	if ReflectionSaved._lighting == nil then
-		ReflectionSaved._lighting = {
-			specular = Lighting.EnvironmentSpecularScale,
-			diffuse = Lighting.EnvironmentDiffuseScale
-		}
-	end
-
-	Lighting.EnvironmentSpecularScale = 1
-	Lighting.EnvironmentDiffuseScale = 1
-
-	for _, object in ipairs(Workspace:GetDescendants()) do
-		ApplyReflectionToObject(object)
-	end
-end
-
-local function DisableReflections()
-	local lightingSaved = ReflectionSaved._lighting
-
-	for object, reflectance in pairs(ReflectionSaved) do
-		if typeof(object) == "Instance" and object.Parent then
-			object.Reflectance = reflectance
+	if UltraGraphicsSaved.createdAtmosphere then
+		local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
+		if atmosphere then
+			atmosphere:Destroy()
+		end
+	elseif UltraGraphicsSaved.atmosphere then
+		local saved = UltraGraphicsSaved.atmosphere
+		local atmosphere = saved.object
+		if atmosphere and atmosphere.Parent then
+			atmosphere.Density = saved.Density
+			atmosphere.Offset = saved.Offset
+			atmosphere.Glare = saved.Glare
+			atmosphere.Haze = saved.Haze
+			atmosphere.Color = saved.Color
+			atmosphere.Decay = saved.Decay
 		end
 	end
+	UltraGraphicsSaved.atmosphere = nil
+	UltraGraphicsSaved.createdAtmosphere = false
 
-	if lightingSaved then
-		Lighting.EnvironmentSpecularScale = lightingSaved.specular
-		Lighting.EnvironmentDiffuseScale = lightingSaved.diffuse
-	end
-
-	table.clear(ReflectionSaved)
-end
-
-local function EnableEnvironment()
-	if not EnvironmentSaved.lighting then
-		EnvironmentSaved.lighting = {
-			Ambient = Lighting.Ambient,
-			OutdoorAmbient = Lighting.OutdoorAmbient,
-			ColorShift_Top = Lighting.ColorShift_Top,
-			ColorShift_Bottom = Lighting.ColorShift_Bottom,
-			FogEnd = Lighting.FogEnd
-		}
-	end
-
-	if not State.fullBright then
-		Lighting.Ambient = Color3.fromRGB(126, 128, 140)
-		Lighting.OutdoorAmbient = Color3.fromRGB(164, 166, 178)
-	end
-
-	Lighting.ColorShift_Top = Color3.fromRGB(8, 6, 12)
-	Lighting.ColorShift_Bottom = Color3.fromRGB(3, 3, 5)
-	Lighting.FogEnd = math.max(Lighting.FogEnd, 1200)
-
-	if not EnvironmentEffects.Atmosphere then
-		EnvironmentEffects.Atmosphere = New("Atmosphere", {
-			Name = "LostHubEnvironmentAtmosphere",
-			Density = 0.14,
-			Offset = 0.04,
-			Color = Color3.fromRGB(218, 220, 228),
-			Decay = Color3.fromRGB(85, 88, 98),
-			Glare = 0.12,
-			Haze = 0.28
-		}, Lighting)
-	end
-
-	if not EnvironmentEffects.Sun then
-		EnvironmentEffects.Sun = New("SunRaysEffect", {
-			Name = "LostHubEnvironmentSun",
-			Intensity = 0.10,
-			Spread = 0.88
-		}, Lighting)
-	end
-
-	if not EnvironmentEffects.Depth then
-		EnvironmentEffects.Depth = New("DepthOfFieldEffect", {
-			Name = "LostHubEnvironmentDepth",
-			FarIntensity = 0.065,
-			FocusDistance = 80,
-			InFocusRadius = 62,
-			NearIntensity = 0
-		}, Lighting)
-	end
-end
-
-local function DisableEnvironment()
-	for _, effect in pairs(EnvironmentEffects) do
-		if effect then
-			effect:Destroy()
+	for name, data in pairs(UltraGraphicsSaved.effects) do
+		local object = data.object
+		if data.created then
+			if object and object.Parent then
+				object:Destroy()
+			end
+		elseif object and object.Parent and data.properties then
+			for property, value in pairs(data.properties) do
+				pcall(function()
+					object[property] = value
+				end)
+			end
 		end
 	end
-	table.clear(EnvironmentEffects)
+	table.clear(UltraGraphicsSaved.effects)
 
-	local saved = EnvironmentSaved.lighting
-	if saved then
-		if not State.fullBright then
-			Lighting.Ambient = saved.Ambient
-			Lighting.OutdoorAmbient = saved.OutdoorAmbient
+	for name, clone in pairs(UltraGraphicsSaved.replacedEffects) do
+		if clone then
+			local existing = Lighting:FindFirstChild(name)
+			if existing then
+				existing:Destroy()
+			end
+			clone.Parent = Lighting
 		end
-		Lighting.ColorShift_Top = saved.ColorShift_Top
-		Lighting.ColorShift_Bottom = saved.ColorShift_Bottom
-		Lighting.FogEnd = saved.FogEnd
 	end
+	table.clear(UltraGraphicsSaved.replacedEffects)
 
-	EnvironmentSaved = {}
+	if UltraGraphicsSaved.lighting then
+		for property, value in pairs(UltraGraphicsSaved.lighting) do
+			pcall(function()
+				Lighting[property] = value
+			end)
+		end
+	end
+	UltraGraphicsSaved.lighting = nil
 end
 
 local function ApplyLowToObject(object)
@@ -2196,18 +2506,16 @@ local function DisableLowGraphics()
 end
 
 local function EnableFullBright()
-	if next(FullBrightSaved) then
-		return
-	end
-
-	for _, property in ipairs({
-		"Ambient",
-		"OutdoorAmbient",
-		"Brightness",
-		"ExposureCompensation",
-		"FogEnd"
-	}) do
-		FullBrightSaved[property] = Lighting[property]
+	if not next(FullBrightSaved) then
+		for _, property in ipairs({
+			"Ambient",
+			"OutdoorAmbient",
+			"Brightness",
+			"ExposureCompensation",
+			"FogEnd"
+		}) do
+			FullBrightSaved[property] = Lighting[property]
+		end
 	end
 
 	Lighting.Ambient = Color3.fromRGB(255, 255, 255)
@@ -2226,7 +2534,7 @@ local function DisableFullBright()
 	table.clear(FullBrightSaved)
 
 	if State.graphicsBoost then
-		EnableEnvironment()
+		EnableUltraGraphics()
 	end
 end
 
@@ -2268,7 +2576,7 @@ local function ApplyPanelBackground()
 		)
 	end
 
-	BackgroundShade.BackgroundTransparency = 0.04 + (0.50 * brightness)
+	BackgroundShade.BackgroundTransparency = ResolveUITransparency(0.04 + (0.50 * brightness))
 end
 
 local function GetPlaceId(kind)
@@ -2523,6 +2831,7 @@ local InfoCard = New("Frame", {
 	ZIndex = 46
 }, InfoPage)
 Corner(InfoCard, 9)
+RegisterUITransparency(InfoCard, 0.08)
 
 New("TextLabel", {
 	Size = UDim2.new(1, -28, 0, 28),
@@ -2542,7 +2851,7 @@ RegisterText(
 		Position = UDim2.fromOffset(14, 46),
 		BackgroundTransparency = 1,
 		TextColor3 = Theme.Muted,
-		TextSize = 10,
+		TextSize = 11,
 		Font = Enum.Font.GothamMedium,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ZIndex = 47
@@ -2556,7 +2865,7 @@ RegisterText(
 		Position = UDim2.fromOffset(14, 67),
 		BackgroundTransparency = 1,
 		TextColor3 = Theme.Muted2,
-		TextSize = 9,
+		TextSize = 10,
 		Font = Enum.Font.Gotham,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ZIndex = 47
@@ -2768,15 +3077,12 @@ CreateToggle(GraphicsPage, {
 			if State.lowGraphics and ToggleSetters.lowGraphics then
 				ToggleSetters.lowGraphics(false)
 			end
-			EnableBetterTextures()
-			EnableBetterLights()
-			EnableReflections()
-			EnableEnvironment()
+			EnableUltraGraphics()
+			if State.fullBright then
+				EnableFullBright()
+			end
 		else
-			DisableEnvironment()
-			DisableReflections()
-			DisableBetterLights()
-			DisableBetterTextures()
+			DisableUltraGraphics()
 		end
 	end
 })
@@ -2835,13 +3141,14 @@ local StatusSummary = New("Frame", {
 	ZIndex = 46
 }, StatusPage)
 Corner(StatusSummary, 9)
+RegisterUITransparency(StatusSummary, 0.08)
 
 local ExecutionsLabel = New("TextLabel", {
 	Size = UDim2.new(1, -28, 0, 22),
 	Position = UDim2.fromOffset(14, 13),
 	BackgroundTransparency = 1,
 	TextColor3 = Theme.White,
-	TextSize = 12,
+	TextSize = 13,
 	Font = Enum.Font.GothamSemibold,
 	TextXAlignment = Enum.TextXAlignment.Left,
 	ZIndex = 47
@@ -2867,13 +3174,14 @@ local ActiveCard = New("Frame", {
 	ZIndex = 46
 }, StatusPage)
 Corner(ActiveCard, 9)
+RegisterUITransparency(ActiveCard, 0.08)
 
 local ActiveList = New("TextLabel", {
 	Size = UDim2.new(1, -28, 0, 58),
 	Position = UDim2.fromOffset(14, 13),
 	BackgroundTransparency = 1,
 	TextColor3 = Theme.Light,
-	TextSize = 9,
+	TextSize = 10,
 	Font = Enum.Font.Gotham,
 	TextWrapped = true,
 	TextXAlignment = Enum.TextXAlignment.Left,
@@ -2890,6 +3198,7 @@ local DisabledCard = New("Frame", {
 	ZIndex = 46
 }, StatusPage)
 Corner(DisabledCard, 9)
+RegisterUITransparency(DisabledCard, 0.08)
 
 RegisterText(
 	New("TextLabel", {
@@ -2910,7 +3219,7 @@ local DisabledList = New("TextLabel", {
 	Position = UDim2.fromOffset(14, 34),
 	BackgroundTransparency = 1,
 	TextColor3 = Theme.Muted2,
-	TextSize = 9,
+	TextSize = 10,
 	Font = Enum.Font.Gotham,
 	TextWrapped = true,
 	TextXAlignment = Enum.TextXAlignment.Left,
@@ -2978,15 +3287,24 @@ CreateToggle(SettingsPage, {
 	end
 })
 
+CreateHotkeyRow(
+	SettingsPage,
+	"menu",
+	"menu_hotkey",
+	"menu_hotkey_sub",
+	3
+)
+
 local BlurRow = New("Frame", {
 	Size = UDim2.new(1, 0, 0, 84),
 	BackgroundColor3 = Theme.Surface,
 	BackgroundTransparency = 0.08,
 	BorderSizePixel = 0,
-	LayoutOrder = 3,
+	LayoutOrder = 4,
 	ZIndex = 46
 }, SettingsPage)
 Corner(BlurRow, 9)
+RegisterUITransparency(BlurRow, 0.08)
 
 RegisterText(
 	New("TextLabel", {
@@ -2994,7 +3312,7 @@ RegisterText(
 		Position = UDim2.fromOffset(14, 10),
 		BackgroundTransparency = 1,
 		TextColor3 = Theme.White,
-		TextSize = 12,
+		TextSize = 14,
 		Font = Enum.Font.GothamSemibold,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ZIndex = 47
@@ -3008,7 +3326,7 @@ RegisterText(
 		Position = UDim2.fromOffset(14, 29),
 		BackgroundTransparency = 1,
 		TextColor3 = Theme.Muted,
-		TextSize = 9,
+		TextSize = 10,
 		Font = Enum.Font.Gotham,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ZIndex = 47
@@ -3034,10 +3352,11 @@ local BrightnessRow = New("Frame", {
 	BackgroundColor3 = Theme.Surface,
 	BackgroundTransparency = 0.08,
 	BorderSizePixel = 0,
-	LayoutOrder = 4,
+	LayoutOrder = 5,
 	ZIndex = 46
 }, SettingsPage)
 Corner(BrightnessRow, 9)
+RegisterUITransparency(BrightnessRow, 0.08)
 
 RegisterText(
 	New("TextLabel", {
@@ -3045,7 +3364,7 @@ RegisterText(
 		Position = UDim2.fromOffset(14, 10),
 		BackgroundTransparency = 1,
 		TextColor3 = Theme.White,
-		TextSize = 12,
+		TextSize = 14,
 		Font = Enum.Font.GothamSemibold,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ZIndex = 47
@@ -3059,7 +3378,7 @@ RegisterText(
 		Position = UDim2.fromOffset(14, 29),
 		BackgroundTransparency = 1,
 		TextColor3 = Theme.Muted,
-		TextSize = 9,
+		TextSize = 10,
 		Font = Enum.Font.Gotham,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ZIndex = 47
@@ -3080,15 +3399,69 @@ CreateSlider(
 	true
 )
 
+local TransparencyRow = New("Frame", {
+	Size = UDim2.new(1, 0, 0, 84),
+	BackgroundColor3 = Theme.Surface,
+	BackgroundTransparency = 0.08,
+	BorderSizePixel = 0,
+	LayoutOrder = 6,
+	ZIndex = 46
+}, SettingsPage)
+Corner(TransparencyRow, 9)
+RegisterUITransparency(TransparencyRow, 0.08)
+
+RegisterText(
+	New("TextLabel", {
+		Size = UDim2.new(1, -125, 0, 18),
+		Position = UDim2.fromOffset(14, 10),
+		BackgroundTransparency = 1,
+		TextColor3 = Theme.White,
+		TextSize = 14,
+		Font = Enum.Font.GothamSemibold,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		ZIndex = 47
+	}, TransparencyRow),
+	"ui_transparency"
+)
+
+RegisterText(
+	New("TextLabel", {
+		Size = UDim2.new(1, -125, 0, 15),
+		Position = UDim2.fromOffset(14, 29),
+		BackgroundTransparency = 1,
+		TextColor3 = Theme.Muted,
+		TextSize = 10,
+		Font = Enum.Font.Gotham,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		ZIndex = 47
+	}, TransparencyRow),
+	"ui_transparency_sub"
+)
+
+CreateSlider(
+	TransparencyRow,
+	63,
+	0,
+	90,
+	State.uiTransparency,
+	function(value)
+		State.uiTransparency = value
+		ApplyUITransparency()
+		ApplyPanelBackground()
+	end,
+	true
+)
+
 local LanguageRow = New("Frame", {
 	Size = UDim2.new(1, 0, 0, 64),
 	BackgroundColor3 = Theme.Surface,
 	BackgroundTransparency = 0.08,
 	BorderSizePixel = 0,
-	LayoutOrder = 5,
+	LayoutOrder = 7,
 	ZIndex = 46
 }, SettingsPage)
 Corner(LanguageRow, 9)
+RegisterUITransparency(LanguageRow, 0.08)
 
 RegisterText(
 	New("TextLabel", {
@@ -3096,7 +3469,7 @@ RegisterText(
 		Position = UDim2.fromOffset(14, 11),
 		BackgroundTransparency = 1,
 		TextColor3 = Theme.White,
-		TextSize = 12,
+		TextSize = 14,
 		Font = Enum.Font.GothamSemibold,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ZIndex = 47
@@ -3110,7 +3483,7 @@ RegisterText(
 		Position = UDim2.fromOffset(14, 32),
 		BackgroundTransparency = 1,
 		TextColor3 = Theme.Muted,
-		TextSize = 9,
+		TextSize = 10,
 		Font = Enum.Font.Gotham,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ZIndex = 47
@@ -3125,13 +3498,14 @@ local LanguageButton = New("TextButton", {
 	BorderSizePixel = 0,
 	Text = "ENG",
 	TextColor3 = Theme.White,
-	TextSize = 9,
+	TextSize = 11,
 	Font = Enum.Font.GothamBold,
 	AutoButtonColor = false,
 	ZIndex = 48
 }, LanguageRow)
 Corner(LanguageButton, 7)
 Stroke(LanguageButton, 0.55, 1, Theme.Stroke)
+RegisterUITransparency(LanguageButton, 0)
 
 local function ApplyLanguage()
 	RefreshLanguage()
@@ -3172,6 +3546,7 @@ local StatusHud = New("CanvasGroup", {
 	ZIndex = 700
 }, ScreenGui)
 Corner(StatusHud, 9)
+RegisterUITransparency(StatusHud, 0.04)
 
 local HudScale = New("UIScale", {
 	Scale = 0.96
@@ -3182,7 +3557,7 @@ local FpsLabel = New("TextLabel", {
 	BackgroundTransparency = 1,
 	Text = "0",
 	TextColor3 = Theme.White,
-	TextSize = 12,
+	TextSize = 13,
 	Font = Enum.Font.GothamBold,
 	ZIndex = 701
 }, StatusHud)
@@ -3196,7 +3571,7 @@ local FlyNotice = RegisterText(
 		BackgroundTransparency = 0.05,
 		BorderSizePixel = 0,
 		TextColor3 = Theme.White,
-		TextSize = 10,
+		TextSize = 11,
 		Font = Enum.Font.GothamSemibold,
 		Visible = false,
 		TextTransparency = 1,
@@ -3298,84 +3673,90 @@ local function SetMenuVisible(visible)
 		PreviousMouseBehavior = UserInputService.MouseBehavior
 		PreviousMouseIconEnabled = UserInputService.MouseIconEnabled
 
+		-- Set this once when opening. Do not force it every frame:
+		-- Roblox can still switch mouse behavior while RMB controls the camera.
+		UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+		UserInputService.MouseIconEnabled = true
+
 		Main.Visible = true
 		ApplyPanelBackground()
+		ApplyUITransparency()
 
 		Main.GroupTransparency = 1
-		MainScale.Scale = 0.90
-		Main.Rotation = -0.35
+		MainScale.Scale = 0.88
+		Main.Rotation = -0.65
 
-		TopBar.Position = UDim2.fromOffset(0, -8)
-		Sidebar.Position = UDim2.fromOffset(-14, 76)
-		Content.Position = UDim2.fromOffset(196, 76)
+		TopBar.Position = UDim2.fromOffset(0, -14)
+		Sidebar.Position = UDim2.fromOffset(-24, 68)
+		Content.Position = UDim2.fromOffset(218, 68)
 
 		local targetBackgroundTransparency =
 			0.05 + (0.18 * math.clamp(State.panelBlur / 100, 0, 1))
 
 		Background.ImageTransparency = math.min(
-			0.88,
-			targetBackgroundTransparency + 0.48
+			0.90,
+			targetBackgroundTransparency + 0.54
 		)
 
-		Tween(MainScale, 0.46, {
+		Tween(MainScale, 0.58, {
 			Scale = 1
 		}, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 
-		Tween(Main, 0.30, {
+		Tween(Main, 0.38, {
 			GroupTransparency = 0,
 			Rotation = 0
 		}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
-		Tween(TopBar, 0.34, {
+		Tween(TopBar, 0.44, {
 			Position = UDim2.fromOffset(0, 0)
 		}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
-		Tween(Sidebar, 0.40, {
-			Position = UDim2.fromOffset(0, 76)
+		Tween(Sidebar, 0.50, {
+			Position = UDim2.fromOffset(0, 68)
 		}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
-		Tween(Content, 0.40, {
-			Position = UDim2.fromOffset(180, 76)
+		Tween(Content, 0.54, {
+			Position = UDim2.fromOffset(190, 68)
 		}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
-		Tween(Background, 0.48, {
+		Tween(Background, 0.58, {
 			ImageTransparency = targetBackgroundTransparency
 		}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	else
 		StopSpeedManipulation()
 
-		Tween(MainScale, 0.24, {
-			Scale = 0.93
+		Tween(MainScale, 0.30, {
+			Scale = 0.91
 		}, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
 
-		Tween(Main, 0.23, {
+		Tween(Main, 0.28, {
 			GroupTransparency = 1,
-			Rotation = 0.28
+			Rotation = 0.42
 		}, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
 
-		Tween(TopBar, 0.20, {
-			Position = UDim2.fromOffset(0, -6)
+		Tween(TopBar, 0.24, {
+			Position = UDim2.fromOffset(0, -9)
 		}, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
 
-		Tween(Sidebar, 0.22, {
-			Position = UDim2.fromOffset(-10, 76)
+		Tween(Sidebar, 0.27, {
+			Position = UDim2.fromOffset(-16, 68)
 		}, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
 
-		Tween(Content, 0.22, {
-			Position = UDim2.fromOffset(190, 76)
+		Tween(Content, 0.28, {
+			Position = UDim2.fromOffset(208, 68)
 		}, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
 
-		local fade = Tween(Background, 0.18, {
-			ImageTransparency = 0.82
+		Tween(Background, 0.24, {
+			ImageTransparency = 0.86
 		}, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 
-		task.delay(0.24, function()
+		task.delay(0.31, function()
 			if id == MenuAnimationId and not State.menuVisible then
 				Main.Visible = false
 				Main.Rotation = 0
 				TopBar.Position = UDim2.fromOffset(0, 0)
-				Sidebar.Position = UDim2.fromOffset(0, 76)
-				Content.Position = UDim2.fromOffset(180, 76)
+				Sidebar.Position = UDim2.fromOffset(0, 68)
+				Content.Position = UDim2.fromOffset(190, 68)
 				UserInputService.MouseBehavior = PreviousMouseBehavior
 				UserInputService.MouseIconEnabled = PreviousMouseIconEnabled
 			end
@@ -3446,10 +3827,17 @@ Bind(UserInputService.InputBegan, function(input, gameProcessed)
 				return
 			end
 
-			newBinding = {
-				kind = "KeyCode",
-				value = input.KeyCode
-			}
+			if input.KeyCode == Enum.KeyCode.LeftControl
+				or input.KeyCode == Enum.KeyCode.RightControl then
+				newBinding = {
+					kind = "Control"
+				}
+			else
+				newBinding = {
+					kind = "KeyCode",
+					value = input.KeyCode
+				}
+			end
 
 		elseif input.UserInputType == Enum.UserInputType.MouseButton1
 			or input.UserInputType == Enum.UserInputType.MouseButton2
@@ -3472,9 +3860,7 @@ Bind(UserInputService.InputBegan, function(input, gameProcessed)
 		return
 	end
 
-	if input.UserInputType == Enum.UserInputType.Keyboard
-		and input.KeyCode == Enum.KeyCode.Quote then
-
+	if BindingMatches(Bindings.menu, input) then
 		SetMenuVisible(not State.menuVisible)
 		return
 	end
@@ -3490,6 +3876,7 @@ Bind(UserInputService.InputBegan, function(input, gameProcessed)
 
 	for id, binding in pairs(Bindings) do
 		if id ~= "speedManipulation"
+			and id ~= "menu"
 			and BindingMatches(binding, input) then
 
 			local setter = ToggleSetters[id]
@@ -3592,16 +3979,6 @@ Bind(RunService.Heartbeat, function()
 end)
 
 Bind(Workspace.DescendantAdded, function(object)
-	if State.graphicsBoost then
-		task.defer(function()
-			if object.Parent then
-				ApplyBetterTextureToObject(object)
-				ApplyBetterLightToObject(object)
-				ApplyReflectionToObject(object)
-			end
-		end)
-	end
-
 	if State.lowGraphics then
 		task.defer(function()
 			if object.Parent then
@@ -3633,11 +4010,6 @@ Bind(RunService.RenderStepped, function(deltaTime)
 	FrameElapsed += deltaTime
 	FpsAccumulator += deltaTime
 	StatusAccumulator += deltaTime
-
-	if State.menuVisible then
-		UserInputService.MouseBehavior = Enum.MouseBehavior.Default
-		UserInputService.MouseIconEnabled = true
-	end
 
 	if State.fly and FlyVelocity and FlyGyro then
 		local character = LocalPlayer.Character
@@ -3762,7 +4134,7 @@ task.spawn(function()
 end)
 
 task.spawn(function()
-	local preload = {Background, HubIcon, Avatar}
+	local preload = {Background, HubIcon, IntroIcon, Avatar}
 	for _, data in ipairs(BlurLayers) do
 		table.insert(preload, data.image)
 	end
@@ -3806,10 +4178,7 @@ local function Cleanup()
 	RestoreLocalCollision()
 	RestoreOtherCollision()
 	ClearPlayerEsp()
-	DisableBetterTextures()
-	DisableBetterLights()
-	DisableReflections()
-	DisableEnvironment()
+	DisableUltraGraphics()
 	DisableLowGraphics()
 	DisableFullBright()
 	DisableInstantInteract()
@@ -3837,27 +4206,121 @@ _G.LostHubCleanup = Cleanup
 
 SelectPage("Info")
 ApplyPanelBackground()
+ApplyUITransparency()
 SetFpsVisible(false)
 RefreshStatusPage()
 ApplyLanguage()
 
 task.spawn(function()
-	Tween(IntroScale, 0.45, {
+	-- A longer, softer intro: icon reveal, orbit, loading pulse and progress.
+	Tween(IntroGradient, 5.10, {
+		Rotation = 155
+	}, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+
+	Tween(IntroRing, 5.05, {
+		Rotation = 188
+	}, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+
+	Tween(IntroRingScale, 0.72, {
 		Scale = 1
-	}, Enum.EasingStyle.Quint)
+	}, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 
-	Tween(IntroLine, 0.48, {
-		Size = UDim2.fromOffset(180, 1)
-	}, Enum.EasingStyle.Quint)
+	Tween(IntroCenter, 0.66, {
+		GroupTransparency = 0
+	}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
-	task.wait(0.55)
+	Tween(IntroIconScale, 0.78, {
+		Scale = 1
+	}, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 
-	local fade = Tween(Intro, 0.30, {
+	Tween(IntroProgressFill, 4.85, {
+		Size = UDim2.fromScale(1, 1)
+	}, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+
+	task.spawn(function()
+		for cycle = 1, 5 do
+			if Destroyed then
+				return
+			end
+
+			Tween(IntroGlow, 0.48, {
+				Size = UDim2.fromOffset(278, 278),
+				BackgroundTransparency = 0.91
+			}, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+
+			Tween(IntroIconScale, 0.48, {
+				Scale = 1.045
+			}, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+
+			task.wait(0.48)
+
+			Tween(IntroGlow, 0.48, {
+				Size = UDim2.fromOffset(250, 250),
+				BackgroundTransparency = 0.86
+			}, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
+
+			Tween(IntroIconScale, 0.48, {
+				Scale = 1
+			}, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
+
+			task.wait(0.48)
+		end
+	end)
+
+	task.spawn(function()
+		for cycle = 1, 5 do
+			for index, dot in ipairs(IntroDots) do
+				if Destroyed then
+					return
+				end
+
+				Tween(dot, 0.20, {
+					Position = UDim2.new(0.5, (index - 2) * 14, 0.5, 107),
+					BackgroundTransparency = 0.06,
+					Size = UDim2.fromOffset(7, 7)
+				}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
+				task.wait(0.09)
+
+				Tween(dot, 0.28, {
+					Position = UDim2.new(0.5, (index - 2) * 14, 0.5, 111),
+					BackgroundTransparency = 0.48,
+					Size = UDim2.fromOffset(5, 5)
+				}, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+			end
+			task.wait(0.35)
+		end
+	end)
+
+	task.spawn(function()
+		for cycle = 1, 4 do
+			for index, sparkle in ipairs(IntroSparkles) do
+				local alpha = ((cycle + index) % 3 == 0) and 0.18 or 0.68
+				Tween(sparkle, 0.42, {
+					BackgroundTransparency = alpha,
+					Rotation = sparkle.Rotation + 25
+				}, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+			end
+			task.wait(0.72)
+		end
+	end)
+
+	task.wait(5.05)
+
+	if Destroyed then
+		return
+	end
+
+	Tween(IntroIconScale, 0.36, {
+		Scale = 0.88
+	}, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+
+	Tween(IntroRingScale, 0.40, {
+		Scale = 1.12
+	}, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+
+	local fade = Tween(Intro, 0.48, {
 		GroupTransparency = 1
-	}, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
-
-	Tween(IntroScale, 0.30, {
-		Scale = 1.02
 	}, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
 
 	fade.Completed:Wait()
@@ -3867,52 +4330,6 @@ task.spawn(function()
 	end
 
 	Intro.Visible = false
-
-	PreviousMouseBehavior = UserInputService.MouseBehavior
-	PreviousMouseIconEnabled = UserInputService.MouseIconEnabled
-
-	Main.Visible = true
-	ApplyPanelBackground()
-
-	Main.GroupTransparency = 1
-	MainScale.Scale = 0.90
-	Main.Rotation = -0.35
-	TopBar.Position = UDim2.fromOffset(0, -8)
-	Sidebar.Position = UDim2.fromOffset(-14, 76)
-	Content.Position = UDim2.fromOffset(196, 76)
-
-	local targetBackgroundTransparency =
-		0.05 + (0.18 * math.clamp(State.panelBlur / 100, 0, 1))
-
-	Background.ImageTransparency = math.min(
-		0.88,
-		targetBackgroundTransparency + 0.48
-	)
-
-	Tween(MainScale, 0.46, {
-		Scale = 1
-	}, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-
-	Tween(Main, 0.30, {
-		GroupTransparency = 0,
-		Rotation = 0
-	}, Enum.EasingStyle.Quint)
-
-	Tween(TopBar, 0.34, {
-		Position = UDim2.fromOffset(0, 0)
-	}, Enum.EasingStyle.Quint)
-
-	Tween(Sidebar, 0.40, {
-		Position = UDim2.fromOffset(0, 76)
-	}, Enum.EasingStyle.Quint)
-
-	Tween(Content, 0.40, {
-		Position = UDim2.fromOffset(180, 76)
-	}, Enum.EasingStyle.Quint)
-
-	Tween(Background, 0.48, {
-		ImageTransparency = targetBackgroundTransparency
-	}, Enum.EasingStyle.Quint)
+	SetMenuVisible(true)
 end)
-
 
