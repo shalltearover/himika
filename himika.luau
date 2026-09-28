@@ -1,4 +1,7 @@
-if _G.LostHubCleanup then
+if _G.KHubCleanup then
+	pcall(_G.KHubCleanup)
+	_G.KHubCleanup = nil
+elseif _G.LostHubCleanup then
 	pcall(_G.LostHubCleanup)
 	_G.LostHubCleanup = nil
 end
@@ -16,12 +19,12 @@ local ContentProvider = game:GetService("ContentProvider")
 
 local LocalPlayer = Players.LocalPlayer
 local previousExecutionCount = math.max(
-	tonumber(_G.LostHubExecutionCount) or 0,
-	tonumber(LocalPlayer:GetAttribute("LostHubExecutionCount")) or 0
+	tonumber(_G.KHubExecutionCount) or 0,
+	tonumber(LocalPlayer:GetAttribute("KHubExecutionCount")) or 0
 )
-_G.LostHubExecutionCount = previousExecutionCount + 1
+_G.KHubExecutionCount = previousExecutionCount + 1
 pcall(function()
-	LocalPlayer:SetAttribute("LostHubExecutionCount", _G.LostHubExecutionCount)
+	LocalPlayer:SetAttribute("KHubExecutionCount", _G.KHubExecutionCount)
 end)
 
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
@@ -50,22 +53,23 @@ for _, effectName in ipairs({
 end
 
 local Theme = {
-	Base = Color3.fromRGB(7, 8, 10),
-	Surface = Color3.fromRGB(11, 12, 15),
-	Surface2 = Color3.fromRGB(16, 17, 21),
-	Surface3 = Color3.fromRGB(22, 23, 28),
-	Surface4 = Color3.fromRGB(31, 32, 38),
-	White = Color3.fromRGB(238, 239, 242),
-	Light = Color3.fromRGB(196, 198, 204),
-	Muted = Color3.fromRGB(128, 131, 140),
-	Muted2 = Color3.fromRGB(82, 85, 94),
+	Base = Color3.fromRGB(5, 6, 8),
+	Surface = Color3.fromRGB(9, 10, 13),
+	Surface2 = Color3.fromRGB(14, 15, 19),
+	Surface3 = Color3.fromRGB(20, 21, 26),
+	Surface4 = Color3.fromRGB(29, 30, 36),
+	White = Color3.fromRGB(242, 243, 246),
+	Light = Color3.fromRGB(198, 201, 208),
+	Muted = Color3.fromRGB(126, 130, 139),
+	Muted2 = Color3.fromRGB(78, 82, 91),
 	Black = Color3.fromRGB(0, 0, 0),
-	Off = Color3.fromRGB(42, 44, 50),
-	Purple = Color3.fromRGB(103, 91, 142),
-	PurpleBright = Color3.fromRGB(145, 132, 184),
-	PurpleSoft = Color3.fromRGB(61, 55, 79),
-	Red = Color3.fromRGB(215, 84, 94),
-	Stroke = Color3.fromRGB(45, 47, 54)
+	Off = Color3.fromRGB(38, 40, 46),
+	Purple = Color3.fromRGB(117, 105, 151),
+	PurpleBright = Color3.fromRGB(158, 146, 191),
+	PurpleSoft = Color3.fromRGB(55, 50, 70),
+	Red = Color3.fromRGB(224, 92, 102),
+	Green = Color3.fromRGB(126, 188, 151),
+	Stroke = Color3.fromRGB(39, 41, 48)
 }
 
 local Language = "en"
@@ -113,15 +117,40 @@ local Strings = {
 		fly = "Fly",
 		fly_sub = "Move freely through the air",
 		fly_notice = "Fly enabled  ·  Q down  ·  E up",
-		speed_manip = "Speed Manipulation",
-		speed_manip_sub = "Hold the assigned key for noclip + WalkSpeed 2",
+		speed_manip = "Movement Boost",
+		speed_manip_sub = "Hold the assigned key for a collision-safe speed boost",
+		fov = "Field of View",
+		fov_sub = "Adjust the camera field of view",
+		freecam = "Freecam",
+		freecam_sub = "Detach the camera and move it with WASD + Q/E",
+		freecam_speed = "Freecam Speed",
+		spectate = "Spectate Player",
+		spectate_sub = "Follow another player's character",
 
 		esp_title = "ESP",
 		esp_subtitle = "Players and potentially hostile entities",
 		player_esp = "Player ESP",
 		player_esp_sub = "Show names and distance for players",
+		friend_esp = "Friend ESP",
+		friend_esp_sub = "Highlight Roblox friends with a separate marker",
 		entity_esp = "Entity ESP",
-		entity_esp_sub = "Highlight NPCs and entities that may be hostile",
+		entity_esp_sub = "Highlight detected NPCs and entities",
+		esp_filters = "ESP Filters",
+		esp_filters_sub = "Choose what ESP elements are rendered",
+		esp_names = "Names",
+		esp_names_sub = "Show names above ESP targets",
+		esp_distance = "Distance",
+		esp_distance_sub = "Show distance from your character",
+		esp_highlight = "Highlight",
+		esp_highlight_sub = "Render an outline through walls",
+		entity_hostile_only = "Hostile Entities Only",
+		entity_hostile_only_sub = "Ignore neutral NPCs when possible",
+		entity_spawn_warning = "Entity Spawn Warning",
+		entity_spawn_warning_sub = "Show a warning when a hostile entity appears",
+		item_esp = "Item ESP",
+		item_esp_sub = "Highlight tagged or recognizable pickups and loot",
+		objective_esp = "Objective ESP",
+		objective_esp_sub = "Highlight tagged objectives, keys and progression targets",
 
 		graphics_title = "Graphics",
 		graphics_subtitle = "Visual quality and performance",
@@ -143,6 +172,14 @@ local Strings = {
 		fps_display_sub = "Numeric FPS counter updated at up to 30 Hz",
 		clock_display = "Clock",
 		clock_display_sub = "Show your local time on screen",
+		no_fog = "No Fog",
+		no_fog_sub = "Remove distance fog and atmosphere haze",
+		brightness = "Brightness",
+		brightness_sub = "Override Lighting brightness while enabled",
+		hide_particles = "Hide Particles",
+		hide_particles_sub = "Disable particles, trails, beams and emitters",
+		performance_mode = "Performance Mode",
+		performance_mode_sub = "Reduce expensive effects, materials and shadows",
 		heavy = "HEAVY",
 
 		status_title = "Runtime Status",
@@ -157,11 +194,16 @@ local Strings = {
 		menu_hotkey = "Menu Shortcut",
 		menu_hotkey_sub = "Key used to open and close the menu",
 		panel_blur = "Panel Blur",
-		panel_blur_sub = "Soften the artwork inside the menu",
+		panel_blur_sub = "Background blur is fixed at 90%",
 		background_brightness = "Background Brightness",
 		background_brightness_sub = "Adjust the menu artwork brightness",
 		ui_transparency = "Interface Transparency",
 		ui_transparency_sub = "Adjust cards, option surfaces and buttons",
+		ui_scale = "UI Scale",
+		ui_scale_sub = "Resize the whole K hub interface",
+		remember_settings = "Remember Settings",
+		remember_settings_sub = "Restore your K hub setup on the next execution",
+		search = "Search this tab...",
 		language = "Language",
 		language_sub = "Switch between ENG and PT-BR",
 		english = "ENG",
@@ -220,15 +262,40 @@ local Strings = {
 		fly = "Voo",
 		fly_sub = "Permite se mover livremente pelo ar",
 		fly_notice = "Voo ativado  ·  Q desce  ·  E sobe",
-		speed_manip = "Manipulação de Velocidade",
-		speed_manip_sub = "Segure a tecla escolhida para noclip + WalkSpeed 2",
+		speed_manip = "Impulso de Movimento",
+		speed_manip_sub = "Segure a tecla para ganhar velocidade sem alterar colisões",
+		fov = "Campo de Visão",
+		fov_sub = "Ajusta o campo de visão da câmera",
+		freecam = "Câmera Livre",
+		freecam_sub = "Solta a câmera e move com WASD + Q/E",
+		freecam_speed = "Velocidade da Câmera",
+		spectate = "Observar Jogador",
+		spectate_sub = "Faz a câmera acompanhar outro jogador",
 
 		esp_title = "ESP",
 		esp_subtitle = "Jogadores e entidades potencialmente hostis",
 		player_esp = "ESP de Jogadores",
 		player_esp_sub = "Mostra nome e distância dos jogadores",
+		friend_esp = "ESP de Amigos",
+		friend_esp_sub = "Destaca seus amigos do Roblox com um marcador separado",
 		entity_esp = "ESP de Entidades",
-		entity_esp_sub = "Destaca NPCs e entidades que podem ser hostis",
+		entity_esp_sub = "Destaca NPCs e entidades detectadas",
+		esp_filters = "Filtros do ESP",
+		esp_filters_sub = "Escolha quais elementos aparecem no ESP",
+		esp_names = "Nomes",
+		esp_names_sub = "Mostra o nome acima dos alvos",
+		esp_distance = "Distância",
+		esp_distance_sub = "Mostra a distância até o personagem",
+		esp_highlight = "Contorno",
+		esp_highlight_sub = "Mostra o contorno através das paredes",
+		entity_hostile_only = "Somente Entidades Hostis",
+		entity_hostile_only_sub = "Ignora NPCs neutros quando possível",
+		entity_spawn_warning = "Aviso de Spawn de Entidade",
+		entity_spawn_warning_sub = "Mostra um aviso quando uma entidade hostil aparece",
+		item_esp = "ESP de Itens",
+		item_esp_sub = "Destaca pickups, loot e itens reconhecíveis",
+		objective_esp = "ESP de Objetivos",
+		objective_esp_sub = "Destaca objetivos, chaves e alvos de progresso",
 
 		graphics_title = "Gráficos",
 		graphics_subtitle = "Qualidade visual e desempenho",
@@ -250,6 +317,14 @@ local Strings = {
 		fps_display_sub = "Mostra apenas o FPS, atualizado em até 30 Hz",
 		clock_display = "Relógio",
 		clock_display_sub = "Mostra sua hora local na tela",
+		no_fog = "Sem Neblina",
+		no_fog_sub = "Remove a neblina distante e a névoa da atmosfera",
+		brightness = "Brilho",
+		brightness_sub = "Substitui o brilho do Lighting enquanto estiver ativo",
+		hide_particles = "Ocultar Partículas",
+		hide_particles_sub = "Desativa partículas, trails, beams e emissores",
+		performance_mode = "Modo Desempenho",
+		performance_mode_sub = "Reduz efeitos, materiais e sombras pesadas",
 		heavy = "PESADO",
 
 		status_title = "Status da Execução",
@@ -264,11 +339,16 @@ local Strings = {
 		menu_hotkey = "Atalho do Menu",
 		menu_hotkey_sub = "Tecla usada para abrir e fechar o menu",
 		panel_blur = "Desfoque do Painel",
-		panel_blur_sub = "Suaviza a arte dentro do menu",
+		panel_blur_sub = "O desfoque do fundo fica fixo em 90%",
 		background_brightness = "Brilho do Fundo",
 		background_brightness_sub = "Ajusta o brilho da arte do menu",
 		ui_transparency = "Transparência da Interface",
 		ui_transparency_sub = "Ajusta cartões, opções e botões",
+		ui_scale = "Escala da Interface",
+		ui_scale_sub = "Redimensiona toda a interface do K hub",
+		remember_settings = "Lembrar Ajustes",
+		remember_settings_sub = "Restaura sua configuração na próxima execução",
+		search = "Buscar nesta aba...",
 		language = "Idioma",
 		language_sub = "Alterna entre ENG e PT-BR",
 		english = "ENG",
@@ -317,18 +397,37 @@ local State = {
 	speedManipulation = false,
 	fly = false,
 	playerEsp = false,
+	friendEsp = false,
 	entityEsp = false,
-	graphicsBoost = false,
 	lowGraphics = false,
 	fullBright = false,
 	fpsVisible = false,
 	clockVisible = false,
 	instantInteract = false,
+	fov = false,
+	freecam = false,
+	spectate = false,
+	espShowNames = true,
+	espShowDistance = true,
+	espHighlight = true,
+	entityOnlyHostile = true,
+	entitySpawnWarning = false,
+	itemEsp = false,
+	objectiveEsp = false,
+	noFog = false,
+	brightness = false,
+	hideParticles = false,
+	performanceMode = false,
+	rememberSettings = false,
 	walkSpeedValue = 16,
 	flySpeed = 30,
-	panelBlur = 0,
-	backgroundBrightness = 48,
-	uiTransparency = 8,
+	freecamSpeed = 36,
+	fovValue = 70,
+	brightnessValue = 2.5,
+	panelBlur = 90,
+	backgroundBrightness = 34,
+	uiTransparency = 5,
+	uiScale = 100,
 	menuVisible = true
 }
 
@@ -344,9 +443,18 @@ local Bindings = {
 		value = Enum.KeyCode.V
 	},
 	fly = nil,
+	fov = nil,
+	freecam = nil,
+	spectate = nil,
 	playerEsp = nil,
+	friendEsp = nil,
 	entityEsp = nil,
-	graphicsBoost = nil,
+	itemEsp = nil,
+	objectiveEsp = nil,
+	noFog = nil,
+	brightness = nil,
+	hideParticles = nil,
+	performanceMode = nil,
 	lowGraphics = nil,
 	fullBright = nil,
 	fpsVisible = {
@@ -363,14 +471,39 @@ local HotkeyCapable = {
 	walkSpeed = true,
 	speedManipulation = true,
 	fly = true,
+	fov = true,
+	freecam = true,
+	spectate = true,
 	playerEsp = true,
+	friendEsp = true,
 	entityEsp = true,
-	graphicsBoost = false,
-	lowGraphics = true,
+	itemEsp = true,
+	objectiveEsp = true,
+	noFog = true,
+	brightness = true,
+	hideParticles = true,
+	performanceMode = true,
+	lowGraphics = false,
 	fullBright = true,
 	fpsVisible = true,
 	clockVisible = true,
 	instantInteract = true
+}
+
+local Extra = {
+	SearchBoxes = {},
+	FriendEspObjects = {},
+	FriendCache = {},
+	FriendPending = {},
+	ItemEspObjects = {},
+	ObjectiveEspObjects = {},
+	WarnedEntities = {},
+	ParticleSaved = {},
+	VisualSaved = {},
+	SpectateIndex = 1,
+	SelectedSpectate = nil,
+	Freecam = {},
+	SettingsFile = "khub_settings.json"
 }
 
 local Connections = {}
@@ -384,7 +517,6 @@ local SavedOtherCollision = {}
 local SavedWalkSpeed = nil
 local LastSafeCFrame = nil
 
-local SpeedManipSavedCollision = {}
 local SpeedManipSavedSpeed = nil
 
 local PlayerEspObjects = {}
@@ -622,6 +754,9 @@ local function AssignBinding(id, binding)
 		button.TextColor3 = Theme.Light
 	end
 
+	if Extra.SaveSettings then
+		Extra.SaveSettings()
+	end
 	return true
 end
 
@@ -680,6 +815,80 @@ local function ApplyUITransparency()
 		end
 	end
 end
+
+
+Extra.EncodeBinding = function(binding)
+	if not binding then return nil end
+	if binding.kind == "Control" then return {kind = "Control"} end
+	if binding.kind == "KeyCode" and binding.value then return {kind = "KeyCode", value = binding.value.Name} end
+	if binding.kind == "InputType" and binding.value then return {kind = "InputType", value = binding.value.Name} end
+	return nil
+end
+
+Extra.DecodeBinding = function(data)
+	if type(data) ~= "table" then return nil end
+	if data.kind == "Control" then return {kind = "Control"} end
+	if data.kind == "KeyCode" and data.value and Enum.KeyCode[data.value] then
+		return {kind = "KeyCode", value = Enum.KeyCode[data.value]}
+	end
+	if data.kind == "InputType" and data.value and Enum.UserInputType[data.value] then
+		return {kind = "InputType", value = Enum.UserInputType[data.value]}
+	end
+	return nil
+end
+
+Extra.SaveSettings = function()
+	if not State.rememberSettings then return end
+	local data = {version = 5, language = Language, state = {}, bindings = {}}
+	for key, value in pairs(State) do
+		if key ~= "menuVisible" and (type(value) == "boolean" or type(value) == "number" or type(value) == "string") then
+			data.state[key] = value
+		end
+	end
+	for id, binding in pairs(Bindings) do
+		data.bindings[id] = Extra.EncodeBinding(binding)
+	end
+	_G.KHubRemembered = data
+	pcall(function()
+		if typeof(writefile) == "function" then
+			writefile(Extra.SettingsFile, game:GetService("HttpService"):JSONEncode(data))
+		end
+	end)
+end
+
+Extra.ClearSavedSettings = function()
+	_G.KHubRemembered = nil
+	pcall(function()
+		if typeof(delfile) == "function" and typeof(isfile) == "function" and isfile(Extra.SettingsFile) then
+			delfile(Extra.SettingsFile)
+		end
+	end)
+end
+
+Extra.LoadSettings = function()
+	local data = _G.KHubRemembered
+	if type(data) ~= "table" then
+		pcall(function()
+			if typeof(readfile) == "function" and typeof(isfile) == "function" and isfile(Extra.SettingsFile) then
+				data = game:GetService("HttpService"):JSONDecode(readfile(Extra.SettingsFile))
+			end
+		end)
+	end
+	if type(data) ~= "table" or type(data.state) ~= "table" or data.state.rememberSettings ~= true then return end
+	for key, value in pairs(data.state) do
+		if State[key] ~= nil and key ~= "menuVisible" then State[key] = value end
+	end
+	State.panelBlur = 90
+	if data.language == "en" or data.language == "ptbr" then Language = data.language end
+	if type(data.bindings) == "table" then
+		for id, encoded in pairs(data.bindings) do
+			if Bindings[id] ~= nil or id == "menu" then Bindings[id] = Extra.DecodeBinding(encoded) end
+		end
+	end
+	if not Bindings.menu then Bindings.menu = {kind = "Control"} end
+end
+
+Extra.LoadSettings()
 
 local ScreenGui = New("ScreenGui", {
 	Name = "KHub",
@@ -821,10 +1030,19 @@ IntroParts.Dot = New("Frame", {
 }, Intro)
 Corner(IntroParts.Dot, 3)
 
+
+IntroParts.RingOuter = New("Frame", {Size = UDim2.fromOffset(138, 138), AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.46, -16), BackgroundTransparency = 1, ZIndex = 2001}, Intro)
+Corner(IntroParts.RingOuter, 69); IntroParts.RingStroke = Stroke(IntroParts.RingOuter, 1, 1, Theme.PurpleBright)
+IntroParts.RingInner = New("Frame", {Size = UDim2.fromOffset(112, 112), AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.46, -16), BackgroundTransparency = 1, ZIndex = 2001}, Intro)
+Corner(IntroParts.RingInner, 56); IntroParts.RingInnerStroke = Stroke(IntroParts.RingInner, 1, 1, Theme.Stroke)
+IntroParts.Tagline = New("TextLabel", {Size = UDim2.fromOffset(320, 18), AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.46, 87), BackgroundTransparency = 1, Text = "a small utility space", TextColor3 = Theme.Muted, TextTransparency = 1, TextSize = 10, Font = Enum.Font.GothamMedium, ZIndex = 2004}, Intro)
+IntroParts.SparkA = New("Frame", {Size = UDim2.fromOffset(4, 4), AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, -82, 0.46, -52), BackgroundColor3 = Theme.PurpleBright, BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = 2004}, Intro); Corner(IntroParts.SparkA, 2)
+IntroParts.SparkB = New("Frame", {Size = UDim2.fromOffset(3, 3), AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 76, 0.46, 24), BackgroundColor3 = Theme.White, BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = 2004}, Intro); Corner(IntroParts.SparkB, 2)
+
 local Main = New("CanvasGroup", {
 	Name = "Main",
-	Size = UDim2.fromOffset(900, 580),
-	Position = UDim2.new(0.5, -450, 0.5, -290),
+	Size = UDim2.fromOffset(940, 600),
+	Position = UDim2.new(0.5, -470, 0.5, -300),
 	BackgroundColor3 = Theme.Base,
 	BorderSizePixel = 0,
 	ClipsDescendants = true,
@@ -843,7 +1061,7 @@ local Background = New("ImageLabel", {
 	Position = UDim2.fromScale(0, 0),
 	BackgroundTransparency = 1,
 	Image = AssetThumbnail(BACKGROUND_ASSET_ID),
-	ImageTransparency = 0.62,
+	ImageTransparency = 0.86,
 	ImageColor3 = Color3.fromRGB(118, 120, 126),
 	ScaleType = Enum.ScaleType.Crop,
 	ZIndex = 20
@@ -878,7 +1096,7 @@ end
 local BackgroundShade = New("Frame", {
 	Size = UDim2.fromScale(1, 1),
 	BackgroundColor3 = Theme.Black,
-	BackgroundTransparency = 0.16,
+	BackgroundTransparency = 0.08,
 	BorderSizePixel = 0,
 	ZIndex = 21
 }, Main)
@@ -914,7 +1132,7 @@ local HubIcon = New("ImageLabel", {
 }, HubIconBox)
 
 local Sidebar = New("Frame", {
-	Size = UDim2.new(0, 190, 1, -68),
+	Size = UDim2.new(0, 184, 1, -68),
 	Position = UDim2.fromOffset(0, 68),
 	BackgroundColor3 = Theme.Surface,
 	BackgroundTransparency = 0.09,
@@ -1031,8 +1249,8 @@ Bind(Profile.MouseButton1Up, function()
 end)
 
 local Content = New("Frame", {
-	Size = UDim2.new(1, -190, 1, -68),
-	Position = UDim2.fromOffset(190, 68),
+	Size = UDim2.new(1, -184, 1, -68),
+	Position = UDim2.fromOffset(184, 68),
 	BackgroundTransparency = 1,
 	ZIndex = 45
 }, Main)
@@ -1059,18 +1277,66 @@ local function CreatePage(name)
 		BorderSizePixel = 0,
 		ScrollBarThickness = 2,
 		ScrollBarImageColor3 = Theme.Muted2,
-		ScrollBarImageTransparency = 0.32,
+		ScrollBarImageTransparency = 0.46,
 		AutomaticCanvasSize = Enum.AutomaticSize.Y,
 		CanvasSize = UDim2.fromOffset(0, 0),
 		ZIndex = 45
 	}, group)
 
 	New("UIListLayout", {
-		Padding = UDim.new(0, 8),
+		Padding = UDim.new(0, 9),
 		SortOrder = Enum.SortOrder.LayoutOrder
 	}, page)
+	Padding(page, 22, 22, 18, 22)
 
-	Padding(page, 20, 20, 18, 20)
+	local searchHolder = New("Frame", {
+		Name = "SearchBar",
+		Size = UDim2.new(1, 0, 0, 40),
+		BackgroundColor3 = Theme.Surface2,
+		BackgroundTransparency = 0.10,
+		BorderSizePixel = 0,
+		LayoutOrder = -1000,
+		ZIndex = 55
+	}, page)
+	Corner(searchHolder, 10)
+	Stroke(searchHolder, 0.80, 1, Theme.Stroke)
+	RegisterUITransparency(searchHolder, 0.10)
+
+	local searchBox = New("TextBox", {
+		Size = UDim2.new(1, -28, 1, 0),
+		Position = UDim2.fromOffset(14, 0),
+		BackgroundTransparency = 1,
+		Text = "",
+		PlaceholderText = T("search"),
+		PlaceholderColor3 = Theme.Muted2,
+		TextColor3 = Theme.Light,
+		TextSize = 12,
+		Font = Enum.Font.GothamMedium,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		ClearTextOnFocus = false,
+		ZIndex = 56
+	}, searchHolder)
+	Extra.SearchBoxes[name] = searchBox
+
+	Bind(searchBox:GetPropertyChangedSignal("Text"), function()
+		local query = string.lower(searchBox.Text or "")
+		for _, child in ipairs(page:GetChildren()) do
+			if child:IsA("GuiObject") and child ~= searchHolder then
+				if query == "" then
+					child.Visible = true
+				else
+					local haystack = ""
+					for _, desc in ipairs(child:GetDescendants()) do
+						if desc:IsA("TextLabel") or desc:IsA("TextButton") then
+							haystack ..= " " .. string.lower(desc.Text or "")
+						end
+					end
+					child.Visible = string.find(haystack, query, 1, true) ~= nil
+				end
+			end
+		end
+	end)
+
 	Pages[name] = group
 	PageScrolls[name] = page
 	return page
@@ -1081,9 +1347,7 @@ local PageAnimationId = 0
 
 local function SelectPage(name)
 	local target = Pages[name]
-	if not target or CurrentPageName == name then
-		return
-	end
+	if not target or CurrentPageName == name then return end
 
 	PageAnimationId += 1
 	local animationId = PageAnimationId
@@ -1091,29 +1355,24 @@ local function SelectPage(name)
 	CurrentPageName = name
 
 	if previous and previous ~= target then
-		Tween(previous, 0.16, {
+		Tween(previous, 0.18, {
 			GroupTransparency = 1,
-			Position = UDim2.fromOffset(-8, 0)
-		}, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
-
-		task.delay(0.16, function()
+			Position = UDim2.fromOffset(-14, 4)
+		}, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+		task.delay(0.18, function()
 			if animationId == PageAnimationId and previous ~= Pages[CurrentPageName] then
 				previous.Visible = false
 				previous.Position = UDim2.fromOffset(0, 0)
-				previous.GroupTransparency = 1
 			end
 		end)
 	end
 
 	target.Visible = true
-	target.Position = UDim2.fromOffset(10, 0)
+	target.Position = UDim2.fromOffset(18, 5)
 	target.GroupTransparency = 1
-
 	task.defer(function()
-		if animationId ~= PageAnimationId then
-			return
-		end
-		Tween(target, 0.26, {
+		if animationId ~= PageAnimationId then return end
+		Tween(target, 0.34, {
 			GroupTransparency = 0,
 			Position = UDim2.fromOffset(0, 0)
 		}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
@@ -1121,11 +1380,11 @@ local function SelectPage(name)
 
 	for tabName, data in pairs(Tabs) do
 		local selected = tabName == name
-		Tween(data.button, 0.18, {
-			BackgroundTransparency = selected and ResolveUITransparency(0.72) or 1,
+		Tween(data.button, 0.22, {
+			BackgroundTransparency = selected and ResolveUITransparency(0.76) or 1,
 			BackgroundColor3 = Theme.Surface3,
 			TextColor3 = selected and Theme.White or Theme.Muted
-		}, Enum.EasingStyle.Quart)
+		}, Enum.EasingStyle.Quint)
 	end
 end
 
@@ -1465,14 +1724,14 @@ local function CreateToggle(parent, config)
 	local row = New("Frame", {
 		Size = UDim2.new(1, 0, 0, config.height or 64),
 		BackgroundColor3 = Theme.Surface,
-		BackgroundTransparency = 0.04,
+		BackgroundTransparency = 0.08,
 		BorderSizePixel = 0,
 		LayoutOrder = config.order,
 		ZIndex = 46
 	}, parent)
 	Corner(row, 7)
-	Stroke(row, 0.82, 1, Theme.Stroke)
-	RegisterUITransparency(row, 0.04)
+	Stroke(row, 0.86, 1, Theme.Stroke)
+	RegisterUITransparency(row, 0.08)
 
 	local overlay = New("Frame", {
 		Size = UDim2.fromScale(1, 1),
@@ -1592,6 +1851,9 @@ local function CreateToggle(parent, config)
 		if RefreshStatusPage then
 			RefreshStatusPage()
 		end
+		if Extra.SaveSettings then
+			Extra.SaveSettings()
+		end
 	end
 
 	ToggleSetters[config.id] = Set
@@ -1612,7 +1874,7 @@ local function CreateToggle(parent, config)
 		Set(not State[config.id])
 	end)
 
-	Apply(false)
+	Apply(State[config.id] == true)
 	return row
 end
 
@@ -1696,6 +1958,9 @@ local function CreateSlider(row, y, minimum, maximum, initial, callback, percent
 		}, Enum.EasingStyle.Quart)
 		valueBox.Text = tostring(numeric) .. (percent and "%" or "")
 		callback(numeric)
+		if Extra.SaveSettings then
+			Extra.SaveSettings()
+		end
 	end
 
 	local function SetFromX(x)
@@ -1892,110 +2157,56 @@ local function RestoreOtherCollision()
 end
 
 local function StopSpeedManipulation()
-	if not State.speedManipulation then
-		return
-	end
-
+	if not State.speedManipulation then return end
 	State.speedManipulation = false
-
 	local character = LocalPlayer.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-
-	if not State.noclip then
-		for part, value in pairs(SpeedManipSavedCollision) do
-			if part and part.Parent then
-				part.CanCollide = value
-			end
-		end
-	end
-
-	table.clear(SpeedManipSavedCollision)
-
 	if humanoid then
-		if State.walkSpeed then
-			humanoid.WalkSpeed = State.walkSpeedValue
-		elseif SpeedManipSavedSpeed then
-			humanoid.WalkSpeed = SpeedManipSavedSpeed
-		end
+		humanoid.WalkSpeed = State.walkSpeed and State.walkSpeedValue or (SpeedManipSavedSpeed or 16)
 	end
-
 	SpeedManipSavedSpeed = nil
-
-	if RefreshStatusPage then
-		RefreshStatusPage()
-	end
+	if RefreshStatusPage then RefreshStatusPage() end
 end
 
 local function StartSpeedManipulation()
-	if State.speedManipulation then
-		return
-	end
-
+	if State.speedManipulation then return end
 	local character = LocalPlayer.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-
-	if not character or not humanoid then
-		return
-	end
-
+	if not humanoid then return end
 	State.speedManipulation = true
 	SpeedManipSavedSpeed = humanoid.WalkSpeed
-	humanoid.WalkSpeed = 2
-
-	for _, object in ipairs(character:GetDescendants()) do
-		if object:IsA("BasePart") then
-			if SpeedManipSavedCollision[object] == nil then
-				SpeedManipSavedCollision[object] = object.CanCollide
-			end
-			object.CanCollide = false
-		end
-	end
-
-	if RefreshStatusPage then
-		RefreshStatusPage()
-	end
+	humanoid.WalkSpeed = math.clamp(math.max(State.walkSpeedValue, humanoid.WalkSpeed) * 1.55, 18, 42)
+	if RefreshStatusPage then RefreshStatusPage() end
 end
 
 local function DestroyFly()
-	if FlyVelocity then
-		FlyVelocity:Destroy()
-		FlyVelocity = nil
-	end
-
-	if FlyGyro then
-		FlyGyro:Destroy()
-		FlyGyro = nil
-	end
+	if FlyVelocity then FlyVelocity:Destroy(); FlyVelocity = nil end
+	if FlyGyro then FlyGyro:Destroy(); FlyGyro = nil end
 end
 
 local function CreateFly()
 	DestroyFly()
-
-	if not State.fly then
-		return
-	end
-
+	if not State.fly then return end
 	local character = LocalPlayer.Character
 	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if not root then return end
 
-	if not root then
-		return
-	end
-
-	FlyVelocity = New("BodyVelocity", {
-		Name = "LostHubFlyVelocity",
-		MaxForce = Vector3.new(1e9, 1e9, 1e9),
-		P = 12500,
-		Velocity = Vector3.zero
+	FlyGyro = New("Attachment", {Name = "KHubFlyAttachment"}, root)
+	FlyVelocity = New("LinearVelocity", {
+		Name = "KHubFlyVelocity",
+		Attachment0 = FlyGyro,
+		RelativeTo = Enum.ActuatorRelativeTo.World,
+		MaxForce = math.huge,
+		VectorVelocity = Vector3.zero
 	}, root)
-
-	FlyGyro = New("BodyGyro", {
-		Name = "LostHubFlyGyro",
-		MaxTorque = Vector3.new(1e9, 1e9, 1e9),
-		P = 9000,
-		D = 350,
+	New("AlignOrientation", {
+		Name = "KHubFlyAlign",
+		Attachment0 = FlyGyro,
+		Mode = Enum.OrientationAlignmentMode.OneAttachment,
+		Responsiveness = 12,
+		MaxTorque = math.huge,
 		CFrame = root.CFrame
-	}, root)
+	}, FlyGyro)
 end
 
 local function DestroyPlayerEsp(player)
@@ -2039,7 +2250,7 @@ local function EnsurePlayerEsp(player)
 
 	if not data then
 		local highlight = New("Highlight", {
-			Name = "LostHubPlayerESP",
+			Name = "KHubPlayerESP",
 			Adornee = character,
 			FillColor = Theme.PurpleBright,
 			FillTransparency = 0.72,
@@ -2049,7 +2260,7 @@ local function EnsurePlayerEsp(player)
 		}, ScreenGui)
 
 		local billboard = New("BillboardGui", {
-			Name = "LostHubPlayerESPLabel",
+			Name = "KHubPlayerESPLabel",
 			Adornee = head,
 			Size = UDim2.fromOffset(210, 28),
 			StudsOffset = Vector3.new(0, 2.72, 0),
@@ -2087,7 +2298,12 @@ local function EnsurePlayerEsp(player)
 		distance = math.floor((localRoot.Position - root.Position).Magnitude + 0.5)
 	end
 
-	data.label.Text = player.DisplayName .. "  ·  " .. tostring(distance) .. "m"
+	if data.highlight then data.highlight.Enabled = State.espHighlight end
+	local pieces = {}
+	if State.espShowNames then table.insert(pieces, player.DisplayName) end
+	if State.espShowDistance then table.insert(pieces, tostring(distance) .. "m") end
+	data.billboard.Enabled = #pieces > 0
+	data.label.Text = table.concat(pieces, "  ·  ")
 end
 
 local function ClearPlayerEsp()
@@ -2096,17 +2312,153 @@ local function ClearPlayerEsp()
 	end
 end
 
+-- Friend ESP ---------------------------------------------------------------
+-- Friendship is cached so the render/heartbeat loops never wait on a network call.
+Extra.RefreshFriendStatus = function(player)
+	if not player or player == LocalPlayer then
+		return false
+	end
+
+	Extra.FriendPending[player.UserId] = true
+	local ok, isFriend = pcall(function()
+		return LocalPlayer:IsFriendsWith(player.UserId)
+	end)
+	Extra.FriendPending[player.UserId] = nil
+	Extra.FriendCache[player.UserId] = ok and isFriend == true or false
+	return Extra.FriendCache[player.UserId]
+end
+
+Extra.IsFriend = function(player)
+	if not player or player == LocalPlayer then
+		return false
+	end
+
+	local cached = Extra.FriendCache[player.UserId]
+	if cached ~= nil then
+		return cached == true
+	end
+
+	if not Extra.FriendPending[player.UserId] then
+		Extra.FriendPending[player.UserId] = true
+		task.spawn(function()
+			Extra.RefreshFriendStatus(player)
+		end)
+	end
+
+	return false
+end
+
+Extra.DestroyFriendEsp = function(player)
+	local data = Extra.FriendEspObjects[player]
+	if not data then return end
+	if data.highlight then data.highlight:Destroy() end
+	if data.billboard then data.billboard:Destroy() end
+	Extra.FriendEspObjects[player] = nil
+end
+
+Extra.EnsureFriendEsp = function(player)
+	if not player or player == LocalPlayer or not Extra.IsFriend(player) then
+		Extra.DestroyFriendEsp(player)
+		return
+	end
+
+	local character = player.Character
+	if not character then
+		Extra.DestroyFriendEsp(player)
+		return
+	end
+
+	local head = character:FindFirstChild("Head")
+	local root = character:FindFirstChild("HumanoidRootPart")
+	if not head or not root then return end
+
+	local data = Extra.FriendEspObjects[player]
+	if data and data.character ~= character then
+		Extra.DestroyFriendEsp(player)
+		data = nil
+	end
+
+	if not data then
+		local friendColor = Theme.Green
+		local highlight = New("Highlight", {
+			Name = "KHubFriendESP",
+			Adornee = character,
+			FillColor = friendColor,
+			FillTransparency = 0.80,
+			OutlineColor = friendColor,
+			OutlineTransparency = 0.04,
+			DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+		}, ScreenGui)
+
+		local billboard = New("BillboardGui", {
+			Name = "KHubFriendESPLabel",
+			Adornee = head,
+			Size = UDim2.fromOffset(220, 28),
+			StudsOffset = Vector3.new(0, 3.25, 0),
+			AlwaysOnTop = true,
+			ZIndexBehavior = Enum.ZIndexBehavior.Global
+		}, ScreenGui)
+
+		local label = New("TextLabel", {
+			Size = UDim2.fromScale(1, 1),
+			BackgroundTransparency = 1,
+			TextColor3 = Theme.White,
+			TextStrokeColor3 = friendColor,
+			TextStrokeTransparency = 0.25,
+			TextSize = 12,
+			Font = Enum.Font.GothamSemibold,
+			ZIndex = 60
+		}, billboard)
+
+		data = {
+			character = character,
+			root = root,
+			highlight = highlight,
+			billboard = billboard,
+			label = label
+		}
+		Extra.FriendEspObjects[player] = data
+	end
+
+	local localRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+	local distance = localRoot and math.floor((localRoot.Position - root.Position).Magnitude + 0.5) or 0
+	if data.highlight then data.highlight.Enabled = State.espHighlight end
+
+	local pieces = {}
+	if State.espShowNames then table.insert(pieces, "★ " .. player.DisplayName) end
+	if State.espShowDistance then table.insert(pieces, tostring(distance) .. "m") end
+	data.billboard.Enabled = #pieces > 0
+	data.label.Text = table.concat(pieces, "  ·  ")
+end
+
+Extra.RefreshFriendEsp = function()
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer then
+			task.spawn(function()
+				Extra.RefreshFriendStatus(player)
+				if State.friendEsp then Extra.EnsureFriendEsp(player) end
+			end)
+		end
+	end
+end
+
+Extra.ClearFriendEsp = function()
+	for player in pairs(Extra.FriendEspObjects) do
+		Extra.DestroyFriendEsp(player)
+	end
+end
+
 local HostileKeywords = {
-	"enemy", "monster", "entity", "hostile", "killer", "boss",
+	"enemy", "monster", "hostile", "killer", "boss",
 	"zombie", "demon", "creature", "rush", "ambush", "seek", "figure"
 }
 
 local HostileTags = {
-	"Enemy", "Entity", "Monster", "Hostile", "Killer", "Boss", "NPC"
+	"Enemy", "Monster", "Hostile", "Killer", "Boss"
 }
 
 local HostileAttributes = {
-	"Hostile", "IsHostile", "Enemy", "IsEnemy", "Entity", "IsEntity",
+	"Hostile", "IsHostile", "Enemy", "IsEnemy",
 	"CanKill", "KillsPlayer", "Damage", "AttackDamage"
 }
 
@@ -2148,9 +2500,14 @@ local function IsPotentiallyHostile(model)
 		end
 	end
 
-	local humanoid = model:FindFirstChildOfClass("Humanoid")
-	if humanoid and humanoid.Health > 0 then
-		return true
+	if not State.entityOnlyHostile then
+		if CollectionService:HasTag(model, "Entity") or CollectionService:HasTag(model, "NPC")
+			or model:GetAttribute("Entity") == true or model:GetAttribute("IsEntity") == true
+			or string.find(string.lower(model.Name), "entity", 1, true) then
+			return true
+		end
+		local humanoid = model:FindFirstChildOfClass("Humanoid")
+		if humanoid and humanoid.Health > 0 then return true end
 	end
 
 	return false
@@ -2226,7 +2583,12 @@ local function EnsureEntityEsp(model)
 	if localRoot and data.anchor and data.anchor.Parent then
 		distance = math.floor((localRoot.Position - data.anchor.Position).Magnitude + 0.5)
 	end
-	data.label.Text = model.Name .. "  ·  " .. tostring(distance) .. "m"
+	if data.highlight then data.highlight.Enabled = State.espHighlight end
+	local pieces = {}
+	if State.espShowNames then table.insert(pieces, model.Name) end
+	if State.espShowDistance then table.insert(pieces, tostring(distance) .. "m") end
+	data.billboard.Enabled = #pieces > 0
+	data.label.Text = table.concat(pieces, "  ·  ")
 end
 
 local function RefreshEntityEsp()
@@ -2250,347 +2612,223 @@ local function ClearEntityEsp()
 	end
 end
 
-local UltraGraphicsSaved = {
-	lighting = nil,
-	terrain = nil,
-	objects = {},
-	effects = {},
-	replacedEffects = {},
-	atmosphere = nil,
-	createdAtmosphere = false
-}
-local UltraGraphicsConnection = nil
 
-local function SaveObjectProperty(object, property)
-	if not UltraGraphicsSaved.objects[object] then
-		UltraGraphicsSaved.objects[object] = {}
+Extra.GetAnchor = function(object)
+	if not object or not object.Parent then return nil end
+	if object:IsA("BasePart") then return object end
+	if object:IsA("Model") then
+		return object.PrimaryPart or object:FindFirstChild("HumanoidRootPart") or object:FindFirstChild("Head") or object:FindFirstChildWhichIsA("BasePart", true)
 	end
+	return object:FindFirstAncestorWhichIsA("BasePart")
+end
 
-	local saved = UltraGraphicsSaved.objects[object]
-	if saved[property] == nil then
-		local ok, value = pcall(function()
-			return object[property]
-		end)
-		if ok then
-			saved[property] = value
+Extra.IsItem = function(object)
+	if not object or not object.Parent then return false end
+	if LocalPlayer.Character and object:IsDescendantOf(LocalPlayer.Character) then return false end
+	local candidate = object:IsA("Model") and object or object:FindFirstAncestorOfClass("Model") or object
+	for _, tag in ipairs({"Item", "Pickup", "Loot", "Collectible", "Tool"}) do
+		if CollectionService:HasTag(candidate, tag) or CollectionService:HasTag(object, tag) then return true end
+	end
+	for _, attr in ipairs({"Item", "IsItem", "Pickup", "Loot", "Collectible"}) do
+		if candidate:GetAttribute(attr) == true or object:GetAttribute(attr) == true then return true end
+	end
+	local name = string.lower(candidate.Name or object.Name)
+	for _, word in ipairs({"item", "pickup", "loot", "coin", "key", "battery", "medkit", "flashlight", "tool"}) do
+		if string.find(name, word, 1, true) then return true end
+	end
+	return false
+end
+
+Extra.IsObjective = function(object)
+	if not object or not object.Parent then return false end
+	local candidate = object:IsA("Model") and object or object:FindFirstAncestorOfClass("Model") or object
+	for _, tag in ipairs({"Objective", "Quest", "Goal", "Target", "Generator", "Checkpoint"}) do
+		if CollectionService:HasTag(candidate, tag) or CollectionService:HasTag(object, tag) then return true end
+	end
+	for _, attr in ipairs({"Objective", "IsObjective", "QuestTarget", "ProgressTarget"}) do
+		if candidate:GetAttribute(attr) == true or object:GetAttribute(attr) == true then return true end
+	end
+	local name = string.lower(candidate.Name or object.Name)
+	for _, word in ipairs({"objective", "generator", "checkpoint", "quest", "goal", "exit", "lever", "switch"}) do
+		if string.find(name, word, 1, true) then return true end
+	end
+	return false
+end
+
+Extra.DestroyGenericEsp = function(store, object)
+	local data = store[object]
+	if not data then return end
+	if data.highlight then data.highlight:Destroy() end
+	if data.billboard then data.billboard:Destroy() end
+	store[object] = nil
+end
+
+Extra.EnsureGenericEsp = function(store, object, kind)
+	local predicate = kind == "item" and Extra.IsItem or Extra.IsObjective
+	if not predicate(object) then Extra.DestroyGenericEsp(store, object); return end
+	local anchor = Extra.GetAnchor(object)
+	if not anchor then return end
+	local adornee = object
+	local data = store[adornee]
+	if not data then
+		local tint = kind == "item" and Color3.fromRGB(130, 190, 164) or Color3.fromRGB(185, 174, 125)
+		local highlight = New("Highlight", {
+			Name = kind == "item" and "KHubItemESP" or "KHubObjectiveESP",
+			Adornee = adornee,
+			FillColor = tint,
+			FillTransparency = 0.82,
+			OutlineColor = tint,
+			OutlineTransparency = 0.10,
+			DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+		}, ScreenGui)
+		local billboard = New("BillboardGui", {
+			Name = kind == "item" and "KHubItemLabel" or "KHubObjectiveLabel",
+			Adornee = anchor,
+			Size = UDim2.fromOffset(210, 26),
+			StudsOffset = Vector3.new(0, 2.3, 0),
+			AlwaysOnTop = true,
+			ZIndexBehavior = Enum.ZIndexBehavior.Global
+		}, ScreenGui)
+		local label = New("TextLabel", {
+			Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1,
+			TextColor3 = Theme.White, TextStrokeColor3 = tint, TextStrokeTransparency = 0.35,
+			TextSize = 12, Font = Enum.Font.GothamSemibold, ZIndex = 60
+		}, billboard)
+		data = {highlight = highlight, billboard = billboard, label = label, anchor = anchor, object = adornee}
+		store[adornee] = data
+	end
+	if data.highlight then data.highlight.Enabled = State.espHighlight end
+	local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+	local distance = root and data.anchor and math.floor((root.Position - data.anchor.Position).Magnitude + 0.5) or 0
+	local pieces = {}
+	if State.espShowNames then table.insert(pieces, data.object.Name) end
+	if State.espShowDistance then table.insert(pieces, tostring(distance) .. "m") end
+	data.billboard.Enabled = #pieces > 0
+	data.label.Text = table.concat(pieces, "  ·  ")
+end
+
+Extra.RefreshGenericEsp = function(kind)
+	local store = kind == "item" and Extra.ItemEspObjects or Extra.ObjectiveEspObjects
+	local predicate = kind == "item" and Extra.IsItem or Extra.IsObjective
+	local seen = {}
+	for _, object in ipairs(Workspace:GetDescendants()) do
+		if (object:IsA("Model") or object:IsA("BasePart")) and predicate(object) then
+			local target = object
+			if not seen[target] then seen[target] = true; Extra.EnsureGenericEsp(store, target, kind) end
 		end
 	end
+	for object in pairs(store) do if not seen[object] or not object.Parent then Extra.DestroyGenericEsp(store, object) end end
 end
 
-local function ApplyUltraGraphicsToObject(object)
-	if object:IsA("BasePart") then
-		SaveObjectProperty(object, "CastShadow")
-		object.CastShadow = true
+Extra.ClearGenericEsp = function(kind)
+	local store = kind == "item" and Extra.ItemEspObjects or Extra.ObjectiveEspObjects
+	for object in pairs(store) do Extra.DestroyGenericEsp(store, object) end
+end
 
-		if object.Material == Enum.Material.Metal then
-			SaveObjectProperty(object, "Reflectance")
-			object.Reflectance = math.max(object.Reflectance, 0.08)
-		elseif object.Material == Enum.Material.Glass then
-			SaveObjectProperty(object, "Reflectance")
-			object.Reflectance = math.max(object.Reflectance, 0.05)
+Extra.Toast = function(message, danger)
+	Extra.ToastSerial = (Extra.ToastSerial or 0) + 1
+	local holder = New("CanvasGroup", {
+		Size = UDim2.fromOffset(300, 54), AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, -18, 0, 18), BackgroundColor3 = Theme.Surface2,
+		BackgroundTransparency = 0.04, BorderSizePixel = 0, GroupTransparency = 1, ZIndex = 1200
+	}, ScreenGui)
+	Corner(holder, 11); Stroke(holder, 0.72, 1, danger and Theme.Red or Theme.Stroke)
+	New("TextLabel", {
+		Size = UDim2.new(1, -30, 1, 0), Position = UDim2.fromOffset(15, 0), BackgroundTransparency = 1,
+		Text = message, TextColor3 = danger and Theme.Red or Theme.White, TextSize = 12,
+		Font = Enum.Font.GothamSemibold, TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 1201
+	}, holder)
+	Tween(holder, 0.28, {GroupTransparency = 0, Position = UDim2.new(1, -18, 0, 28)}, Enum.EasingStyle.Quint)
+	task.delay(3.2, function()
+		if holder and holder.Parent then
+			local fade = Tween(holder, 0.24, {GroupTransparency = 1, Position = UDim2.new(1, 10, 0, 28)}, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+			fade.Completed:Once(function() if holder and holder.Parent then holder:Destroy() end end)
 		end
-	end
-
-	if object:IsA("PointLight")
-		or object:IsA("SpotLight")
-		or object:IsA("SurfaceLight") then
-
-		SaveObjectProperty(object, "Enabled")
-		SaveObjectProperty(object, "Shadows")
-		object.Enabled = true
-		object.Shadows = true
-	end
-
-	if object:IsA("ParticleEmitter") then
-		SaveObjectProperty(object, "Enabled")
-		SaveObjectProperty(object, "LightEmission")
-		object.Enabled = true
-		object.LightEmission = math.max(object.LightEmission, 0.1)
-	end
-
-	if object:IsA("Beam") then
-		SaveObjectProperty(object, "Enabled")
-		object.Enabled = true
-	end
-
-	if object:IsA("Trail") then
-		SaveObjectProperty(object, "Enabled")
-		object.Enabled = true
-	end
-
-	if object:IsA("SurfaceAppearance") then
-		SaveObjectProperty(object, "AlphaMode")
-		object.AlphaMode = Enum.AlphaMode.Overlay
-	end
+	end)
 end
 
-local function SaveEffectProperties(effect, properties)
-	local saved = {}
-	for _, property in ipairs(properties) do
-		saved[property] = effect[property]
+Extra.EnableNoFog = function()
+	if not Extra.VisualSaved.fog then
+		Extra.VisualSaved.fog = {FogStart = Lighting.FogStart, FogEnd = Lighting.FogEnd}
 	end
-	return saved
-end
-
-local function GetOrCreateUltraEffect(className, name, properties)
-	local tracked = UltraGraphicsSaved.effects[name]
-	if tracked and tracked.object and tracked.object.Parent then
-		return tracked.object
-	end
-
-	local object = Lighting:FindFirstChild(name)
-
-	if object and object.ClassName ~= className then
-		local ok, clone = pcall(function()
-			return object:Clone()
-		end)
-		if ok and clone then
-			UltraGraphicsSaved.replacedEffects[name] = clone
-		end
-		object:Destroy()
-		object = nil
-	end
-
-	if not object then
-		object = Instance.new(className)
-		object.Name = name
-		object.Parent = Lighting
-		UltraGraphicsSaved.effects[name] = {
-			object = object,
-			created = true
-		}
-	else
-		UltraGraphicsSaved.effects[name] = {
-			object = object,
-			created = false,
-			properties = SaveEffectProperties(object, properties)
-		}
-	end
-
-	return object
-end
-
-local function EnableUltraGraphics()
-	if not UltraGraphicsSaved.lighting then
-		UltraGraphicsSaved.lighting = {
-			GlobalShadows = Lighting.GlobalShadows,
-			EnvironmentDiffuseScale = Lighting.EnvironmentDiffuseScale,
-			EnvironmentSpecularScale = Lighting.EnvironmentSpecularScale,
-			PrioritizeLightingQuality = Lighting.PrioritizeLightingQuality,
-			ShadowSoftness = Lighting.ShadowSoftness,
-			Brightness = Lighting.Brightness,
-			ExposureCompensation = Lighting.ExposureCompensation,
-			Ambient = Lighting.Ambient,
-			OutdoorAmbient = Lighting.OutdoorAmbient
-		}
-	end
-
-	Lighting.GlobalShadows = true
-	Lighting.EnvironmentDiffuseScale = 1
-	Lighting.EnvironmentSpecularScale = 1
-	Lighting.PrioritizeLightingQuality = true
-	Lighting.ShadowSoftness = 0.2
-	Lighting.Brightness = 2.5
-	Lighting.ExposureCompensation = 0.05
-
-	Lighting.Ambient = Color3.fromRGB(25, 25, 30)
-	Lighting.OutdoorAmbient = Color3.fromRGB(125, 125, 135)
-
-	local bloom = GetOrCreateUltraEffect(
-		"BloomEffect",
-		"UltraBloom",
-		{"Enabled", "Intensity", "Size", "Threshold"}
-	)
-	bloom.Enabled = true
-	bloom.Intensity = 0.35
-	bloom.Size = 32
-	bloom.Threshold = 1.1
-
-	local color = GetOrCreateUltraEffect(
-		"ColorCorrectionEffect",
-		"UltraColor",
-		{"Enabled", "Brightness", "Contrast", "Saturation", "TintColor"}
-	)
-	color.Enabled = true
-	color.Brightness = 0.01
-	color.Contrast = 0.08
-	color.Saturation = 0.08
-	color.TintColor = Color3.fromRGB(255, 250, 245)
-
-	local rays = GetOrCreateUltraEffect(
-		"SunRaysEffect",
-		"UltraSunRays",
-		{"Enabled", "Intensity", "Spread"}
-	)
-	rays.Enabled = true
-	rays.Intensity = 0.075
-	rays.Spread = 0.85
-
-	local depth = GetOrCreateUltraEffect(
-		"DepthOfFieldEffect",
-		"UltraDepthOfField",
-		{"Enabled", "FocusDistance", "InFocusRadius", "NearIntensity", "FarIntensity"}
-	)
-	depth.Enabled = true
-	depth.FocusDistance = 25
-	depth.InFocusRadius = 70
-	depth.NearIntensity = 0.04
-	depth.FarIntensity = 0.08
-
+	Lighting.FogStart = 0; Lighting.FogEnd = 1000000
 	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
-	if not atmosphere then
-		atmosphere = Instance.new("Atmosphere")
-		atmosphere.Parent = Lighting
-		UltraGraphicsSaved.createdAtmosphere = true
-	elseif not UltraGraphicsSaved.atmosphere then
-		UltraGraphicsSaved.atmosphere = {
-			object = atmosphere,
-			Density = atmosphere.Density,
-			Offset = atmosphere.Offset,
-			Glare = atmosphere.Glare,
-			Haze = atmosphere.Haze,
-			Color = atmosphere.Color,
-			Decay = atmosphere.Decay
-		}
-	end
-
-	atmosphere.Density = 0.22
-	atmosphere.Offset = 0.1
-	atmosphere.Glare = 0.15
-	atmosphere.Haze = 1.2
-	atmosphere.Color = Color3.fromRGB(220, 225, 235)
-	atmosphere.Decay = Color3.fromRGB(100, 105, 120)
-
-	local terrain = Workspace:FindFirstChildOfClass("Terrain")
-	if terrain then
-		if not UltraGraphicsSaved.terrain then
-			UltraGraphicsSaved.terrain = {
-				object = terrain,
-				WaterReflectance = terrain.WaterReflectance,
-				WaterTransparency = terrain.WaterTransparency,
-				WaterWaveSize = terrain.WaterWaveSize,
-				WaterWaveSpeed = terrain.WaterWaveSpeed
-			}
-		end
-
-		terrain.WaterReflectance = 1
-		terrain.WaterTransparency = 0.25
-		terrain.WaterWaveSize = 0.15
-		terrain.WaterWaveSpeed = 12
-	end
-
-	local descendants = Workspace:GetDescendants()
-	for i, object in ipairs(descendants) do
-		pcall(ApplyUltraGraphicsToObject, object)
-
-		if i % 250 == 0 then
-			task.wait()
-		end
-	end
-
-	if not UltraGraphicsConnection then
-		UltraGraphicsConnection = Workspace.DescendantAdded:Connect(function(object)
-			task.defer(function()
-				if State.graphicsBoost and object.Parent then
-					pcall(ApplyUltraGraphicsToObject, object)
-				end
-			end)
-		end)
-		table.insert(Connections, UltraGraphicsConnection)
+	if atmosphere then
+		if not Extra.VisualSaved.atmosphere then Extra.VisualSaved.atmosphere = {object = atmosphere, Density = atmosphere.Density, Haze = atmosphere.Haze} end
+		atmosphere.Density = 0; atmosphere.Haze = 0
 	end
 end
 
-local function DisableUltraGraphics()
-	if UltraGraphicsConnection then
-		pcall(function()
-			UltraGraphicsConnection:Disconnect()
-		end)
-		UltraGraphicsConnection = nil
-	end
+Extra.DisableNoFog = function()
+	if Extra.VisualSaved.fog then Lighting.FogStart = Extra.VisualSaved.fog.FogStart; Lighting.FogEnd = Extra.VisualSaved.fog.FogEnd end
+	local saved = Extra.VisualSaved.atmosphere
+	if saved and saved.object and saved.object.Parent then saved.object.Density = saved.Density; saved.object.Haze = saved.Haze end
+	Extra.VisualSaved.fog = nil; Extra.VisualSaved.atmosphere = nil
+end
 
-	for object, properties in pairs(UltraGraphicsSaved.objects) do
-		if object and object.Parent then
-			for property, value in pairs(properties) do
-				pcall(function()
-					object[property] = value
-				end)
+Extra.SetParticlesHidden = function(hidden)
+	if hidden then
+		for _, object in ipairs(Workspace:GetDescendants()) do
+			if object:IsA("ParticleEmitter") or object:IsA("Trail") or object:IsA("Beam") or object:IsA("Smoke") or object:IsA("Fire") or object:IsA("Sparkles") then
+				if Extra.ParticleSaved[object] == nil then Extra.ParticleSaved[object] = object.Enabled end
+				object.Enabled = false
 			end
 		end
+	else
+		for object, enabled in pairs(Extra.ParticleSaved) do if object and object.Parent then object.Enabled = enabled end end
+		table.clear(Extra.ParticleSaved)
 	end
-	table.clear(UltraGraphicsSaved.objects)
+end
 
-	if UltraGraphicsSaved.terrain then
-		local terrain = UltraGraphicsSaved.terrain.object
-		if terrain and terrain.Parent then
-			for _, property in ipairs({
-				"WaterReflectance",
-				"WaterTransparency",
-				"WaterWaveSize",
-				"WaterWaveSpeed"
-			}) do
-				pcall(function()
-					terrain[property] = UltraGraphicsSaved.terrain[property]
-				end)
-			end
-		end
-	end
-	UltraGraphicsSaved.terrain = nil
+Extra.StartFreecam = function()
+	if Extra.Freecam.active then return end
+	Extra.Freecam.active = true
+	Extra.Freecam.cameraType = Camera.CameraType
+	Extra.Freecam.subject = Camera.CameraSubject
+	Extra.Freecam.cframe = Camera.CFrame
+	Extra.Freecam.position = Camera.CFrame.Position
+	local x, y = Camera.CFrame:ToOrientation()
+	Extra.Freecam.pitch = x; Extra.Freecam.yaw = y
+	Extra.Freecam.mouseBehavior = UserInputService.MouseBehavior
+	Extra.Freecam.mouseIcon = UserInputService.MouseIconEnabled
+	Camera.CameraType = Enum.CameraType.Scriptable
+	if not State.menuVisible then UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter; UserInputService.MouseIconEnabled = false end
+end
 
-	if UltraGraphicsSaved.createdAtmosphere then
-		local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
-		if atmosphere then
-			atmosphere:Destroy()
-		end
-	elseif UltraGraphicsSaved.atmosphere then
-		local saved = UltraGraphicsSaved.atmosphere
-		local atmosphere = saved.object
-		if atmosphere and atmosphere.Parent then
-			atmosphere.Density = saved.Density
-			atmosphere.Offset = saved.Offset
-			atmosphere.Glare = saved.Glare
-			atmosphere.Haze = saved.Haze
-			atmosphere.Color = saved.Color
-			atmosphere.Decay = saved.Decay
-		end
+Extra.StopFreecam = function()
+	if not Extra.Freecam.active then return end
+	Extra.Freecam.active = false
+	Camera.CameraType = Extra.Freecam.cameraType or Enum.CameraType.Custom
+	Camera.CameraSubject = Extra.Freecam.subject
+	if Extra.Freecam.cframe then Camera.CFrame = Extra.Freecam.cframe end
+	PreviousMouseBehavior = Extra.Freecam.mouseBehavior or Enum.MouseBehavior.Default
+	PreviousMouseIconEnabled = Extra.Freecam.mouseIcon ~= false
+	if not State.menuVisible then
+		UserInputService.MouseBehavior = PreviousMouseBehavior
+		UserInputService.MouseIconEnabled = PreviousMouseIconEnabled
 	end
-	UltraGraphicsSaved.atmosphere = nil
-	UltraGraphicsSaved.createdAtmosphere = false
+end
 
-	for name, data in pairs(UltraGraphicsSaved.effects) do
-		local object = data.object
-		if data.created then
-			if object and object.Parent then
-				object:Destroy()
-			end
-		elseif object and object.Parent and data.properties then
-			for property, value in pairs(data.properties) do
-				pcall(function()
-					object[property] = value
-				end)
-			end
-		end
+Extra.UpdateSpectate = function()
+	local available = {}
+	for _, player in ipairs(Players:GetPlayers()) do if player ~= LocalPlayer then table.insert(available, player) end end
+	if #available == 0 then Extra.SelectedSpectate = nil else
+		Extra.SpectateIndex = math.clamp(Extra.SpectateIndex or 1, 1, #available)
+		Extra.SelectedSpectate = available[Extra.SpectateIndex]
 	end
-	table.clear(UltraGraphicsSaved.effects)
+	if Extra.SpectateUI and Extra.SpectateUI.Name then
+		Extra.SpectateUI.Name.Text = Extra.SelectedSpectate and Extra.SelectedSpectate.DisplayName or "—"
+	end
+	if State.spectate then
+		local character = Extra.SelectedSpectate and Extra.SelectedSpectate.Character
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		if humanoid then Camera.CameraType = Enum.CameraType.Custom; Camera.CameraSubject = humanoid end
+	end
+end
 
-	for name, clone in pairs(UltraGraphicsSaved.replacedEffects) do
-		if clone then
-			local existing = Lighting:FindFirstChild(name)
-			if existing then
-				existing:Destroy()
-			end
-			clone.Parent = Lighting
-		end
-	end
-	table.clear(UltraGraphicsSaved.replacedEffects)
-
-	if UltraGraphicsSaved.lighting then
-		for property, value in pairs(UltraGraphicsSaved.lighting) do
-			pcall(function()
-				Lighting[property] = value
-			end)
-		end
-	end
-	UltraGraphicsSaved.lighting = nil
+Extra.StopSpectate = function()
+	local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+	if humanoid and not State.freecam then Camera.CameraType = Enum.CameraType.Custom; Camera.CameraSubject = humanoid end
 end
 
 local function ApplyLowToObject(object)
@@ -2693,9 +2931,6 @@ local function DisableFullBright()
 	end
 	table.clear(FullBrightSaved)
 
-	if State.graphicsBoost then
-		EnableUltraGraphics()
-	end
 end
 
 local function EnableInstantInteract()
@@ -2719,8 +2954,9 @@ local function DisableInstantInteract()
 end
 
 local function ApplyPanelBackground()
+	State.panelBlur = 90
 	local brightness = math.clamp(State.backgroundBrightness / 100, 0, 1)
-	local blur = math.clamp(State.panelBlur / 100, 0, 1)
+	local blur = 0.90
 	local level = 0.22 + (brightness * 0.58)
 	local color = Color3.new(level, level, math.min(1, level + 0.02))
 
@@ -3202,64 +3438,112 @@ CreateSlider(
 	false
 )
 
+
+
+Extra.FovRow = CreateToggle(PlayerPage, {
+	id = "fov", titleKey = "fov", subtitleKey = "fov_sub", order = 6, height = 102,
+	changed = function(enabled)
+		if enabled then
+			if Extra.OriginalFov == nil then Extra.OriginalFov = Camera.FieldOfView end
+			Camera.FieldOfView = State.fovValue
+		elseif Extra.OriginalFov then Camera.FieldOfView = Extra.OriginalFov end
+	end
+})
+CreateSlider(Extra.FovRow, 77, 50, 120, State.fovValue, function(value)
+	State.fovValue = value; if State.fov then Camera.FieldOfView = value end
+end, false)
+
+Extra.FreecamRow = CreateToggle(PlayerPage, {
+	id = "freecam", titleKey = "freecam", subtitleKey = "freecam_sub", order = 7, height = 102,
+	changed = function(enabled)
+		if enabled then
+			if State.spectate and ToggleSetters.spectate then ToggleSetters.spectate(false) end
+			Extra.StartFreecam()
+		else Extra.StopFreecam() end
+	end
+})
+CreateSlider(Extra.FreecamRow, 77, 8, 120, State.freecamSpeed, function(value) State.freecamSpeed = value end, false)
+
+Extra.SpectateRow = CreateToggle(PlayerPage, {
+	id = "spectate", titleKey = "spectate", subtitleKey = "spectate_sub", order = 8, height = 100,
+	changed = function(enabled)
+		if enabled then
+			if State.freecam and ToggleSetters.freecam then ToggleSetters.freecam(false) end
+			Extra.UpdateSpectate()
+		else Extra.StopSpectate() end
+	end
+})
+Extra.SpectateUI = {}
+Extra.SpectateUI.Left = New("TextButton", {Size = UDim2.fromOffset(32, 26), Position = UDim2.new(1, -220, 0, 65), BackgroundColor3 = Theme.Surface2, BorderSizePixel = 0, Text = "‹", TextColor3 = Theme.Light, TextSize = 18, Font = Enum.Font.GothamBold, ZIndex = 55}, Extra.SpectateRow)
+Extra.SpectateUI.Name = New("TextLabel", {Size = UDim2.fromOffset(138, 26), Position = UDim2.new(1, -184, 0, 65), BackgroundColor3 = Theme.Surface2, BorderSizePixel = 0, Text = "—", TextColor3 = Theme.Light, TextSize = 11, Font = Enum.Font.GothamSemibold, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 55}, Extra.SpectateRow)
+Extra.SpectateUI.Right = New("TextButton", {Size = UDim2.fromOffset(32, 26), Position = UDim2.new(1, -42, 0, 65), BackgroundColor3 = Theme.Surface2, BorderSizePixel = 0, Text = "›", TextColor3 = Theme.Light, TextSize = 18, Font = Enum.Font.GothamBold, ZIndex = 55}, Extra.SpectateRow)
+for _, object in pairs(Extra.SpectateUI) do if object:IsA("GuiObject") then Corner(object, 6); RegisterUITransparency(object, 0) end end
+Bind(Extra.SpectateUI.Left.MouseButton1Click, function() Extra.SpectateIndex = math.max(1, (Extra.SpectateIndex or 1) - 1); Extra.UpdateSpectate() end)
+Bind(Extra.SpectateUI.Right.MouseButton1Click, function() Extra.SpectateIndex = (Extra.SpectateIndex or 1) + 1; Extra.UpdateSpectate() end)
+Extra.UpdateSpectate()
+
 CreateHotkeyRow(
 	PlayerPage,
 	"speedManipulation",
 	"speed_manip",
 	"speed_manip_sub",
-	6
+	9
 )
 
 Section(EspPage, "esp_title", "esp_subtitle", 1)
 
-CreateToggle(EspPage, {
-	id = "playerEsp",
-	titleKey = "player_esp",
-	subtitleKey = "player_esp_sub",
-	order = 2,
-	changed = function(enabled)
-		if not enabled then
-			ClearPlayerEsp()
-		end
-	end
-})
-
-CreateToggle(EspPage, {
-	id = "entityEsp",
-	titleKey = "entity_esp",
-	subtitleKey = "entity_esp_sub",
-	order = 3,
-	warning = true,
-	changed = function(enabled)
-		if enabled then
-			task.spawn(RefreshEntityEsp)
-		else
-			ClearEntityEsp()
-		end
-	end
-})
+CreateToggle(EspPage, {id = "playerEsp", titleKey = "player_esp", subtitleKey = "player_esp_sub", order = 2, changed = function(enabled) if not enabled then ClearPlayerEsp() end end})
+CreateToggle(EspPage, {id = "friendEsp", titleKey = "friend_esp", subtitleKey = "friend_esp_sub", order = 3, changed = function(enabled) if enabled then Extra.RefreshFriendEsp() else Extra.ClearFriendEsp() end end})
+CreateToggle(EspPage, {id = "entityEsp", titleKey = "entity_esp", subtitleKey = "entity_esp_sub", order = 4, warning = true, changed = function(enabled) if enabled then task.spawn(RefreshEntityEsp) else ClearEntityEsp() end end})
+CreateToggle(EspPage, {id = "itemEsp", titleKey = "item_esp", subtitleKey = "item_esp_sub", order = 5, changed = function(enabled) if enabled then task.spawn(function() Extra.RefreshGenericEsp("item") end) else Extra.ClearGenericEsp("item") end end})
+CreateToggle(EspPage, {id = "objectiveEsp", titleKey = "objective_esp", subtitleKey = "objective_esp_sub", order = 6, changed = function(enabled) if enabled then task.spawn(function() Extra.RefreshGenericEsp("objective") end) else Extra.ClearGenericEsp("objective") end end})
+CreateToggle(EspPage, {id = "entityOnlyHostile", titleKey = "entity_hostile_only", subtitleKey = "entity_hostile_only_sub", order = 7, changed = function() if State.entityEsp then task.spawn(RefreshEntityEsp) end end})
+CreateToggle(EspPage, {id = "entitySpawnWarning", titleKey = "entity_spawn_warning", subtitleKey = "entity_spawn_warning_sub", order = 8})
+Section(EspPage, "esp_filters", "esp_filters_sub", 9)
+CreateToggle(EspPage, {id = "espShowNames", titleKey = "esp_names", subtitleKey = "esp_names_sub", order = 10})
+CreateToggle(EspPage, {id = "espShowDistance", titleKey = "esp_distance", subtitleKey = "esp_distance_sub", order = 11})
+CreateToggle(EspPage, {id = "espHighlight", titleKey = "esp_highlight", subtitleKey = "esp_highlight_sub", order = 12})
 
 Section(GraphicsPage, "graphics_title", "graphics_subtitle", 1)
 
 CreateToggle(GraphicsPage, {
-	id = "lowGraphics",
-	titleKey = "low_graphics",
-	subtitleKey = "low_graphics_sub",
-	order = 2,
+	id = "performanceMode", titleKey = "performance_mode", subtitleKey = "performance_mode_sub", order = 2,
 	changed = function(enabled)
 		if enabled then
 			EnableLowGraphics()
 		else
 			DisableLowGraphics()
+			Extra.SetParticlesHidden(State.hideParticles)
 		end
 	end
 })
 
 CreateToggle(GraphicsPage, {
+	id = "hideParticles", titleKey = "hide_particles", subtitleKey = "hide_particles_sub", order = 3,
+	changed = function(enabled) if not State.performanceMode then Extra.SetParticlesHidden(enabled) end end
+})
+
+CreateToggle(GraphicsPage, {
+	id = "noFog", titleKey = "no_fog", subtitleKey = "no_fog_sub", order = 4,
+	changed = function(enabled) if enabled then Extra.EnableNoFog() else Extra.DisableNoFog() end end
+})
+
+Extra.BrightnessRow = CreateToggle(GraphicsPage, {
+	id = "brightness", titleKey = "brightness", subtitleKey = "brightness_sub", order = 5, height = 102,
+	changed = function(enabled)
+		if enabled then
+			if Extra.VisualSaved.brightness == nil then Extra.VisualSaved.brightness = Lighting.Brightness end
+			Lighting.Brightness = State.brightnessValue
+		elseif Extra.VisualSaved.brightness ~= nil then Lighting.Brightness = Extra.VisualSaved.brightness; Extra.VisualSaved.brightness = nil end
+	end
+})
+CreateSlider(Extra.BrightnessRow, 77, 0, 5, State.brightnessValue, function(value) State.brightnessValue = value; if State.brightness then Lighting.Brightness = value end end, false)
+
+CreateToggle(GraphicsPage, {
 	id = "fullBright",
 	titleKey = "full_bright",
 	subtitleKey = "full_bright_sub",
-	order = 3,
+	order = 6,
 	changed = function(enabled)
 		if enabled then
 			EnableFullBright()
@@ -3273,7 +3557,7 @@ CreateToggle(GraphicsPage, {
 	id = "fpsVisible",
 	titleKey = "fps_display",
 	subtitleKey = "fps_display_sub",
-	order = 4,
+	order = 7,
 	changed = function(enabled)
 		if SetFpsVisible then
 			SetFpsVisible(enabled)
@@ -3285,7 +3569,7 @@ CreateToggle(GraphicsPage, {
 	id = "clockVisible",
 	titleKey = "clock_display",
 	subtitleKey = "clock_display_sub",
-	order = 5,
+	order = 8,
 	changed = function(enabled)
 		if SetClockVisible then
 			SetClockVisible(enabled)
@@ -3392,18 +3676,13 @@ StatusUI.DisabledList = New("TextLabel", {
 }, StatusUI.DisabledCard)
 
 local FeatureNameKeys = {
-	{"antiFling", "anti_fling"},
-	{"noclip", "noclip"},
-	{"walkSpeed", "walk_speed"},
-	{"speedManipulation", "speed_manip"},
-	{"fly", "fly"},
-	{"playerEsp", "player_esp"},
-	{"entityEsp", "entity_esp"},
-	{"lowGraphics", "low_graphics"},
-	{"fullBright", "full_bright"},
-	{"fpsVisible", "fps_display"},
-	{"clockVisible", "clock_display"},
-	{"instantInteract", "instant_interact"}
+	{"antiFling", "anti_fling"}, {"noclip", "noclip"}, {"walkSpeed", "walk_speed"},
+	{"speedManipulation", "speed_manip"}, {"fly", "fly"}, {"fov", "fov"}, {"freecam", "freecam"},
+	{"spectate", "spectate"}, {"playerEsp", "player_esp"}, {"friendEsp", "friend_esp"}, {"entityEsp", "entity_esp"},
+	{"itemEsp", "item_esp"}, {"objectiveEsp", "objective_esp"}, {"entitySpawnWarning", "entity_spawn_warning"},
+	{"noFog", "no_fog"}, {"brightness", "brightness"}, {"hideParticles", "hide_particles"},
+	{"performanceMode", "performance_mode"}, {"fullBright", "full_bright"}, {"fpsVisible", "fps_display"},
+	{"clockVisible", "clock_display"}, {"instantInteract", "instant_interact"}
 }
 
 RefreshStatusPage = function()
@@ -3421,7 +3700,7 @@ RefreshStatusPage = function()
 
 	StatusUI.ExecutionsLabel.Text = T("executions")
 		.. ": "
-		.. tostring(_G.LostHubExecutionCount or 1)
+		.. tostring(_G.KHubExecutionCount or 1)
 
 	StatusUI.ActiveCountLabel.Text = T("active")
 		.. ": "
@@ -3461,64 +3740,12 @@ CreateHotkeyRow(
 )
 
 local SettingsUI = {}
-SettingsUI.BlurRow = New("Frame", {
-	Size = UDim2.new(1, 0, 0, 84),
-	BackgroundColor3 = Theme.Surface,
-	BackgroundTransparency = 0.08,
-	BorderSizePixel = 0,
-	LayoutOrder = 4,
-	ZIndex = 46
-}, SettingsPage)
-Corner(SettingsUI.BlurRow, 9)
-RegisterUITransparency(SettingsUI.BlurRow, 0.08)
-
-RegisterText(
-	New("TextLabel", {
-		Size = UDim2.new(1, -125, 0, 18),
-		Position = UDim2.fromOffset(14, 10),
-		BackgroundTransparency = 1,
-		TextColor3 = Theme.White,
-		TextSize = 14,
-		Font = Enum.Font.GothamSemibold,
-		TextXAlignment = Enum.TextXAlignment.Left,
-		ZIndex = 47
-	}, SettingsUI.BlurRow),
-	"panel_blur"
-)
-
-RegisterText(
-	New("TextLabel", {
-		Size = UDim2.new(1, -125, 0, 15),
-		Position = UDim2.fromOffset(14, 29),
-		BackgroundTransparency = 1,
-		TextColor3 = Theme.Muted,
-		TextSize = 10,
-		Font = Enum.Font.Gotham,
-		TextXAlignment = Enum.TextXAlignment.Left,
-		ZIndex = 47
-	}, SettingsUI.BlurRow),
-	"panel_blur_sub"
-)
-
-CreateSlider(
-	SettingsUI.BlurRow,
-	63,
-	0,
-	100,
-	State.panelBlur,
-	function(value)
-		State.panelBlur = value
-		ApplyPanelBackground()
-	end,
-	true
-)
-
 SettingsUI.BrightnessRow = New("Frame", {
 	Size = UDim2.new(1, 0, 0, 84),
 	BackgroundColor3 = Theme.Surface,
 	BackgroundTransparency = 0.08,
 	BorderSizePixel = 0,
-	LayoutOrder = 5,
+	LayoutOrder = 4,
 	ZIndex = 46
 }, SettingsPage)
 Corner(SettingsUI.BrightnessRow, 9)
@@ -3570,7 +3797,7 @@ SettingsUI.TransparencyRow = New("Frame", {
 	BackgroundColor3 = Theme.Surface,
 	BackgroundTransparency = 0.08,
 	BorderSizePixel = 0,
-	LayoutOrder = 6,
+	LayoutOrder = 5,
 	ZIndex = 46
 }, SettingsPage)
 Corner(SettingsUI.TransparencyRow, 9)
@@ -3618,12 +3845,29 @@ CreateSlider(
 	true
 )
 
+
+SettingsUI.ScaleRow = New("Frame", {Size = UDim2.new(1, 0, 0, 84), BackgroundColor3 = Theme.Surface, BackgroundTransparency = 0.08, BorderSizePixel = 0, LayoutOrder = 6, ZIndex = 46}, SettingsPage)
+Corner(SettingsUI.ScaleRow, 9); RegisterUITransparency(SettingsUI.ScaleRow, 0.08)
+RegisterText(New("TextLabel", {Size = UDim2.new(1, -125, 0, 18), Position = UDim2.fromOffset(14, 10), BackgroundTransparency = 1, TextColor3 = Theme.White, TextSize = 14, Font = Enum.Font.GothamSemibold, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 47}, SettingsUI.ScaleRow), "ui_scale")
+RegisterText(New("TextLabel", {Size = UDim2.new(1, -125, 0, 15), Position = UDim2.fromOffset(14, 29), BackgroundTransparency = 1, TextColor3 = Theme.Muted, TextSize = 10, Font = Enum.Font.Gotham, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 47}, SettingsUI.ScaleRow), "ui_scale_sub")
+CreateSlider(SettingsUI.ScaleRow, 63, 80, 120, State.uiScale, function(value)
+	State.uiScale = value
+	if Main.Visible then MainScale.Scale = value / 100 end
+end, true)
+
+CreateToggle(SettingsPage, {
+	id = "rememberSettings", titleKey = "remember_settings", subtitleKey = "remember_settings_sub", order = 7,
+	changed = function(enabled)
+		if enabled then Extra.SaveSettings() else Extra.ClearSavedSettings() end
+	end
+})
+
 SettingsUI.LanguageRow = New("Frame", {
 	Size = UDim2.new(1, 0, 0, 64),
 	BackgroundColor3 = Theme.Surface,
 	BackgroundTransparency = 0.08,
 	BorderSizePixel = 0,
-	LayoutOrder = 7,
+	LayoutOrder = 8,
 	ZIndex = 46
 }, SettingsPage)
 Corner(SettingsUI.LanguageRow, 9)
@@ -3681,12 +3925,13 @@ local function ApplyLanguage()
 		or Strings.ptbr.portuguese
 
 	for id, button in pairs(HotkeyButtons) do
-		if button and button.Parent then
-			button.Text = FormatBinding(Bindings[id])
-		end
+		if button and button.Parent then button.Text = FormatBinding(Bindings[id]) end
 	end
-
+	for _, box in pairs(Extra.SearchBoxes) do
+		if box and box.Parent then box.PlaceholderText = T("search") end
+	end
 	RefreshStatusPage()
+	if Extra.SaveSettings then Extra.SaveSettings() end
 end
 
 Bind(SettingsUI.LanguageButton.MouseButton1Click, function()
@@ -3866,11 +4111,13 @@ local function SetMenuVisible(visible)
 	State.menuVisible = visible
 
 	if visible then
-		local currentBehavior = UserInputService.MouseBehavior
-		PreviousMouseBehavior = currentBehavior == Enum.MouseBehavior.LockCurrentPosition
-			and Enum.MouseBehavior.Default
-			or currentBehavior
-		PreviousMouseIconEnabled = UserInputService.MouseIconEnabled
+		if not (State.freecam and Extra.Freecam.active) then
+			local currentBehavior = UserInputService.MouseBehavior
+			PreviousMouseBehavior = (currentBehavior == Enum.MouseBehavior.LockCurrentPosition or currentBehavior == Enum.MouseBehavior.LockCenter)
+				and Enum.MouseBehavior.Default
+				or currentBehavior
+			PreviousMouseIconEnabled = UserInputService.MouseIconEnabled
+		end
 
 		UserInputService.MouseBehavior = Enum.MouseBehavior.Default
 		UserInputService.MouseIconEnabled = true
@@ -3880,16 +4127,16 @@ local function SetMenuVisible(visible)
 		ApplyUITransparency()
 
 		Main.GroupTransparency = 1
-		MainScale.Scale = 0.94
+		MainScale.Scale = (State.uiScale / 100) * 0.94
 		TopBar.Position = UDim2.fromOffset(0, -8)
 		Sidebar.Position = UDim2.fromOffset(-14, 68)
-		Content.Position = UDim2.fromOffset(198, 68)
+		Content.Position = UDim2.fromOffset(192, 68)
 
-		Tween(MainScale, 0.42, {Scale = 1}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+		Tween(MainScale, 0.42, {Scale = State.uiScale / 100}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 		Tween(Main, 0.28, {GroupTransparency = 0}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 		Tween(TopBar, 0.34, {Position = UDim2.fromOffset(0, 0)}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 		Tween(Sidebar, 0.38, {Position = UDim2.fromOffset(0, 68)}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-		Tween(Content, 0.40, {Position = UDim2.fromOffset(190, 68)}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+		Tween(Content, 0.40, {Position = UDim2.fromOffset(184, 68)}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	else
 		StopSpeedManipulation()
 		Capture = nil
@@ -3902,10 +4149,10 @@ local function SetMenuVisible(visible)
 		UserInputService.MouseBehavior = Enum.MouseBehavior.Default
 		UserInputService.MouseIconEnabled = PreviousMouseIconEnabled
 
-		Tween(MainScale, 0.24, {Scale = 0.96}, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+		Tween(MainScale, 0.24, {Scale = (State.uiScale / 100) * 0.96}, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
 		Tween(Main, 0.20, {GroupTransparency = 1}, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
 		Tween(Sidebar, 0.20, {Position = UDim2.fromOffset(-8, 68)}, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
-		Tween(Content, 0.20, {Position = UDim2.fromOffset(196, 68)}, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+		Tween(Content, 0.20, {Position = UDim2.fromOffset(190, 68)}, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
 
 		task.delay(0.22, function()
 			if id ~= MenuAnimationId or State.menuVisible then
@@ -3913,14 +4160,19 @@ local function SetMenuVisible(visible)
 			end
 			Main.Visible = false
 			Sidebar.Position = UDim2.fromOffset(0, 68)
-			Content.Position = UDim2.fromOffset(190, 68)
+			Content.Position = UDim2.fromOffset(184, 68)
 			TopBar.Position = UDim2.fromOffset(0, 0)
 
-			UserInputService.MouseBehavior = PreviousMouseBehavior
-			UserInputService.MouseIconEnabled = PreviousMouseIconEnabled
+			if State.freecam and Extra.Freecam.active then
+				UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+				UserInputService.MouseIconEnabled = false
+			else
+				UserInputService.MouseBehavior = PreviousMouseBehavior
+				UserInputService.MouseIconEnabled = PreviousMouseIconEnabled
+			end
 
 			task.defer(function()
-				if not State.menuVisible then
+				if not State.menuVisible and not State.freecam then
 					UserInputService.MouseBehavior = PreviousMouseBehavior
 					UserInputService.MouseIconEnabled = PreviousMouseIconEnabled
 				end
@@ -4094,22 +4346,6 @@ Bind(RunService.Stepped, function()
 		RestoreLocalCollision()
 	end
 
-	if State.speedManipulation and character then
-		local humanoid = character:FindFirstChildOfClass("Humanoid")
-
-		if humanoid then
-			humanoid.WalkSpeed = 2
-		end
-
-		for _, object in ipairs(character:GetDescendants()) do
-			if object:IsA("BasePart") then
-				if SpeedManipSavedCollision[object] == nil then
-					SpeedManipSavedCollision[object] = object.CanCollide
-				end
-				object.CanCollide = false
-			end
-		end
-	end
 end)
 
 Bind(RunService.Heartbeat, function()
@@ -4161,6 +4397,14 @@ Bind(RunService.Heartbeat, function()
 		ClearPlayerEsp()
 	end
 
+	if State.friendEsp then
+		for _, player in ipairs(Players:GetPlayers()) do
+			if player ~= LocalPlayer then Extra.EnsureFriendEsp(player) end
+		end
+	elseif next(Extra.FriendEspObjects) then
+		Extra.ClearFriendEsp()
+	end
+
 	if State.entityEsp then
 		for model in pairs(EntityEspObjects) do
 			if model and model.Parent then
@@ -4172,19 +4416,35 @@ Bind(RunService.Heartbeat, function()
 	elseif next(EntityEspObjects) then
 		ClearEntityEsp()
 	end
+
+	if State.itemEsp then
+		for object in pairs(Extra.ItemEspObjects) do if object and object.Parent then Extra.EnsureGenericEsp(Extra.ItemEspObjects, object, "item") else Extra.DestroyGenericEsp(Extra.ItemEspObjects, object) end end
+	elseif next(Extra.ItemEspObjects) then Extra.ClearGenericEsp("item") end
+
+	if State.objectiveEsp then
+		for object in pairs(Extra.ObjectiveEspObjects) do if object and object.Parent then Extra.EnsureGenericEsp(Extra.ObjectiveEspObjects, object, "objective") else Extra.DestroyGenericEsp(Extra.ObjectiveEspObjects, object) end end
+	elseif next(Extra.ObjectiveEspObjects) then Extra.ClearGenericEsp("objective") end
 end)
 
 Bind(Workspace.DescendantAdded, function(object)
-	if State.entityEsp then
-		task.defer(function()
-			local model = object:IsA("Model") and object or object:FindFirstAncestorOfClass("Model")
-			if model and model.Parent then
-				EnsureEntityEsp(model)
+	task.defer(function()
+		local model = object:IsA("Model") and object or object:FindFirstAncestorOfClass("Model")
+		if model and model.Parent then
+			if State.entityEsp then EnsureEntityEsp(model) end
+			if State.entitySpawnWarning and IsPotentiallyHostile(model) and not Extra.WarnedEntities[model] then
+				Extra.WarnedEntities[model] = true
+				Extra.Toast((Language == "ptbr" and "Entidade detectada: " or "Entity detected: ") .. model.Name, true)
 			end
-		end)
-	end
+		end
+		if State.itemEsp and Extra.IsItem(object) then Extra.EnsureGenericEsp(Extra.ItemEspObjects, object, "item") end
+		if State.objectiveEsp and Extra.IsObjective(object) then Extra.EnsureGenericEsp(Extra.ObjectiveEspObjects, object, "objective") end
+		if (State.hideParticles or State.performanceMode) and (object:IsA("ParticleEmitter") or object:IsA("Trail") or object:IsA("Beam") or object:IsA("Smoke") or object:IsA("Fire") or object:IsA("Sparkles")) then
+			if Extra.ParticleSaved[object] == nil then Extra.ParticleSaved[object] = object.Enabled end
+			object.Enabled = false
+		end
+	end)
 
-	if State.lowGraphics then
+	if State.lowGraphics or State.performanceMode then
 		task.defer(function()
 			if object.Parent then
 				ApplyLowToObject(object)
@@ -4272,13 +4532,33 @@ Bind(RunService.RenderStepped, function(deltaTime)
 				movement = movement.Unit * State.flySpeed
 			end
 
-			FlyVelocity.Velocity = movement
-			FlyGyro.CFrame = CFrame.lookAt(
-				root.Position,
-				root.Position + forward
-			)
+			FlyVelocity.VectorVelocity = movement
+			local align = FlyGyro:FindFirstChild("KHubFlyAlign")
+			if align then align.CFrame = CFrame.lookAt(root.Position, root.Position + forward) end
 		end
 	end
+
+	if State.freecam and Extra.Freecam.active and Camera then
+		Camera.CameraType = Enum.CameraType.Scriptable
+		if not State.menuVisible then
+			local delta = UserInputService:GetMouseDelta()
+			Extra.Freecam.yaw -= delta.X * 0.0024
+			Extra.Freecam.pitch = math.clamp((Extra.Freecam.pitch or 0) - delta.Y * 0.0024, -1.45, 1.45)
+			local rotation = CFrame.fromOrientation(Extra.Freecam.pitch or 0, Extra.Freecam.yaw or 0, 0)
+			local move = Vector3.zero
+			if UserInputService:IsKeyDown(Enum.KeyCode.W) then move += rotation.LookVector end
+			if UserInputService:IsKeyDown(Enum.KeyCode.S) then move -= rotation.LookVector end
+			if UserInputService:IsKeyDown(Enum.KeyCode.D) then move += rotation.RightVector end
+			if UserInputService:IsKeyDown(Enum.KeyCode.A) then move -= rotation.RightVector end
+			if UserInputService:IsKeyDown(Enum.KeyCode.E) then move += Vector3.yAxis end
+			if UserInputService:IsKeyDown(Enum.KeyCode.Q) then move -= Vector3.yAxis end
+			if move.Magnitude > 0 then Extra.Freecam.position += move.Unit * State.freecamSpeed * deltaTime end
+			Camera.CFrame = CFrame.new(Extra.Freecam.position) * rotation
+		end
+	end
+	if State.fov and Camera then Camera.FieldOfView = State.fovValue end
+	if State.brightness then Lighting.Brightness = State.brightnessValue end
+	if State.noFog then Extra.EnableNoFog() end
 
 	if RuntimeCounters.frameElapsed >= 0.5 then
 		RuntimeCounters.currentFps = math.floor((RuntimeCounters.frameCount / RuntimeCounters.frameElapsed) + 0.5)
@@ -4309,6 +4589,19 @@ end)
 
 Bind(Players.PlayerRemoving, function(player)
 	DestroyPlayerEsp(player)
+	Extra.DestroyFriendEsp(player)
+	Extra.FriendCache[player.UserId] = nil
+	Extra.FriendPending[player.UserId] = nil
+	if Extra.SelectedSpectate == player then task.defer(Extra.UpdateSpectate) end
+end)
+Bind(Players.PlayerAdded, function(player)
+	task.defer(Extra.UpdateSpectate)
+	if State.friendEsp then
+		task.spawn(function()
+			Extra.RefreshFriendStatus(player)
+			if State.friendEsp then Extra.EnsureFriendEsp(player) end
+		end)
+	end
 end)
 
 Bind(LocalPlayer.CharacterAdded, function(character)
@@ -4327,10 +4620,8 @@ Bind(LocalPlayer.CharacterAdded, function(character)
 			humanoid.WalkSpeed = State.walkSpeedValue
 		end
 
-		if State.fly then
-			task.wait(0.3)
-			CreateFly()
-		end
+		if State.fly then task.wait(0.3); CreateFly() end
+		if State.spectate then Extra.UpdateSpectate() end
 	end)
 end)
 
@@ -4379,8 +4670,17 @@ local function Cleanup()
 	State.walkSpeed = false
 	State.fly = false
 	State.playerEsp = false
+	State.friendEsp = false
 	State.entityEsp = false
-	State.graphicsBoost = false
+	State.itemEsp = false
+	State.objectiveEsp = false
+	State.fov = false
+	State.freecam = false
+	State.spectate = false
+	State.noFog = false
+	State.brightness = false
+	State.hideParticles = false
+	State.performanceMode = false
 	State.lowGraphics = false
 	State.fullBright = false
 	State.fpsVisible = false
@@ -4399,8 +4699,16 @@ local function Cleanup()
 	RestoreLocalCollision()
 	RestoreOtherCollision()
 	ClearPlayerEsp()
+	Extra.ClearFriendEsp()
 	ClearEntityEsp()
-	DisableUltraGraphics()
+	Extra.ClearGenericEsp("item")
+	Extra.ClearGenericEsp("objective")
+	Extra.StopFreecam()
+	Extra.StopSpectate()
+	Extra.DisableNoFog()
+	if Extra.OriginalFov then Camera.FieldOfView = Extra.OriginalFov end
+	if Extra.VisualSaved.brightness ~= nil then Lighting.Brightness = Extra.VisualSaved.brightness; Extra.VisualSaved.brightness = nil end
+	Extra.SetParticlesHidden(false)
 	DisableLowGraphics()
 	DisableFullBright()
 	DisableInstantInteract()
@@ -4419,81 +4727,96 @@ local function Cleanup()
 		ScreenGui:Destroy()
 	end
 
-	if _G.LostHubCleanup == Cleanup then
-		_G.LostHubCleanup = nil
+	if _G.KHubCleanup == Cleanup then
+		_G.KHubCleanup = nil
 	end
 end
 
-_G.LostHubCleanup = Cleanup
+_G.KHubCleanup = Cleanup
 
 SelectPage("Info")
 ApplyPanelBackground()
 ApplyUITransparency()
-SetFpsVisible(false)
-SetClockVisible(false)
+for id, setter in pairs(ToggleSetters) do
+	if State[id] == true and id ~= "rememberSettings" then pcall(setter, true) end
+end
+if State.rememberSettings and ToggleSetters.rememberSettings then pcall(ToggleSetters.rememberSettings, true) end
+SetFpsVisible(State.fpsVisible)
+SetClockVisible(State.clockVisible)
 RefreshStatusPage()
 ApplyLanguage()
 
+-- Warm the friendship cache in the background so Friend ESP appears quickly when enabled.
+task.spawn(function()
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer then
+			task.spawn(function() Extra.RefreshFriendStatus(player) end)
+		end
+	end
+end)
+
 task.spawn(function()
 	local ok, err = pcall(function()
-		-- Minimal K hub intro: calm reveal, breathing icon and a clean progress pass.
-	IntroParts.IconBox.BackgroundTransparency = 1
-	IntroParts.IconStroke.Transparency = 1
-	IntroParts.Icon.ImageTransparency = 1
-	IntroParts.Progress.BackgroundTransparency = 1
-	IntroParts.ProgressFill.BackgroundTransparency = 1
+		IntroParts.IconBox.BackgroundTransparency = 1
+		IntroParts.IconStroke.Transparency = 1
+		IntroParts.Icon.ImageTransparency = 1
+		IntroParts.Progress.BackgroundTransparency = 1
+		IntroParts.ProgressFill.BackgroundTransparency = 1
+		IntroParts.K.TextTransparency = 1; IntroParts.Hub.TextTransparency = 1
+		IntroParts.Status.TextTransparency = 1; IntroParts.Tagline.TextTransparency = 1
 
-	Tween(IntroParts.Gradient, 5.65, {Rotation = 24}, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
-	Tween(IntroParts.Glow, 0.80, {
-		Size = UDim2.fromOffset(210, 210),
-		BackgroundTransparency = 0.955
-	}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-	Tween(IntroParts.IconBox, 0.62, {BackgroundTransparency = 0.04}, Enum.EasingStyle.Quint)
-	Tween(IntroParts.IconStroke, 0.70, {Transparency = 0.50}, Enum.EasingStyle.Quint)
-	Tween(IntroParts.Icon, 0.58, {ImageTransparency = 0}, Enum.EasingStyle.Quint)
-	Tween(IntroParts.IconScale, 0.76, {Scale = 1}, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+		Tween(IntroParts.Gradient, 6.40, {Rotation = 38}, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+		Tween(IntroParts.Glow, 0.90, {Size = UDim2.fromOffset(238, 238), BackgroundTransparency = 0.958}, Enum.EasingStyle.Quint)
+		Tween(IntroParts.RingStroke, 0.70, {Transparency = 0.48}, Enum.EasingStyle.Quint)
+		Tween(IntroParts.RingInnerStroke, 0.95, {Transparency = 0.74}, Enum.EasingStyle.Quint)
+		Tween(IntroParts.SparkA, 0.55, {BackgroundTransparency = 0.18}, Enum.EasingStyle.Sine)
+		Tween(IntroParts.SparkB, 0.72, {BackgroundTransparency = 0.25}, Enum.EasingStyle.Sine)
+		task.wait(0.34)
+		Tween(IntroParts.IconBox, 0.70, {BackgroundTransparency = 0.03}, Enum.EasingStyle.Quint)
+		Tween(IntroParts.IconStroke, 0.75, {Transparency = 0.58}, Enum.EasingStyle.Quint)
+		Tween(IntroParts.Icon, 0.58, {ImageTransparency = 0}, Enum.EasingStyle.Quint)
+		Tween(IntroParts.IconScale, 0.82, {Scale = 1}, Enum.EasingStyle.Back)
+		task.wait(0.78)
+		Tween(IntroParts.K, 0.38, {TextTransparency = 0}, Enum.EasingStyle.Quint)
+		task.wait(0.08)
+		Tween(IntroParts.Hub, 0.46, {TextTransparency = 0}, Enum.EasingStyle.Quint)
+		Tween(IntroParts.Tagline, 0.55, {TextTransparency = 0}, Enum.EasingStyle.Sine)
+		task.wait(0.42)
+		IntroParts.Status.Text = Language == "ptbr" and "preparando interface" or "preparing interface"
+		Tween(IntroParts.Status, 0.30, {TextTransparency = 0}, Enum.EasingStyle.Sine)
+		Tween(IntroParts.Progress, 0.30, {BackgroundTransparency = 0.24}, Enum.EasingStyle.Sine)
+		Tween(IntroParts.ProgressFill, 0.30, {BackgroundTransparency = 0.05}, Enum.EasingStyle.Sine)
+		Tween(IntroParts.ProgressFill, 3.50, {Size = UDim2.fromScale(1, 1)}, Enum.EasingStyle.Quint)
 
-	task.wait(0.72)
-	Tween(IntroParts.K, 0.38, {TextTransparency = 0}, Enum.EasingStyle.Quint)
-	task.wait(0.10)
-	Tween(IntroParts.Hub, 0.44, {TextTransparency = 0}, Enum.EasingStyle.Quint)
-	task.wait(0.30)
-	Tween(IntroParts.Status, 0.34, {TextTransparency = 0}, Enum.EasingStyle.Sine)
-	Tween(IntroParts.Progress, 0.30, {BackgroundTransparency = 0.20}, Enum.EasingStyle.Sine)
-	Tween(IntroParts.ProgressFill, 0.30, {BackgroundTransparency = 0.12}, Enum.EasingStyle.Sine)
-	Tween(IntroParts.Dot, 0.30, {BackgroundTransparency = 0.12}, Enum.EasingStyle.Sine)
+		task.spawn(function()
+			for i = 1, 4 do
+				if Destroyed then return end
+				Tween(IntroParts.IconScale, 0.46, {Scale = 1.035}, Enum.EasingStyle.Sine)
+				Tween(IntroParts.RingOuter, 0.72, {Size = UDim2.fromOffset(150, 150)}, Enum.EasingStyle.Sine)
+				Tween(IntroParts.SparkA, 0.72, {Position = UDim2.new(0.5, -74 + i * 3, 0.46, -60 + i * 2), BackgroundTransparency = 0.55}, Enum.EasingStyle.Sine)
+				task.wait(0.46)
+				Tween(IntroParts.IconScale, 0.50, {Scale = 1}, Enum.EasingStyle.Sine)
+				Tween(IntroParts.RingOuter, 0.70, {Size = UDim2.fromOffset(138, 138)}, Enum.EasingStyle.Sine)
+				task.wait(0.46)
+			end
+		end)
 
-	Tween(IntroParts.ProgressFill, 3.60, {Size = UDim2.fromScale(1, 1)}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-	Tween(IntroParts.Dot, 3.60, {Position = UDim2.new(0.5, 110, 0.46, 137)}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-
-	task.spawn(function()
-		for _ = 1, 4 do
-			if Destroyed then return end
-			Tween(IntroParts.IconScale, 0.44, {Scale = 1.035}, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
-			Tween(IntroParts.Glow, 0.44, {Size = UDim2.fromOffset(224, 224), BackgroundTransparency = 0.965}, Enum.EasingStyle.Sine)
-			task.wait(0.44)
-			Tween(IntroParts.IconScale, 0.48, {Scale = 1}, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
-			Tween(IntroParts.Glow, 0.48, {Size = UDim2.fromOffset(205, 205), BackgroundTransparency = 0.95}, Enum.EasingStyle.Sine)
-			task.wait(0.48)
-		end
-	end)
-
-	task.wait(3.78)
-	if Destroyed then return end
-
-	IntroParts.Status.Text = "ready"
-	Tween(IntroParts.Status, 0.18, {TextColor3 = Theme.Light}, Enum.EasingStyle.Sine)
-	task.wait(0.42)
-
-	Tween(IntroParts.IconScale, 0.32, {Scale = 0.94}, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
-	local fade = Tween(Intro, 0.52, {GroupTransparency = 1}, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
-	fade.Completed:Wait()
-
+		task.wait(1.25)
+		IntroParts.Status.Text = Language == "ptbr" and "carregando recursos" or "loading features"
+		task.wait(1.15)
+		IntroParts.Status.Text = Language == "ptbr" and "quase pronto" or "almost ready"
+		task.wait(1.18)
+		IntroParts.Status.Text = Language == "ptbr" and "pronto" or "ready"
+		IntroParts.Status.TextColor3 = Theme.Light
+		Tween(IntroParts.RingStroke, 0.30, {Transparency = 0.82}, Enum.EasingStyle.Sine)
+		task.wait(0.52)
+		Tween(IntroParts.IconScale, 0.34, {Scale = 0.94}, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+		local fade = Tween(Intro, 0.60, {GroupTransparency = 1}, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+		fade.Completed:Wait()
 		if Destroyed then return end
 		Intro.Visible = false
 		SetMenuVisible(true)
 	end)
-
 	if not ok and not Destroyed then
 		warn("[K hub] Intro failed: " .. tostring(err))
 		Intro.Visible = false
