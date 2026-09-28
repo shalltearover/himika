@@ -31,7 +31,7 @@ local Camera = Workspace.CurrentCamera
 local BACKGROUND_ASSET_ID = 10039618753
 local HUB_ICON_ASSET_ID = 11878291148
 
-local oldGui = PlayerGui:FindFirstChild("LostHub")
+local oldGui = PlayerGui:FindFirstChild("KHub") or PlayerGui:FindFirstChild("LostHub")
 if oldGui then
 	oldGui:Destroy()
 end
@@ -424,12 +424,27 @@ end
 
 local function New(className, properties, parent)
 	local object = Instance.new(className)
+
 	for key, value in pairs(properties or {}) do
-		object[key] = value
+		local ok, err = pcall(function()
+			object[key] = value
+		end)
+
+		if not ok then
+			warn(("[K hub] Failed to set %s.%s: %s"):format(className, tostring(key), tostring(err)))
+		end
 	end
+
 	if parent then
-		object.Parent = parent
+		local ok, err = pcall(function()
+			object.Parent = parent
+		end)
+
+		if not ok then
+			warn(("[K hub] Failed to parent %s: %s"):format(className, tostring(err)))
+		end
 	end
+
 	return object
 end
 
@@ -667,7 +682,7 @@ local function ApplyUITransparency()
 end
 
 local ScreenGui = New("ScreenGui", {
-	Name = "LostHub",
+	Name = "KHub",
 	ResetOnSpawn = false,
 	IgnoreGuiInset = true,
 	DisplayOrder = 2147483647,
@@ -682,23 +697,24 @@ local Intro = New("CanvasGroup", {
 	ZIndex = 2000
 }, ScreenGui)
 
-local IntroBackdrop = New("Frame", {
+local IntroParts = {}
+IntroParts.Backdrop = New("Frame", {
 	Size = UDim2.fromScale(1, 1),
 	BackgroundColor3 = Theme.Base,
 	BorderSizePixel = 0,
 	ZIndex = 2000
 }, Intro)
 
-local IntroGradient = New("UIGradient", {
+IntroParts.Gradient = New("UIGradient", {
 	Color = ColorSequence.new({
 		ColorSequenceKeypoint.new(0, Color3.fromRGB(8, 9, 12)),
 		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(14, 14, 19)),
 		ColorSequenceKeypoint.new(1, Color3.fromRGB(7, 8, 10))
 	}),
 	Rotation = -18
-}, IntroBackdrop)
+}, IntroParts.Backdrop)
 
-local IntroGlow = New("Frame", {
+IntroParts.Glow = New("Frame", {
 	Size = UDim2.fromOffset(160, 160),
 	AnchorPoint = Vector2.new(0.5, 0.5),
 	Position = UDim2.fromScale(0.5, 0.46),
@@ -707,9 +723,9 @@ local IntroGlow = New("Frame", {
 	BorderSizePixel = 0,
 	ZIndex = 2001
 }, Intro)
-Corner(IntroGlow, 80)
+Corner(IntroParts.Glow, 80)
 
-local IntroIconBox = New("Frame", {
+IntroParts.IconBox = New("Frame", {
 	Size = UDim2.fromOffset(82, 82),
 	AnchorPoint = Vector2.new(0.5, 0.5),
 	Position = UDim2.fromScale(0.5, 0.46),
@@ -718,10 +734,10 @@ local IntroIconBox = New("Frame", {
 	BorderSizePixel = 0,
 	ZIndex = 2003
 }, Intro)
-Corner(IntroIconBox, 20)
-local IntroIconStroke = Stroke(IntroIconBox, 0.50, 1, Theme.Stroke)
+Corner(IntroParts.IconBox, 20)
+IntroParts.IconStroke = Stroke(IntroParts.IconBox, 0.50, 1, Theme.Stroke)
 
-local IntroIcon = New("ImageLabel", {
+IntroParts.Icon = New("ImageLabel", {
 	Size = UDim2.fromOffset(54, 54),
 	AnchorPoint = Vector2.new(0.5, 0.5),
 	Position = UDim2.fromScale(0.5, 0.5),
@@ -729,11 +745,11 @@ local IntroIcon = New("ImageLabel", {
 	Image = AssetThumbnail(HUB_ICON_ASSET_ID),
 	ImageTransparency = 0,
 	ZIndex = 2004
-}, IntroIconBox)
+}, IntroParts.IconBox)
 
-local IntroIconScale = New("UIScale", {Scale = 0.72}, IntroIconBox)
+IntroParts.IconScale = New("UIScale", {Scale = 0.72}, IntroParts.IconBox)
 
-local IntroK = New("TextLabel", {
+IntroParts.K = New("TextLabel", {
 	Size = UDim2.fromOffset(28, 30),
 	AnchorPoint = Vector2.new(1, 0.5),
 	Position = UDim2.new(0.5, -3, 0.46, 78),
@@ -747,7 +763,7 @@ local IntroK = New("TextLabel", {
 	ZIndex = 2004
 }, Intro)
 
-local IntroHub = New("TextLabel", {
+IntroParts.Hub = New("TextLabel", {
 	Size = UDim2.fromOffset(52, 30),
 	AnchorPoint = Vector2.new(0, 0.5),
 	Position = UDim2.new(0.5, 3, 0.46, 78),
@@ -761,7 +777,7 @@ local IntroHub = New("TextLabel", {
 	ZIndex = 2004
 }, Intro)
 
-local IntroStatus = New("TextLabel", {
+IntroParts.Status = New("TextLabel", {
 	Size = UDim2.fromOffset(220, 18),
 	AnchorPoint = Vector2.new(0.5, 0.5),
 	Position = UDim2.new(0.5, 0, 0.46, 111),
@@ -774,7 +790,7 @@ local IntroStatus = New("TextLabel", {
 	ZIndex = 2004
 }, Intro)
 
-local IntroProgress = New("Frame", {
+IntroParts.Progress = New("Frame", {
 	Size = UDim2.fromOffset(220, 2),
 	AnchorPoint = Vector2.new(0.5, 0.5),
 	Position = UDim2.new(0.5, 0, 0.46, 137),
@@ -783,18 +799,18 @@ local IntroProgress = New("Frame", {
 	BorderSizePixel = 0,
 	ZIndex = 2002
 }, Intro)
-Corner(IntroProgress, 1)
+Corner(IntroParts.Progress, 1)
 
-local IntroProgressFill = New("Frame", {
+IntroParts.ProgressFill = New("Frame", {
 	Size = UDim2.fromScale(0, 1),
 	BackgroundColor3 = Theme.PurpleBright,
 	BackgroundTransparency = 0.12,
 	BorderSizePixel = 0,
 	ZIndex = 2003
-}, IntroProgress)
-Corner(IntroProgressFill, 1)
+}, IntroParts.Progress)
+Corner(IntroParts.ProgressFill, 1)
 
-local IntroDot = New("Frame", {
+IntroParts.Dot = New("Frame", {
 	Size = UDim2.fromOffset(5, 5),
 	AnchorPoint = Vector2.new(0.5, 0.5),
 	Position = UDim2.new(0.5, -118, 0.46, 137),
@@ -803,7 +819,7 @@ local IntroDot = New("Frame", {
 	BorderSizePixel = 0,
 	ZIndex = 2004
 }, Intro)
-Corner(IntroDot, 3)
+Corner(IntroParts.Dot, 3)
 
 local Main = New("CanvasGroup", {
 	Name = "Main",
@@ -3279,7 +3295,8 @@ CreateToggle(GraphicsPage, {
 
 Section(StatusPage, "status_title", "status_subtitle", 1)
 
-local StatusSummary = New("Frame", {
+local StatusUI = {}
+StatusUI.Summary = New("Frame", {
 	Size = UDim2.new(1, 0, 0, 78),
 	BackgroundColor3 = Theme.Surface,
 	BackgroundTransparency = 0.08,
@@ -3287,10 +3304,10 @@ local StatusSummary = New("Frame", {
 	LayoutOrder = 2,
 	ZIndex = 46
 }, StatusPage)
-Corner(StatusSummary, 9)
-RegisterUITransparency(StatusSummary, 0.08)
+Corner(StatusUI.Summary, 9)
+RegisterUITransparency(StatusUI.Summary, 0.08)
 
-local ExecutionsLabel = New("TextLabel", {
+StatusUI.ExecutionsLabel = New("TextLabel", {
 	Size = UDim2.new(1, -28, 0, 22),
 	Position = UDim2.fromOffset(14, 13),
 	BackgroundTransparency = 1,
@@ -3299,9 +3316,9 @@ local ExecutionsLabel = New("TextLabel", {
 	Font = Enum.Font.GothamSemibold,
 	TextXAlignment = Enum.TextXAlignment.Left,
 	ZIndex = 47
-}, StatusSummary)
+}, StatusUI.Summary)
 
-local ActiveCountLabel = New("TextLabel", {
+StatusUI.ActiveCountLabel = New("TextLabel", {
 	Size = UDim2.new(1, -28, 0, 18),
 	Position = UDim2.fromOffset(14, 42),
 	BackgroundTransparency = 1,
@@ -3310,9 +3327,9 @@ local ActiveCountLabel = New("TextLabel", {
 	Font = Enum.Font.GothamBold,
 	TextXAlignment = Enum.TextXAlignment.Left,
 	ZIndex = 47
-}, StatusSummary)
+}, StatusUI.Summary)
 
-local ActiveCard = New("Frame", {
+StatusUI.ActiveCard = New("Frame", {
 	Size = UDim2.new(1, 0, 0, 84),
 	BackgroundColor3 = Theme.Surface,
 	BackgroundTransparency = 0.08,
@@ -3320,10 +3337,10 @@ local ActiveCard = New("Frame", {
 	LayoutOrder = 3,
 	ZIndex = 46
 }, StatusPage)
-Corner(ActiveCard, 9)
-RegisterUITransparency(ActiveCard, 0.08)
+Corner(StatusUI.ActiveCard, 9)
+RegisterUITransparency(StatusUI.ActiveCard, 0.08)
 
-local ActiveList = New("TextLabel", {
+StatusUI.ActiveList = New("TextLabel", {
 	Size = UDim2.new(1, -28, 0, 58),
 	Position = UDim2.fromOffset(14, 13),
 	BackgroundTransparency = 1,
@@ -3334,9 +3351,9 @@ local ActiveList = New("TextLabel", {
 	TextXAlignment = Enum.TextXAlignment.Left,
 	TextYAlignment = Enum.TextYAlignment.Top,
 	ZIndex = 47
-}, ActiveCard)
+}, StatusUI.ActiveCard)
 
-local DisabledCard = New("Frame", {
+StatusUI.DisabledCard = New("Frame", {
 	Size = UDim2.new(1, 0, 0, 132),
 	BackgroundColor3 = Theme.Surface,
 	BackgroundTransparency = 0.08,
@@ -3344,8 +3361,8 @@ local DisabledCard = New("Frame", {
 	LayoutOrder = 4,
 	ZIndex = 46
 }, StatusPage)
-Corner(DisabledCard, 9)
-RegisterUITransparency(DisabledCard, 0.08)
+Corner(StatusUI.DisabledCard, 9)
+RegisterUITransparency(StatusUI.DisabledCard, 0.08)
 
 RegisterText(
 	New("TextLabel", {
@@ -3357,11 +3374,11 @@ RegisterText(
 		Font = Enum.Font.GothamBold,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ZIndex = 47
-	}, DisabledCard),
+	}, StatusUI.DisabledCard),
 	"disabled"
 )
 
-local DisabledList = New("TextLabel", {
+StatusUI.DisabledList = New("TextLabel", {
 	Size = UDim2.new(1, -28, 0, 92),
 	Position = UDim2.fromOffset(14, 34),
 	BackgroundTransparency = 1,
@@ -3372,7 +3389,7 @@ local DisabledList = New("TextLabel", {
 	TextXAlignment = Enum.TextXAlignment.Left,
 	TextYAlignment = Enum.TextYAlignment.Top,
 	ZIndex = 47
-}, DisabledCard)
+}, StatusUI.DisabledCard)
 
 local FeatureNameKeys = {
 	{"antiFling", "anti_fling"},
@@ -3402,19 +3419,19 @@ RefreshStatusPage = function()
 		end
 	end
 
-	ExecutionsLabel.Text = T("executions")
+	StatusUI.ExecutionsLabel.Text = T("executions")
 		.. ": "
 		.. tostring(_G.LostHubExecutionCount or 1)
 
-	ActiveCountLabel.Text = T("active")
+	StatusUI.ActiveCountLabel.Text = T("active")
 		.. ": "
 		.. tostring(#active)
 
-	ActiveList.Text = #active > 0
+	StatusUI.ActiveList.Text = #active > 0
 		and table.concat(active, "  ·  ")
 		or T("none")
 
-	DisabledList.Text = #disabled > 0
+	StatusUI.DisabledList.Text = #disabled > 0
 		and table.concat(disabled, "  ·  ")
 		or T("none")
 end
@@ -3443,7 +3460,8 @@ CreateHotkeyRow(
 	3
 )
 
-local BlurRow = New("Frame", {
+local SettingsUI = {}
+SettingsUI.BlurRow = New("Frame", {
 	Size = UDim2.new(1, 0, 0, 84),
 	BackgroundColor3 = Theme.Surface,
 	BackgroundTransparency = 0.08,
@@ -3451,8 +3469,8 @@ local BlurRow = New("Frame", {
 	LayoutOrder = 4,
 	ZIndex = 46
 }, SettingsPage)
-Corner(BlurRow, 9)
-RegisterUITransparency(BlurRow, 0.08)
+Corner(SettingsUI.BlurRow, 9)
+RegisterUITransparency(SettingsUI.BlurRow, 0.08)
 
 RegisterText(
 	New("TextLabel", {
@@ -3464,7 +3482,7 @@ RegisterText(
 		Font = Enum.Font.GothamSemibold,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ZIndex = 47
-	}, BlurRow),
+	}, SettingsUI.BlurRow),
 	"panel_blur"
 )
 
@@ -3478,12 +3496,12 @@ RegisterText(
 		Font = Enum.Font.Gotham,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ZIndex = 47
-	}, BlurRow),
+	}, SettingsUI.BlurRow),
 	"panel_blur_sub"
 )
 
 CreateSlider(
-	BlurRow,
+	SettingsUI.BlurRow,
 	63,
 	0,
 	100,
@@ -3495,7 +3513,7 @@ CreateSlider(
 	true
 )
 
-local BrightnessRow = New("Frame", {
+SettingsUI.BrightnessRow = New("Frame", {
 	Size = UDim2.new(1, 0, 0, 84),
 	BackgroundColor3 = Theme.Surface,
 	BackgroundTransparency = 0.08,
@@ -3503,8 +3521,8 @@ local BrightnessRow = New("Frame", {
 	LayoutOrder = 5,
 	ZIndex = 46
 }, SettingsPage)
-Corner(BrightnessRow, 9)
-RegisterUITransparency(BrightnessRow, 0.08)
+Corner(SettingsUI.BrightnessRow, 9)
+RegisterUITransparency(SettingsUI.BrightnessRow, 0.08)
 
 RegisterText(
 	New("TextLabel", {
@@ -3516,7 +3534,7 @@ RegisterText(
 		Font = Enum.Font.GothamSemibold,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ZIndex = 47
-	}, BrightnessRow),
+	}, SettingsUI.BrightnessRow),
 	"background_brightness"
 )
 
@@ -3530,12 +3548,12 @@ RegisterText(
 		Font = Enum.Font.Gotham,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ZIndex = 47
-	}, BrightnessRow),
+	}, SettingsUI.BrightnessRow),
 	"background_brightness_sub"
 )
 
 CreateSlider(
-	BrightnessRow,
+	SettingsUI.BrightnessRow,
 	63,
 	0,
 	100,
@@ -3547,7 +3565,7 @@ CreateSlider(
 	true
 )
 
-local TransparencyRow = New("Frame", {
+SettingsUI.TransparencyRow = New("Frame", {
 	Size = UDim2.new(1, 0, 0, 84),
 	BackgroundColor3 = Theme.Surface,
 	BackgroundTransparency = 0.08,
@@ -3555,8 +3573,8 @@ local TransparencyRow = New("Frame", {
 	LayoutOrder = 6,
 	ZIndex = 46
 }, SettingsPage)
-Corner(TransparencyRow, 9)
-RegisterUITransparency(TransparencyRow, 0.08)
+Corner(SettingsUI.TransparencyRow, 9)
+RegisterUITransparency(SettingsUI.TransparencyRow, 0.08)
 
 RegisterText(
 	New("TextLabel", {
@@ -3568,7 +3586,7 @@ RegisterText(
 		Font = Enum.Font.GothamSemibold,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ZIndex = 47
-	}, TransparencyRow),
+	}, SettingsUI.TransparencyRow),
 	"ui_transparency"
 )
 
@@ -3582,12 +3600,12 @@ RegisterText(
 		Font = Enum.Font.Gotham,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ZIndex = 47
-	}, TransparencyRow),
+	}, SettingsUI.TransparencyRow),
 	"ui_transparency_sub"
 )
 
 CreateSlider(
-	TransparencyRow,
+	SettingsUI.TransparencyRow,
 	63,
 	0,
 	90,
@@ -3600,7 +3618,7 @@ CreateSlider(
 	true
 )
 
-local LanguageRow = New("Frame", {
+SettingsUI.LanguageRow = New("Frame", {
 	Size = UDim2.new(1, 0, 0, 64),
 	BackgroundColor3 = Theme.Surface,
 	BackgroundTransparency = 0.08,
@@ -3608,8 +3626,8 @@ local LanguageRow = New("Frame", {
 	LayoutOrder = 7,
 	ZIndex = 46
 }, SettingsPage)
-Corner(LanguageRow, 9)
-RegisterUITransparency(LanguageRow, 0.08)
+Corner(SettingsUI.LanguageRow, 9)
+RegisterUITransparency(SettingsUI.LanguageRow, 0.08)
 
 RegisterText(
 	New("TextLabel", {
@@ -3621,7 +3639,7 @@ RegisterText(
 		Font = Enum.Font.GothamSemibold,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ZIndex = 47
-	}, LanguageRow),
+	}, SettingsUI.LanguageRow),
 	"language"
 )
 
@@ -3635,11 +3653,11 @@ RegisterText(
 		Font = Enum.Font.Gotham,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ZIndex = 47
-	}, LanguageRow),
+	}, SettingsUI.LanguageRow),
 	"language_sub"
 )
 
-local LanguageButton = New("TextButton", {
+SettingsUI.LanguageButton = New("TextButton", {
 	Size = UDim2.fromOffset(128, 30),
 	Position = UDim2.new(1, -142, 0.5, -15),
 	BackgroundColor3 = Theme.Surface2,
@@ -3650,15 +3668,15 @@ local LanguageButton = New("TextButton", {
 	Font = Enum.Font.GothamBold,
 	AutoButtonColor = false,
 	ZIndex = 48
-}, LanguageRow)
-Corner(LanguageButton, 7)
-Stroke(LanguageButton, 0.55, 1, Theme.Stroke)
-RegisterUITransparency(LanguageButton, 0)
+}, SettingsUI.LanguageRow)
+Corner(SettingsUI.LanguageButton, 7)
+Stroke(SettingsUI.LanguageButton, 0.55, 1, Theme.Stroke)
+RegisterUITransparency(SettingsUI.LanguageButton, 0)
 
 local function ApplyLanguage()
 	RefreshLanguage()
 
-	LanguageButton.Text = Language == "en"
+	SettingsUI.LanguageButton.Text = Language == "en"
 		and Strings.en.english
 		or Strings.ptbr.portuguese
 
@@ -3671,7 +3689,7 @@ local function ApplyLanguage()
 	RefreshStatusPage()
 end
 
-Bind(LanguageButton.MouseButton1Click, function()
+Bind(SettingsUI.LanguageButton.MouseButton1Click, function()
 	Language = Language == "en" and "ptbr" or "en"
 	ApplyLanguage()
 end)
@@ -3680,7 +3698,8 @@ Bind(Profile.MouseButton1Click, function()
 	SelectPage("Status")
 end)
 
-local StatusHud = New("CanvasGroup", {
+local HudUI = {}
+HudUI.StatusHud = New("CanvasGroup", {
 	Name = "StatusHud",
 	Size = UDim2.fromOffset(68, 34),
 	AnchorPoint = Vector2.new(0.5, 0),
@@ -3693,14 +3712,14 @@ local StatusHud = New("CanvasGroup", {
 	Visible = false,
 	ZIndex = 700
 }, ScreenGui)
-Corner(StatusHud, 9)
-RegisterUITransparency(StatusHud, 0.04)
+Corner(HudUI.StatusHud, 9)
+RegisterUITransparency(HudUI.StatusHud, 0.04)
 
-local HudScale = New("UIScale", {
+HudUI.Scale = New("UIScale", {
 	Scale = 0.96
-}, StatusHud)
+}, HudUI.StatusHud)
 
-local FpsLabel = New("TextLabel", {
+HudUI.FpsLabel = New("TextLabel", {
 	Size = UDim2.fromScale(1, 1),
 	BackgroundTransparency = 1,
 	Text = "0",
@@ -3708,9 +3727,10 @@ local FpsLabel = New("TextLabel", {
 	TextSize = 13,
 	Font = Enum.Font.GothamBold,
 	ZIndex = 701
-}, StatusHud)
+}, HudUI.StatusHud)
 
-local ClockHud = New("CanvasGroup", {
+local ClockUI = {}
+ClockUI.Hud = New("CanvasGroup", {
 	Name = "ClockHud",
 	Size = UDim2.fromOffset(92, 34),
 	AnchorPoint = Vector2.new(0.5, 0),
@@ -3723,12 +3743,12 @@ local ClockHud = New("CanvasGroup", {
 	Visible = false,
 	ZIndex = 700
 }, ScreenGui)
-Corner(ClockHud, 9)
-RegisterUITransparency(ClockHud, 0.04)
+Corner(ClockUI.Hud, 9)
+RegisterUITransparency(ClockUI.Hud, 0.04)
 
-local ClockScale = New("UIScale", {Scale = 0.96}, ClockHud)
+ClockUI.Scale = New("UIScale", {Scale = 0.96}, ClockUI.Hud)
 
-local ClockLabel = New("TextLabel", {
+ClockUI.Label = New("TextLabel", {
 	Size = UDim2.fromScale(1, 1),
 	BackgroundTransparency = 1,
 	Text = "--:--",
@@ -3736,9 +3756,9 @@ local ClockLabel = New("TextLabel", {
 	TextSize = 13,
 	Font = Enum.Font.GothamSemibold,
 	ZIndex = 701
-}, ClockHud)
+}, ClockUI.Hud)
 
-local FlyNotice = RegisterText(
+HudUI.FlyNotice = RegisterText(
 	New("TextLabel", {
 		Size = UDim2.fromOffset(260, 34),
 		AnchorPoint = Vector2.new(0.5, 0),
@@ -3756,17 +3776,17 @@ local FlyNotice = RegisterText(
 	}, ScreenGui),
 	"fly_notice"
 )
-Corner(FlyNotice, 9)
+Corner(HudUI.FlyNotice, 9)
 
 ShowFlyNotice = function()
 	FlyNoticeToken += 1
 	local token = FlyNoticeToken
 
-	FlyNotice.Visible = true
-	FlyNotice.TextTransparency = 1
-	FlyNotice.BackgroundTransparency = 1
+	HudUI.FlyNotice.Visible = true
+	HudUI.FlyNotice.TextTransparency = 1
+	HudUI.FlyNotice.BackgroundTransparency = 1
 
-	Tween(FlyNotice, 0.18, {
+	Tween(HudUI.FlyNotice, 0.18, {
 		TextTransparency = 0,
 		BackgroundTransparency = 0.05
 	}, Enum.EasingStyle.Sine)
@@ -3776,14 +3796,14 @@ ShowFlyNotice = function()
 			return
 		end
 
-		local fade = Tween(FlyNotice, 0.18, {
+		local fade = Tween(HudUI.FlyNotice, 0.18, {
 			TextTransparency = 1,
 			BackgroundTransparency = 1
 		}, Enum.EasingStyle.Sine)
 
 		fade.Completed:Once(function()
 			if token == FlyNoticeToken then
-				FlyNotice.Visible = false
+				HudUI.FlyNotice.Visible = false
 			end
 		end)
 	end)
@@ -3834,8 +3854,8 @@ local function MakeDraggable(handle, target)
 end
 
 MakeDraggable(TopBar, Main)
-MakeDraggable(StatusHud, StatusHud)
-MakeDraggable(ClockHud, ClockHud)
+MakeDraggable(HudUI.StatusHud, HudUI.StatusHud)
+MakeDraggable(ClockUI.Hud, ClockUI.Hud)
 
 local MenuAnimationId = 0
 local FpsAnimationId = 0
@@ -3915,29 +3935,29 @@ SetFpsVisible = function(visible)
 	State.fpsVisible = visible
 
 	if visible then
-		StatusHud.Visible = true
-		StatusHud.GroupTransparency = 1
-		HudScale.Scale = 0.96
+		HudUI.StatusHud.Visible = true
+		HudUI.StatusHud.GroupTransparency = 1
+		HudUI.Scale.Scale = 0.96
 
-		Tween(HudScale, 0.25, {
+		Tween(HudUI.Scale, 0.25, {
 			Scale = 1
 		}, Enum.EasingStyle.Quint)
 
-		Tween(StatusHud, 0.18, {
+		Tween(HudUI.StatusHud, 0.18, {
 			GroupTransparency = 0
 		}, Enum.EasingStyle.Sine)
 	else
-		local fade = Tween(StatusHud, 0.16, {
+		local fade = Tween(HudUI.StatusHud, 0.16, {
 			GroupTransparency = 1
 		}, Enum.EasingStyle.Sine)
 
-		Tween(HudScale, 0.16, {
+		Tween(HudUI.Scale, 0.16, {
 			Scale = 0.97
 		}, Enum.EasingStyle.Quart)
 
 		fade.Completed:Once(function()
 			if id == FpsAnimationId and not State.fpsVisible then
-				StatusHud.Visible = false
+				HudUI.StatusHud.Visible = false
 			end
 		end)
 	end
@@ -3946,17 +3966,17 @@ end
 SetClockVisible = function(visible)
 	State.clockVisible = visible
 	if visible then
-		ClockHud.Visible = true
-		ClockHud.GroupTransparency = 1
-		ClockScale.Scale = 0.96
-		Tween(ClockScale, 0.24, {Scale = 1}, Enum.EasingStyle.Quint)
-		Tween(ClockHud, 0.18, {GroupTransparency = 0}, Enum.EasingStyle.Sine)
+		ClockUI.Hud.Visible = true
+		ClockUI.Hud.GroupTransparency = 1
+		ClockUI.Scale.Scale = 0.96
+		Tween(ClockUI.Scale, 0.24, {Scale = 1}, Enum.EasingStyle.Quint)
+		Tween(ClockUI.Hud, 0.18, {GroupTransparency = 0}, Enum.EasingStyle.Sine)
 	else
-		local fade = Tween(ClockHud, 0.16, {GroupTransparency = 1}, Enum.EasingStyle.Sine)
-		Tween(ClockScale, 0.16, {Scale = 0.97}, Enum.EasingStyle.Quart)
+		local fade = Tween(ClockUI.Hud, 0.16, {GroupTransparency = 1}, Enum.EasingStyle.Sine)
+		Tween(ClockUI.Scale, 0.16, {Scale = 0.97}, Enum.EasingStyle.Quart)
 		fade.Completed:Once(function()
 			if not State.clockVisible then
-				ClockHud.Visible = false
+				ClockUI.Hud.Visible = false
 			end
 		end)
 	end
@@ -4184,19 +4204,21 @@ Bind(Workspace.DescendantAdded, function(object)
 	end
 end)
 
-local FrameCount = 0
-local FrameElapsed = 0
-local FpsAccumulator = 0
-local StatusAccumulator = 0
-local ClockAccumulator = 0
-local CurrentFps = 0
+local RuntimeCounters = {
+	frameCount = 0,
+	frameElapsed = 0,
+	fpsAccumulator = 0,
+	statusAccumulator = 0,
+	clockAccumulator = 0,
+	currentFps = 0
+}
 
 Bind(RunService.RenderStepped, function(deltaTime)
-	FrameCount += 1
-	FrameElapsed += deltaTime
-	FpsAccumulator += deltaTime
-	StatusAccumulator += deltaTime
-	ClockAccumulator += deltaTime
+	RuntimeCounters.frameCount += 1
+	RuntimeCounters.frameElapsed += deltaTime
+	RuntimeCounters.fpsAccumulator += deltaTime
+	RuntimeCounters.statusAccumulator += deltaTime
+	RuntimeCounters.clockAccumulator += deltaTime
 
 	if State.fly and FlyVelocity and FlyGyro then
 		local character = LocalPlayer.Character
@@ -4258,29 +4280,29 @@ Bind(RunService.RenderStepped, function(deltaTime)
 		end
 	end
 
-	if FrameElapsed >= 0.5 then
-		CurrentFps = math.floor((FrameCount / FrameElapsed) + 0.5)
-		FrameCount = 0
-		FrameElapsed = 0
+	if RuntimeCounters.frameElapsed >= 0.5 then
+		RuntimeCounters.currentFps = math.floor((RuntimeCounters.frameCount / RuntimeCounters.frameElapsed) + 0.5)
+		RuntimeCounters.frameCount = 0
+		RuntimeCounters.frameElapsed = 0
 	end
 
-	if FpsAccumulator >= (1 / 30) then
-		FpsLabel.Text = tostring(CurrentFps)
-		FpsAccumulator = 0
+	if RuntimeCounters.fpsAccumulator >= (1 / 30) then
+		HudUI.FpsLabel.Text = tostring(RuntimeCounters.currentFps)
+		RuntimeCounters.fpsAccumulator = 0
 	end
 
-	if StatusAccumulator >= 0.4 then
+	if RuntimeCounters.statusAccumulator >= 0.4 then
 		RefreshStatusPage()
-		StatusAccumulator = 0
+		RuntimeCounters.statusAccumulator = 0
 	end
 
-	if ClockAccumulator >= 0.5 then
-		ClockAccumulator = 0
+	if RuntimeCounters.clockAccumulator >= 0.5 then
+		RuntimeCounters.clockAccumulator = 0
 		if State.clockVisible then
 			local ok, value = pcall(function()
 				return DateTime.now():FormatLocalTime("HH:mm", "en-us")
 			end)
-			ClockLabel.Text = ok and value or os.date("%H:%M")
+			ClockUI.Label.Text = ok and value or os.date("%H:%M")
 		end
 	end
 end)
@@ -4331,7 +4353,7 @@ task.spawn(function()
 end)
 
 task.spawn(function()
-	local preload = {Background, HubIcon, IntroIcon, Avatar}
+	local preload = {Background, HubIcon, IntroParts.Icon, Avatar}
 	for _, data in ipairs(BlurLayers) do
 		table.insert(preload, data.image)
 	end
@@ -4413,44 +4435,45 @@ RefreshStatusPage()
 ApplyLanguage()
 
 task.spawn(function()
-	-- Minimal K hub intro: calm reveal, breathing icon and a clean progress pass.
-	IntroIconBox.BackgroundTransparency = 1
-	IntroIconStroke.Transparency = 1
-	IntroIcon.ImageTransparency = 1
-	IntroProgress.BackgroundTransparency = 1
-	IntroProgressFill.BackgroundTransparency = 1
+	local ok, err = pcall(function()
+		-- Minimal K hub intro: calm reveal, breathing icon and a clean progress pass.
+	IntroParts.IconBox.BackgroundTransparency = 1
+	IntroParts.IconStroke.Transparency = 1
+	IntroParts.Icon.ImageTransparency = 1
+	IntroParts.Progress.BackgroundTransparency = 1
+	IntroParts.ProgressFill.BackgroundTransparency = 1
 
-	Tween(IntroGradient, 5.65, {Rotation = 24}, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
-	Tween(IntroGlow, 0.80, {
+	Tween(IntroParts.Gradient, 5.65, {Rotation = 24}, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+	Tween(IntroParts.Glow, 0.80, {
 		Size = UDim2.fromOffset(210, 210),
 		BackgroundTransparency = 0.955
 	}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-	Tween(IntroIconBox, 0.62, {BackgroundTransparency = 0.04}, Enum.EasingStyle.Quint)
-	Tween(IntroIconStroke, 0.70, {Transparency = 0.50}, Enum.EasingStyle.Quint)
-	Tween(IntroIcon, 0.58, {ImageTransparency = 0}, Enum.EasingStyle.Quint)
-	Tween(IntroIconScale, 0.76, {Scale = 1}, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+	Tween(IntroParts.IconBox, 0.62, {BackgroundTransparency = 0.04}, Enum.EasingStyle.Quint)
+	Tween(IntroParts.IconStroke, 0.70, {Transparency = 0.50}, Enum.EasingStyle.Quint)
+	Tween(IntroParts.Icon, 0.58, {ImageTransparency = 0}, Enum.EasingStyle.Quint)
+	Tween(IntroParts.IconScale, 0.76, {Scale = 1}, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 
 	task.wait(0.72)
-	Tween(IntroK, 0.38, {TextTransparency = 0}, Enum.EasingStyle.Quint)
+	Tween(IntroParts.K, 0.38, {TextTransparency = 0}, Enum.EasingStyle.Quint)
 	task.wait(0.10)
-	Tween(IntroHub, 0.44, {TextTransparency = 0}, Enum.EasingStyle.Quint)
+	Tween(IntroParts.Hub, 0.44, {TextTransparency = 0}, Enum.EasingStyle.Quint)
 	task.wait(0.30)
-	Tween(IntroStatus, 0.34, {TextTransparency = 0}, Enum.EasingStyle.Sine)
-	Tween(IntroProgress, 0.30, {BackgroundTransparency = 0.20}, Enum.EasingStyle.Sine)
-	Tween(IntroProgressFill, 0.30, {BackgroundTransparency = 0.12}, Enum.EasingStyle.Sine)
-	Tween(IntroDot, 0.30, {BackgroundTransparency = 0.12}, Enum.EasingStyle.Sine)
+	Tween(IntroParts.Status, 0.34, {TextTransparency = 0}, Enum.EasingStyle.Sine)
+	Tween(IntroParts.Progress, 0.30, {BackgroundTransparency = 0.20}, Enum.EasingStyle.Sine)
+	Tween(IntroParts.ProgressFill, 0.30, {BackgroundTransparency = 0.12}, Enum.EasingStyle.Sine)
+	Tween(IntroParts.Dot, 0.30, {BackgroundTransparency = 0.12}, Enum.EasingStyle.Sine)
 
-	Tween(IntroProgressFill, 3.60, {Size = UDim2.fromScale(1, 1)}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-	Tween(IntroDot, 3.60, {Position = UDim2.new(0.5, 110, 0.46, 137)}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+	Tween(IntroParts.ProgressFill, 3.60, {Size = UDim2.fromScale(1, 1)}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+	Tween(IntroParts.Dot, 3.60, {Position = UDim2.new(0.5, 110, 0.46, 137)}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
 	task.spawn(function()
 		for _ = 1, 4 do
 			if Destroyed then return end
-			Tween(IntroIconScale, 0.44, {Scale = 1.035}, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
-			Tween(IntroGlow, 0.44, {Size = UDim2.fromOffset(224, 224), BackgroundTransparency = 0.965}, Enum.EasingStyle.Sine)
+			Tween(IntroParts.IconScale, 0.44, {Scale = 1.035}, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+			Tween(IntroParts.Glow, 0.44, {Size = UDim2.fromOffset(224, 224), BackgroundTransparency = 0.965}, Enum.EasingStyle.Sine)
 			task.wait(0.44)
-			Tween(IntroIconScale, 0.48, {Scale = 1}, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
-			Tween(IntroGlow, 0.48, {Size = UDim2.fromOffset(205, 205), BackgroundTransparency = 0.95}, Enum.EasingStyle.Sine)
+			Tween(IntroParts.IconScale, 0.48, {Scale = 1}, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
+			Tween(IntroParts.Glow, 0.48, {Size = UDim2.fromOffset(205, 205), BackgroundTransparency = 0.95}, Enum.EasingStyle.Sine)
 			task.wait(0.48)
 		end
 	end)
@@ -4458,16 +4481,23 @@ task.spawn(function()
 	task.wait(3.78)
 	if Destroyed then return end
 
-	IntroStatus.Text = "ready"
-	Tween(IntroStatus, 0.18, {TextColor3 = Theme.Light}, Enum.EasingStyle.Sine)
+	IntroParts.Status.Text = "ready"
+	Tween(IntroParts.Status, 0.18, {TextColor3 = Theme.Light}, Enum.EasingStyle.Sine)
 	task.wait(0.42)
 
-	Tween(IntroIconScale, 0.32, {Scale = 0.94}, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+	Tween(IntroParts.IconScale, 0.32, {Scale = 0.94}, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
 	local fade = Tween(Intro, 0.52, {GroupTransparency = 1}, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
 	fade.Completed:Wait()
 
-	if Destroyed then return end
-	Intro.Visible = false
-	SetMenuVisible(true)
+		if Destroyed then return end
+		Intro.Visible = false
+		SetMenuVisible(true)
+	end)
+
+	if not ok and not Destroyed then
+		warn("[K hub] Intro failed: " .. tostring(err))
+		Intro.Visible = false
+		SetMenuVisible(true)
+	end
 end)
 
