@@ -1,3 +1,8 @@
+if _G.KuromiHubCleanup then
+	pcall(_G.KuromiHubCleanup)
+	_G.KuromiHubCleanup = nil
+end
+
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -5,29 +10,46 @@ local TweenService = game:GetService("TweenService")
 local TeleportService = game:GetService("TeleportService")
 local Lighting = game:GetService("Lighting")
 local Workspace = game:GetService("Workspace")
+local CollectionService = game:GetService("CollectionService")
 
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
-local Old = PlayerGui:FindFirstChild("KuromiHub")
-if Old then
-	Old:Destroy()
+local Existing = PlayerGui:FindFirstChild("KuromiHub")
+if Existing then
+	Existing:Destroy()
+end
+
+for _, name in ipairs({
+	"KuromiColor",
+	"KuromiBloom",
+	"KuromiSunRays",
+	"KuromiDepth",
+	"KuromiAtmosphere"
+}) do
+	local object = Lighting:FindFirstChild(name)
+	if object then
+		object:Destroy()
+	end
 end
 
 local Theme = {
-	Base = Color3.fromRGB(10, 8, 14),
-	BaseSoft = Color3.fromRGB(15, 11, 21),
-	Panel = Color3.fromRGB(20, 15, 28),
-	Panel2 = Color3.fromRGB(29, 21, 40),
-	Panel3 = Color3.fromRGB(38, 27, 52),
-	Purple = Color3.fromRGB(161, 102, 238),
-	PurpleSoft = Color3.fromRGB(115, 75, 170),
-	Pink = Color3.fromRGB(239, 118, 184),
+	Base = Color3.fromRGB(8, 7, 12),
+	BaseSoft = Color3.fromRGB(13, 10, 19),
+	Panel = Color3.fromRGB(19, 14, 27),
+	Panel2 = Color3.fromRGB(27, 20, 38),
+	Panel3 = Color3.fromRGB(36, 26, 51),
+	Panel4 = Color3.fromRGB(45, 32, 62),
+	Purple = Color3.fromRGB(157, 94, 235),
+	PurpleSoft = Color3.fromRGB(108, 67, 163),
+	Pink = Color3.fromRGB(235, 109, 178),
+	PinkSoft = Color3.fromRGB(198, 89, 150),
 	White = Color3.fromRGB(247, 243, 251),
-	Muted = Color3.fromRGB(165, 151, 180),
-	Stroke = Color3.fromRGB(74, 55, 95),
-	Off = Color3.fromRGB(60, 49, 70),
-	Danger = Color3.fromRGB(205, 91, 124)
+	Muted = Color3.fromRGB(165, 151, 181),
+	Stroke = Color3.fromRGB(72, 53, 93),
+	Off = Color3.fromRGB(58, 47, 68),
+	Black = Color3.fromRGB(5, 4, 8),
+	Success = Color3.fromRGB(129, 210, 170)
 }
 
 local State = {
@@ -35,11 +57,11 @@ local State = {
 	esp = false,
 	walkSpeed = false,
 	noclip = false,
-	fling = false,
+	invisible = false,
 	shaders = false,
 	lowGraphics = false,
 	walkSpeedValue = 16,
-	flingForce = 85,
+	shaderStrength = 65,
 	menuVisible = true
 }
 
@@ -48,11 +70,12 @@ local Hotkeys = {
 	esp = nil,
 	walkSpeed = nil,
 	noclip = nil,
-	fling = nil,
+	invisible = nil,
 	shaders = nil,
 	lowGraphics = nil
 }
 
+local Connections = {}
 local ToggleSetters = {}
 local HotkeyButtons = {}
 local WaitingForHotkey = nil
@@ -61,13 +84,23 @@ local SavedLocalCollision = {}
 local SavedOtherCollision = {}
 local SavedWalkSpeed = nil
 local LastSafeCFrame = nil
-local FlingAttachment = nil
-local FlingAngular = nil
 local ShaderObjects = {}
+local ShaderSaved = {
+	lighting = {},
+	parts = {}
+}
 local LowGraphicsSaved = {
 	lighting = {},
 	objects = {}
 }
+local InvisibleSaved = {}
+local Destroyed = false
+
+local function Bind(signal, callback)
+	local connection = signal:Connect(callback)
+	table.insert(Connections, connection)
+	return connection
+end
 
 local function New(className, properties, parent)
 	local object = Instance.new(className)
@@ -185,72 +218,75 @@ local ScreenGui = New("ScreenGui", {
 local Intro = New("CanvasGroup", {
 	Name = "Intro",
 	Size = UDim2.fromScale(1, 1),
-	BackgroundColor3 = Theme.Base,
+	BackgroundColor3 = Theme.Black,
 	BackgroundTransparency = 0,
 	GroupTransparency = 0,
-	ZIndex = 1000
+	ZIndex = 2000
 }, ScreenGui)
 
 local IntroScale = New("UIScale", {
-	Scale = 0.94
+	Scale = 0.9
 }, Intro)
 
 local IntroCenter = New("Frame", {
-	Size = UDim2.fromOffset(520, 180),
+	Size = UDim2.fromOffset(560, 220),
 	AnchorPoint = Vector2.new(0.5, 0.5),
 	Position = UDim2.fromScale(0.5, 0.5),
 	BackgroundTransparency = 1,
-	ZIndex = 1001
+	ZIndex = 2001
 }, Intro)
 
-local IntroLineTop = New("Frame", {
-	Size = UDim2.fromOffset(0, 1),
-	AnchorPoint = Vector2.new(0.5, 0),
-	Position = UDim2.new(0.5, 0, 0, 18),
+local IntroIcon = New("ImageLabel", {
+	Size = UDim2.fromOffset(74, 74),
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Position = UDim2.new(0.5, 0, 0.34, 0),
+	BackgroundTransparency = 1,
+	Image = "rbxassetid://8287008384",
+	ImageColor3 = Theme.White,
+	ImageTransparency = 1,
+	ZIndex = 2002
+}, IntroCenter)
+
+local IntroLine = New("Frame", {
+	Size = UDim2.fromOffset(0, 2),
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Position = UDim2.new(0.5, 0, 0.58, 0),
 	BackgroundColor3 = Theme.Pink,
 	BorderSizePixel = 0,
-	ZIndex = 1002
+	ZIndex = 2002
 }, IntroCenter)
-
-local IntroLineBottom = New("Frame", {
-	Size = UDim2.fromOffset(0, 1),
-	AnchorPoint = Vector2.new(0.5, 0),
-	Position = UDim2.new(0.5, 0, 1, -18),
-	BackgroundColor3 = Theme.Purple,
-	BorderSizePixel = 0,
-	ZIndex = 1002
-}, IntroCenter)
+Corner(IntroLine, 1)
 
 local IntroTitle = New("TextLabel", {
-	Size = UDim2.fromOffset(500, 58),
+	Size = UDim2.fromOffset(520, 48),
 	AnchorPoint = Vector2.new(0.5, 0.5),
-	Position = UDim2.new(0.5, 0, 0.48, 0),
+	Position = UDim2.new(0.5, 0, 0.72, 0),
 	BackgroundTransparency = 1,
 	Text = "KUROMI HUB!",
 	TextColor3 = Theme.White,
-	TextSize = 35,
+	TextSize = 32,
 	Font = Enum.Font.GothamBlack,
 	TextTransparency = 1,
-	ZIndex = 1002
+	ZIndex = 2002
 }, IntroCenter)
 
-local IntroSubtitle = New("TextLabel", {
-	Size = UDim2.fromOffset(500, 28),
+local IntroSub = New("TextLabel", {
+	Size = UDim2.fromOffset(520, 24),
 	AnchorPoint = Vector2.new(0.5, 0.5),
-	Position = UDim2.new(0.5, 0, 0.73, 0),
+	Position = UDim2.new(0.5, 0, 0.87, 0),
 	BackgroundTransparency = 1,
-	Text = "PERSONAL CONTROL PANEL",
+	Text = "CONTROL INTERFACE",
 	TextColor3 = Theme.Muted,
-	TextSize = 11,
+	TextSize = 10,
 	Font = Enum.Font.GothamMedium,
 	TextTransparency = 1,
-	ZIndex = 1002
+	ZIndex = 2002
 }, IntroCenter)
 
 local Main = New("CanvasGroup", {
 	Name = "Main",
-	Size = UDim2.fromOffset(780, 510),
-	Position = UDim2.new(0.5, -390, 0.5, -255),
+	Size = UDim2.fromOffset(820, 540),
+	Position = UDim2.new(0.5, -410, 0.5, -270),
 	BackgroundColor3 = Theme.BaseSoft,
 	BorderSizePixel = 0,
 	ClipsDescendants = true,
@@ -259,7 +295,7 @@ local Main = New("CanvasGroup", {
 	ZIndex = 20
 }, ScreenGui)
 Corner(Main, 18)
-Stroke(Main, 0.08, 1.2, Theme.PurpleSoft)
+Stroke(Main, 0.06, 1.2, Theme.PurpleSoft)
 
 local MainScale = New("UIScale", {
 	Scale = 0.94
@@ -278,75 +314,95 @@ local BackgroundImage = New("ImageLabel", {
 local BackgroundOverlay = New("Frame", {
 	Size = UDim2.fromScale(1, 1),
 	BackgroundColor3 = Theme.BaseSoft,
-	BackgroundTransparency = 0.12,
+	BackgroundTransparency = 0.1,
 	BorderSizePixel = 0,
 	ZIndex = 21
 }, Main)
 
 local Accent = New("Frame", {
 	Size = UDim2.new(1, 0, 0, 2),
-	BackgroundColor3 = Theme.Pink,
+	BackgroundColor3 = Color3.new(1, 1, 1),
 	BorderSizePixel = 0,
-	ZIndex = 50
+	ZIndex = 60
 }, Main)
+
+local AccentGradient = New("UIGradient", {
+	Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Theme.Purple),
+		ColorSequenceKeypoint.new(0.5, Theme.Pink),
+		ColorSequenceKeypoint.new(1, Theme.Purple)
+	}),
+	Offset = Vector2.new(-1, 0)
+}, Accent)
 
 local TopBar = New("Frame", {
 	Name = "TopBar",
-	Size = UDim2.new(1, 0, 0, 82),
+	Size = UDim2.new(1, 0, 0, 86),
 	BackgroundColor3 = Theme.Panel,
-	BackgroundTransparency = 0.05,
+	BackgroundTransparency = 0.04,
 	BorderSizePixel = 0,
 	Active = true,
-	ZIndex = 40
+	ZIndex = 50
 }, Main)
 
-local BrandBlock = New("Frame", {
-	Size = UDim2.fromOffset(8, 42),
-	Position = UDim2.fromOffset(20, 20),
-	BackgroundColor3 = Theme.Pink,
+local HubIconBox = New("Frame", {
+	Size = UDim2.fromOffset(52, 52),
+	Position = UDim2.fromOffset(18, 17),
+	BackgroundColor3 = Theme.Panel3,
 	BorderSizePixel = 0,
-	ZIndex = 41
+	ZIndex = 51
 }, TopBar)
-Corner(BrandBlock, 4)
+Corner(HubIconBox, 13)
+Stroke(HubIconBox, 0.14, 1, Theme.Purple)
+
+local HubIcon = New("ImageLabel", {
+	Size = UDim2.fromOffset(38, 38),
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Position = UDim2.fromScale(0.5, 0.5),
+	BackgroundTransparency = 1,
+	Image = "rbxassetid://8287008384",
+	ImageColor3 = Theme.White,
+	ZIndex = 52
+}, HubIconBox)
 
 local HubName = New("TextLabel", {
 	Size = UDim2.fromOffset(300, 30),
-	Position = UDim2.fromOffset(42, 14),
+	Position = UDim2.fromOffset(84, 16),
 	BackgroundTransparency = 1,
 	Text = "KUROMI HUB!",
 	TextColor3 = Theme.White,
 	TextSize = 22,
 	Font = Enum.Font.GothamBlack,
 	TextXAlignment = Enum.TextXAlignment.Left,
-	ZIndex = 41
+	ZIndex = 51
 }, TopBar)
 
 local HubSub = New("TextLabel", {
-	Size = UDim2.fromOffset(300, 18),
-	Position = UDim2.fromOffset(43, 44),
+	Size = UDim2.fromOffset(320, 18),
+	Position = UDim2.fromOffset(85, 47),
 	BackgroundTransparency = 1,
-	Text = "BLACK / PURPLE CONTROL INTERFACE",
+	Text = "PERSONAL CONTROL INTERFACE",
 	TextColor3 = Theme.Muted,
 	TextSize = 10,
 	Font = Enum.Font.GothamMedium,
 	TextXAlignment = Enum.TextXAlignment.Left,
-	ZIndex = 41
+	ZIndex = 51
 }, TopBar)
 
 local Avatar = New("ImageLabel", {
-	Size = UDim2.fromOffset(38, 38),
-	Position = UDim2.new(1, -206, 0, 22),
+	Size = UDim2.fromOffset(40, 40),
+	Position = UDim2.new(1, -210, 0, 23),
 	BackgroundColor3 = Theme.Panel3,
 	BorderSizePixel = 0,
 	Image = "",
-	ZIndex = 41
+	ZIndex = 51
 }, TopBar)
-Corner(Avatar, 10)
+Corner(Avatar, 11)
 Stroke(Avatar, 0.2, 1, Theme.Purple)
 
 local DisplayName = New("TextLabel", {
 	Size = UDim2.fromOffset(150, 18),
-	Position = UDim2.new(1, -158, 0, 20),
+	Position = UDim2.new(1, -160, 0, 21),
 	BackgroundTransparency = 1,
 	Text = LocalPlayer.DisplayName,
 	TextColor3 = Theme.White,
@@ -354,12 +410,12 @@ local DisplayName = New("TextLabel", {
 	Font = Enum.Font.GothamSemibold,
 	TextXAlignment = Enum.TextXAlignment.Left,
 	TextTruncate = Enum.TextTruncate.AtEnd,
-	ZIndex = 41
+	ZIndex = 51
 }, TopBar)
 
 local Username = New("TextLabel", {
 	Size = UDim2.fromOffset(150, 18),
-	Position = UDim2.new(1, -158, 0, 41),
+	Position = UDim2.new(1, -160, 0, 43),
 	BackgroundTransparency = 1,
 	Text = "@" .. LocalPlayer.Name,
 	TextColor3 = Theme.Muted,
@@ -367,32 +423,32 @@ local Username = New("TextLabel", {
 	Font = Enum.Font.Gotham,
 	TextXAlignment = Enum.TextXAlignment.Left,
 	TextTruncate = Enum.TextTruncate.AtEnd,
-	ZIndex = 41
+	ZIndex = 51
 }, TopBar)
 
 local Sidebar = New("Frame", {
 	Name = "Sidebar",
-	Size = UDim2.new(0, 182, 1, -82),
-	Position = UDim2.fromOffset(0, 82),
+	Size = UDim2.new(0, 188, 1, -86),
+	Position = UDim2.fromOffset(0, 86),
 	BackgroundColor3 = Theme.Panel,
-	BackgroundTransparency = 0.04,
+	BackgroundTransparency = 0.03,
 	BorderSizePixel = 0,
-	ZIndex = 35
+	ZIndex = 45
 }, Main)
-Padding(Sidebar, 12, 12, 16, 12)
+Padding(Sidebar, 12, 12, 15, 12)
 
 New("UIListLayout", {
-	Padding = UDim.new(0, 8),
+	Padding = UDim.new(0, 7),
 	SortOrder = Enum.SortOrder.LayoutOrder,
 	HorizontalAlignment = Enum.HorizontalAlignment.Center
 }, Sidebar)
 
 local Content = New("Frame", {
 	Name = "Content",
-	Size = UDim2.new(1, -182, 1, -82),
-	Position = UDim2.fromOffset(182, 82),
+	Size = UDim2.new(1, -188, 1, -86),
+	Position = UDim2.fromOffset(188, 86),
 	BackgroundTransparency = 1,
-	ZIndex = 35
+	ZIndex = 45
 }, Main)
 
 local Pages = {}
@@ -409,7 +465,7 @@ local function CreatePage(name)
 		CanvasSize = UDim2.fromOffset(0, 0),
 		AutomaticCanvasSize = Enum.AutomaticSize.Y,
 		Visible = false,
-		ZIndex = 35
+		ZIndex = 45
 	}, Content)
 
 	New("UIListLayout", {
@@ -437,8 +493,9 @@ local function SelectPage(name)
 		local marker = button:FindFirstChild("Marker")
 		if marker then
 			Tween(marker, 0.16, {
-				BackgroundTransparency = selected and 0 or 1
-			}, Enum.EasingStyle.Quad)
+				Size = selected and UDim2.fromOffset(3, 22) or UDim2.fromOffset(3, 6),
+				BackgroundTransparency = selected and 0 or 0.7
+			}, Enum.EasingStyle.Quart)
 		end
 	end
 end
@@ -446,70 +503,88 @@ end
 local function CreateTab(name, order)
 	local button = New("TextButton", {
 		Name = name,
-		Size = UDim2.new(1, 0, 0, 42),
+		Size = UDim2.new(1, 0, 0, 40),
 		BackgroundColor3 = Theme.Panel2,
 		BorderSizePixel = 0,
 		Text = name,
 		TextColor3 = Theme.Muted,
-		TextSize = 12,
+		TextSize = 11,
 		Font = Enum.Font.GothamSemibold,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		AutoButtonColor = false,
 		LayoutOrder = order,
-		ZIndex = 36
+		ZIndex = 46
 	}, Sidebar)
 	Corner(button, 10)
-	Padding(button, 18, 10, 0, 0)
+	Padding(button, 19, 10, 0, 0)
+
+	local scale = New("UIScale", {
+		Scale = 1
+	}, button)
 
 	local marker = New("Frame", {
 		Name = "Marker",
-		Size = UDim2.fromOffset(3, 20),
-		Position = UDim2.new(0, 7, 0.5, -10),
+		Size = UDim2.fromOffset(3, 6),
+		Position = UDim2.new(0, 7, 0.5, -3),
 		BackgroundColor3 = Theme.Pink,
-		BackgroundTransparency = 1,
+		BackgroundTransparency = 0.7,
 		BorderSizePixel = 0,
-		ZIndex = 37
+		ZIndex = 47
 	}, button)
 	Corner(marker, 2)
 
-	button.MouseEnter:Connect(function()
+	Bind(button.MouseEnter, function()
+		Tween(scale, 0.12, {Scale = 1.025}, Enum.EasingStyle.Quad)
 		if not Pages[name].Visible then
 			Tween(button, 0.12, {BackgroundColor3 = Theme.Panel3}, Enum.EasingStyle.Quad)
 		end
 	end)
 
-	button.MouseLeave:Connect(function()
+	Bind(button.MouseLeave, function()
+		Tween(scale, 0.12, {Scale = 1}, Enum.EasingStyle.Quad)
 		if not Pages[name].Visible then
 			Tween(button, 0.12, {BackgroundColor3 = Theme.Panel2}, Enum.EasingStyle.Quad)
 		end
 	end)
 
-	button.MouseButton1Click:Connect(function()
+	Bind(button.MouseButton1Down, function()
+		Tween(scale, 0.08, {Scale = 0.98}, Enum.EasingStyle.Quad)
+	end)
+
+	Bind(button.MouseButton1Up, function()
+		Tween(scale, 0.1, {Scale = 1.025}, Enum.EasingStyle.Quad)
+	end)
+
+	Bind(button.MouseButton1Click, function()
 		SelectPage(name)
 	end)
 
 	TabButtons[name] = button
 end
 
+local InfoPage = CreatePage("Info")
 local MainPage = CreatePage("Main")
-local VisualsPage = CreatePage("Visuals")
+local PlayerPage = CreatePage("Player")
+local VisualPage = CreatePage("Visual")
 local GraphicsPage = CreatePage("Graphics")
-local PanelPage = CreatePage("Panel")
+local SettingsPage = CreatePage("Settings")
 
-CreateTab("Main", 1)
-CreateTab("Visuals", 2)
-CreateTab("Graphics", 3)
-CreateTab("Panel", 4)
+CreateTab("Info", 1)
+CreateTab("Main", 2)
+CreateTab("Player", 3)
+CreateTab("Visual", 4)
+CreateTab("Graphics", 5)
+CreateTab("Settings", 6)
 
 local ShortcutLabel = New("TextLabel", {
-	Size = UDim2.new(1, 0, 0, 30),
+	Size = UDim2.new(1, 0, 0, 28),
 	BackgroundTransparency = 1,
 	Text = "CTRL + M",
 	TextColor3 = Theme.Pink,
-	TextSize = 10,
+	TextSize = 9,
 	Font = Enum.Font.GothamBold,
 	LayoutOrder = 20,
-	ZIndex = 36
+	ZIndex = 46
 }, Sidebar)
 
 local function Section(parent, title, subtitle, order)
@@ -517,7 +592,7 @@ local function Section(parent, title, subtitle, order)
 		Size = UDim2.new(1, 0, 0, subtitle and 54 or 34),
 		BackgroundTransparency = 1,
 		LayoutOrder = order,
-		ZIndex = 36
+		ZIndex = 46
 	}, parent)
 
 	New("TextLabel", {
@@ -528,7 +603,7 @@ local function Section(parent, title, subtitle, order)
 		TextSize = 17,
 		Font = Enum.Font.GothamBold,
 		TextXAlignment = Enum.TextXAlignment.Left,
-		ZIndex = 37
+		ZIndex = 47
 	}, holder)
 
 	if subtitle then
@@ -541,9 +616,52 @@ local function Section(parent, title, subtitle, order)
 			TextSize = 10,
 			Font = Enum.Font.Gotham,
 			TextXAlignment = Enum.TextXAlignment.Left,
-			ZIndex = 37
+			ZIndex = 47
 		}, holder)
 	end
+end
+
+local function ButtonCard(parent, text, order, callback)
+	local button = New("TextButton", {
+		Size = UDim2.new(1, 0, 0, 50),
+		BackgroundColor3 = Theme.Panel,
+		BorderSizePixel = 0,
+		Text = text,
+		TextColor3 = Theme.White,
+		TextSize = 11,
+		Font = Enum.Font.GothamBold,
+		AutoButtonColor = false,
+		LayoutOrder = order,
+		ZIndex = 46
+	}, parent)
+	Corner(button, 12)
+	Stroke(button, 0.42)
+
+	local scale = New("UIScale", {
+		Scale = 1
+	}, button)
+
+	Bind(button.MouseEnter, function()
+		Tween(button, 0.12, {BackgroundColor3 = Theme.Panel3}, Enum.EasingStyle.Quad)
+		Tween(scale, 0.12, {Scale = 1.012}, Enum.EasingStyle.Quad)
+	end)
+
+	Bind(button.MouseLeave, function()
+		Tween(button, 0.12, {BackgroundColor3 = Theme.Panel}, Enum.EasingStyle.Quad)
+		Tween(scale, 0.12, {Scale = 1}, Enum.EasingStyle.Quad)
+	end)
+
+	Bind(button.MouseButton1Down, function()
+		Tween(scale, 0.07, {Scale = 0.985}, Enum.EasingStyle.Quad)
+	end)
+
+	Bind(button.MouseButton1Up, function()
+		Tween(scale, 0.09, {Scale = 1.012}, Enum.EasingStyle.Quad)
+	end)
+
+	Bind(button.MouseButton1Click, callback)
+
+	return button
 end
 
 local function CreateToggle(parent, config)
@@ -553,10 +671,14 @@ local function CreateToggle(parent, config)
 		BackgroundTransparency = 0.01,
 		BorderSizePixel = 0,
 		LayoutOrder = config.order,
-		ZIndex = 36
+		ZIndex = 46
 	}, parent)
 	Corner(row, 12)
 	Stroke(row, 0.42)
+
+	local rowScale = New("UIScale", {
+		Scale = 1
+	}, row)
 
 	local accent = New("Frame", {
 		Size = UDim2.fromOffset(3, 28),
@@ -564,12 +686,12 @@ local function CreateToggle(parent, config)
 		BackgroundColor3 = Theme.Purple,
 		BackgroundTransparency = 0.45,
 		BorderSizePixel = 0,
-		ZIndex = 37
+		ZIndex = 47
 	}, row)
 	Corner(accent, 2)
 
 	New("TextLabel", {
-		Size = UDim2.new(1, -210, 0, 21),
+		Size = UDim2.new(1, -215, 0, 21),
 		Position = UDim2.fromOffset(29, 13),
 		BackgroundTransparency = 1,
 		Text = config.title,
@@ -577,12 +699,12 @@ local function CreateToggle(parent, config)
 		TextSize = 13,
 		Font = Enum.Font.GothamSemibold,
 		TextXAlignment = Enum.TextXAlignment.Left,
-		ZIndex = 37
+		ZIndex = 47
 	}, row)
 
 	if config.subtitle then
 		New("TextLabel", {
-			Size = UDim2.new(1, -210, 0, 18),
+			Size = UDim2.new(1, -215, 0, 18),
 			Position = UDim2.fromOffset(29, 36),
 			BackgroundTransparency = 1,
 			Text = config.subtitle,
@@ -590,13 +712,13 @@ local function CreateToggle(parent, config)
 			TextSize = 10,
 			Font = Enum.Font.Gotham,
 			TextXAlignment = Enum.TextXAlignment.Left,
-			ZIndex = 37
+			ZIndex = 47
 		}, row)
 	end
 
 	local keyButton = New("TextButton", {
-		Size = UDim2.fromOffset(76, 30),
-		Position = UDim2.new(1, -156, 0.5, -15),
+		Size = UDim2.fromOffset(78, 30),
+		Position = UDim2.new(1, -158, 0.5, -15),
 		BackgroundColor3 = Theme.Panel2,
 		BorderSizePixel = 0,
 		Text = FormatHotkey(Hotkeys[config.id]),
@@ -604,7 +726,7 @@ local function CreateToggle(parent, config)
 		TextSize = 9,
 		Font = Enum.Font.GothamBold,
 		AutoButtonColor = false,
-		ZIndex = 38
+		ZIndex = 48
 	}, row)
 	Corner(keyButton, 9)
 	Stroke(keyButton, 0.45)
@@ -616,7 +738,7 @@ local function CreateToggle(parent, config)
 		BorderSizePixel = 0,
 		Text = "",
 		AutoButtonColor = false,
-		ZIndex = 38
+		ZIndex = 48
 	}, row)
 	Corner(switch, 14)
 
@@ -625,7 +747,7 @@ local function CreateToggle(parent, config)
 		Position = UDim2.fromOffset(3, 3),
 		BackgroundColor3 = Theme.White,
 		BorderSizePixel = 0,
-		ZIndex = 39
+		ZIndex = 49
 	}, switch)
 	Corner(knob, 11)
 
@@ -656,11 +778,37 @@ local function CreateToggle(parent, config)
 	ToggleSetters[config.id] = Set
 	HotkeyButtons[config.id] = keyButton
 
-	switch.MouseButton1Click:Connect(function()
+	Bind(row.MouseEnter, function()
+		Tween(rowScale, 0.12, {Scale = 1.008}, Enum.EasingStyle.Quad)
+		Tween(row, 0.12, {BackgroundColor3 = Theme.Panel2}, Enum.EasingStyle.Quad)
+	end)
+
+	Bind(row.MouseLeave, function()
+		Tween(rowScale, 0.12, {Scale = 1}, Enum.EasingStyle.Quad)
+		Tween(row, 0.12, {BackgroundColor3 = Theme.Panel}, Enum.EasingStyle.Quad)
+	end)
+
+	Bind(switch.MouseButton1Down, function()
+		Tween(rowScale, 0.07, {Scale = 0.992}, Enum.EasingStyle.Quad)
+	end)
+
+	Bind(switch.MouseButton1Up, function()
+		Tween(rowScale, 0.08, {Scale = 1.008}, Enum.EasingStyle.Quad)
+	end)
+
+	Bind(switch.MouseButton1Click, function()
 		Set(not State[config.id])
 	end)
 
-	keyButton.MouseButton1Click:Connect(function()
+	Bind(keyButton.MouseEnter, function()
+		Tween(keyButton, 0.12, {BackgroundColor3 = Theme.Panel4}, Enum.EasingStyle.Quad)
+	end)
+
+	Bind(keyButton.MouseLeave, function()
+		Tween(keyButton, 0.12, {BackgroundColor3 = Theme.Panel2}, Enum.EasingStyle.Quad)
+	end)
+
+	Bind(keyButton.MouseButton1Click, function()
 		WaitingForHotkey = config.id
 		keyButton.Text = "PRESS KEY"
 		keyButton.TextColor3 = Theme.Pink
@@ -672,8 +820,8 @@ end
 
 local function CreateEditableSlider(row, y, minimum, maximum, initial, callback)
 	local valueBox = New("TextBox", {
-		Size = UDim2.fromOffset(62, 28),
-		Position = UDim2.new(1, -78, 0, y - 14),
+		Size = UDim2.fromOffset(64, 28),
+		Position = UDim2.new(1, -80, 0, y - 14),
 		BackgroundColor3 = Theme.Panel2,
 		BorderSizePixel = 0,
 		Text = tostring(initial),
@@ -682,18 +830,18 @@ local function CreateEditableSlider(row, y, minimum, maximum, initial, callback)
 		Font = Enum.Font.GothamBold,
 		ClearTextOnFocus = false,
 		TextXAlignment = Enum.TextXAlignment.Center,
-		ZIndex = 39
+		ZIndex = 49
 	}, row)
 	Corner(valueBox, 8)
 	Stroke(valueBox, 0.45)
 
 	local slider = New("Frame", {
-		Size = UDim2.new(1, -132, 0, 6),
+		Size = UDim2.new(1, -136, 0, 6),
 		Position = UDim2.fromOffset(29, y),
 		BackgroundColor3 = Theme.Off,
 		BorderSizePixel = 0,
 		Active = true,
-		ZIndex = 38
+		ZIndex = 48
 	}, row)
 	Corner(slider, 3)
 
@@ -703,7 +851,7 @@ local function CreateEditableSlider(row, y, minimum, maximum, initial, callback)
 		Size = UDim2.fromScale(normalized, 1),
 		BackgroundColor3 = Theme.Purple,
 		BorderSizePixel = 0,
-		ZIndex = 39
+		ZIndex = 49
 	}, slider)
 	Corner(fill, 3)
 
@@ -713,10 +861,10 @@ local function CreateEditableSlider(row, y, minimum, maximum, initial, callback)
 		Position = UDim2.new(normalized, 0, 0.5, 0),
 		BackgroundColor3 = Theme.White,
 		BorderSizePixel = 0,
-		ZIndex = 40
+		ZIndex = 50
 	}, slider)
 	Corner(knob, 8)
-	Stroke(knob, 0.3, 1, Theme.Pink)
+	Stroke(knob, 0.28, 1, Theme.Pink)
 
 	local dragging = false
 	local current = initial
@@ -726,38 +874,44 @@ local function CreateEditableSlider(row, y, minimum, maximum, initial, callback)
 		current = value
 
 		local alpha = (value - minimum) / (maximum - minimum)
-		fill.Size = UDim2.fromScale(alpha, 1)
-		knob.Position = UDim2.new(alpha, 0, 0.5, 0)
+		Tween(fill, 0.1, {Size = UDim2.fromScale(alpha, 1)}, Enum.EasingStyle.Quad)
+		Tween(knob, 0.1, {Position = UDim2.new(alpha, 0, 0.5, 0)}, Enum.EasingStyle.Quad)
 		valueBox.Text = tostring(value)
 		callback(value)
 	end
 
 	local function UpdateFromX(x)
 		local alpha = math.clamp((x - slider.AbsolutePosition.X) / slider.AbsoluteSize.X, 0, 1)
-		local value = minimum + ((maximum - minimum) * alpha)
-		SetValue(value)
+		SetValue(minimum + ((maximum - minimum) * alpha))
 	end
 
-	slider.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+	Bind(slider.InputBegan, function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch then
+
 			dragging = true
 			UpdateFromX(input.Position.X)
 		end
 	end)
 
-	UserInputService.InputChanged:Connect(function(input)
-		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+	Bind(UserInputService.InputChanged, function(input)
+		if dragging
+			and (input.UserInputType == Enum.UserInputType.MouseMovement
+				or input.UserInputType == Enum.UserInputType.Touch) then
+
 			UpdateFromX(input.Position.X)
 		end
 	end)
 
-	UserInputService.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+	Bind(UserInputService.InputEnded, function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch then
+
 			dragging = false
 		end
 	end)
 
-	valueBox.FocusLost:Connect(function()
+	Bind(valueBox.FocusLost, function()
 		SetValue(valueBox.Text)
 	end)
 
@@ -785,42 +939,80 @@ local function RestoreOtherCollision()
 	table.clear(SavedOtherCollision)
 end
 
-local function RemoveFling()
-	if FlingAngular then
-		FlingAngular:Destroy()
-		FlingAngular = nil
+local function RestoreInvisible()
+	for object, saved in pairs(InvisibleSaved) do
+		if object and object.Parent then
+			if object:IsA("BasePart") then
+				object.LocalTransparencyModifier = saved
+			elseif object:IsA("Decal") or object:IsA("Texture") then
+				object.Transparency = saved
+			end
+		end
+	end
+	table.clear(InvisibleSaved)
+end
+
+local function ApplyInvisible()
+	local character = LocalPlayer.Character
+	if not character then
+		return
 	end
 
-	if FlingAttachment then
-		FlingAttachment:Destroy()
-		FlingAttachment = nil
+	for _, object in ipairs(character:GetDescendants()) do
+		if object:IsA("BasePart") then
+			if InvisibleSaved[object] == nil then
+				InvisibleSaved[object] = object.LocalTransparencyModifier
+			end
+			object.LocalTransparencyModifier = 1
+		elseif object:IsA("Decal") or object:IsA("Texture") then
+			if InvisibleSaved[object] == nil then
+				InvisibleSaved[object] = object.Transparency
+			end
+			object.Transparency = 1
+		end
 	end
 end
 
-local function UpdateFling()
-	RemoveFling()
+local function GetTagsForPlayer(player)
+	local found = {}
+	local seen = {}
 
-	if not State.fling then
-		return
+	local function AddTags(instance)
+		if not instance then
+			return
+		end
+
+		for _, tag in ipairs(CollectionService:GetTags(instance)) do
+			if not seen[tag] then
+				seen[tag] = true
+				table.insert(found, tag)
+			end
+		end
 	end
 
-	local character = LocalPlayer.Character
-	local root = character and character:FindFirstChild("HumanoidRootPart")
-	if not root then
-		return
+	AddTags(player)
+	AddTags(player.Character)
+
+	table.sort(found)
+	return found
+end
+
+local function TagColor(tags)
+	if #tags == 0 then
+		return Theme.Purple, Theme.Pink
 	end
 
-	FlingAttachment = New("Attachment", {
-		Name = "KuromiFlingAttachment"
-	}, root)
+	local text = table.concat(tags, "|")
+	local hash = 0
 
-	FlingAngular = New("AngularVelocity", {
-		Name = "KuromiFlingVelocity",
-		Attachment0 = FlingAttachment,
-		RelativeTo = Enum.ActuatorRelativeTo.World,
-		MaxTorque = math.huge,
-		AngularVelocity = Vector3.new(0, State.flingForce, 0)
-	}, root)
+	for i = 1, #text do
+		hash = (hash * 31 + string.byte(text, i)) % 360
+	end
+
+	local fill = Color3.fromHSV(hash / 360, 0.58, 1)
+	local outline = Color3.fromHSV(((hash + 38) % 360) / 360, 0.52, 1)
+
+	return fill, outline
 end
 
 local function DestroyEsp(player)
@@ -858,6 +1050,10 @@ local function EnsureEsp(player)
 		return
 	end
 
+	local tags = GetTagsForPlayer(player)
+	local fillColor, outlineColor = TagColor(tags)
+	local tagText = #tags > 0 and table.concat(tags, ", ") or "PLAYER"
+
 	local data = EspObjects[player]
 
 	if data and data.character ~= character then
@@ -869,47 +1065,110 @@ local function EnsureEsp(player)
 		local highlight = New("Highlight", {
 			Name = "KuromiESPHighlight",
 			Adornee = character,
-			FillColor = Theme.Purple,
-			FillTransparency = 0.76,
-			OutlineColor = Theme.Pink,
-			OutlineTransparency = 0.06,
+			FillColor = fillColor,
+			FillTransparency = 0.78,
+			OutlineColor = outlineColor,
+			OutlineTransparency = 0.03,
 			DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
 		}, ScreenGui)
 
 		local billboard = New("BillboardGui", {
 			Name = "KuromiESPBillboard",
 			Adornee = head,
-			Size = UDim2.fromOffset(200, 36),
-			StudsOffset = Vector3.new(0, 2.7, 0),
+			Size = UDim2.fromOffset(220, 54),
+			StudsOffset = Vector3.new(0, 3.05, 0),
 			AlwaysOnTop = true,
 			ZIndexBehavior = Enum.ZIndexBehavior.Global
 		}, ScreenGui)
 
-		local label = New("TextLabel", {
+		local card = New("Frame", {
 			Size = UDim2.fromScale(1, 1),
 			BackgroundColor3 = Theme.Base,
-			BackgroundTransparency = 0.18,
+			BackgroundTransparency = 0.13,
 			BorderSizePixel = 0,
-			TextColor3 = Theme.White,
-			TextSize = 11,
-			Font = Enum.Font.GothamSemibold,
 			ZIndex = 60
 		}, billboard)
-		Corner(label, 8)
-		Stroke(label, 0.25, 1, Theme.Purple)
+		Corner(card, 9)
+		Stroke(card, 0.16, 1, outlineColor)
+
+		local marker = New("Frame", {
+			Size = UDim2.fromOffset(3, 32),
+			Position = UDim2.fromOffset(9, 11),
+			BackgroundColor3 = fillColor,
+			BorderSizePixel = 0,
+			ZIndex = 61
+		}, card)
+		Corner(marker, 2)
+
+		local title = New("TextLabel", {
+			Size = UDim2.new(1, -30, 0, 18),
+			Position = UDim2.fromOffset(20, 7),
+			BackgroundTransparency = 1,
+			TextColor3 = Theme.White,
+			TextSize = 11,
+			Font = Enum.Font.GothamBold,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			TextTruncate = Enum.TextTruncate.AtEnd,
+			ZIndex = 61
+		}, card)
+
+		local info = New("TextLabel", {
+			Size = UDim2.new(1, -30, 0, 16),
+			Position = UDim2.fromOffset(20, 26),
+			BackgroundTransparency = 1,
+			TextColor3 = Theme.Muted,
+			TextSize = 9,
+			Font = Enum.Font.GothamMedium,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			TextTruncate = Enum.TextTruncate.AtEnd,
+			ZIndex = 61
+		}, card)
+
+		local tagLabel = New("TextLabel", {
+			Size = UDim2.fromOffset(78, 18),
+			Position = UDim2.new(1, -87, 0, 6),
+			BackgroundColor3 = fillColor,
+			BackgroundTransparency = 0.25,
+			BorderSizePixel = 0,
+			TextColor3 = Theme.White,
+			TextSize = 8,
+			Font = Enum.Font.GothamBold,
+			TextTruncate = Enum.TextTruncate.AtEnd,
+			ZIndex = 62
+		}, card)
+		Corner(tagLabel, 6)
 
 		data = {
 			character = character,
 			root = root,
 			highlight = highlight,
 			billboard = billboard,
-			label = label
+			card = card,
+			marker = marker,
+			title = title,
+			info = info,
+			tagLabel = tagLabel,
+			tagSignature = ""
 		}
 
 		EspObjects[player] = data
 	end
 
 	data.root = root
+
+	local signature = table.concat(tags, "|")
+	if data.tagSignature ~= signature then
+		data.tagSignature = signature
+		data.highlight.FillColor = fillColor
+		data.highlight.OutlineColor = outlineColor
+		data.marker.BackgroundColor3 = fillColor
+		data.tagLabel.BackgroundColor3 = fillColor
+
+		local cardStroke = data.card:FindFirstChildOfClass("UIStroke")
+		if cardStroke then
+			cardStroke.Color = outlineColor
+		end
+	end
 
 	local localCharacter = LocalPlayer.Character
 	local localRoot = localCharacter and localCharacter:FindFirstChild("HumanoidRootPart")
@@ -919,7 +1178,9 @@ local function EnsureEsp(player)
 		distance = math.floor((localRoot.Position - root.Position).Magnitude + 0.5)
 	end
 
-	data.label.Text = player.DisplayName .. "  |  " .. tostring(distance) .. "m"
+	data.title.Text = player.DisplayName
+	data.info.Text = "@" .. player.Name .. "  |  " .. tostring(distance) .. "m"
+	data.tagLabel.Text = tagText
 end
 
 local function ClearEsp()
@@ -928,39 +1189,114 @@ local function ClearEsp()
 	end
 end
 
+local function SaveLightingProperty(name)
+	if ShaderSaved.lighting[name] == nil then
+		ShaderSaved.lighting[name] = Lighting[name]
+	end
+end
+
+local function ApplyShaderStrength()
+	local value = State.shaderStrength / 100
+
+	local color = ShaderObjects.Color
+	local bloom = ShaderObjects.Bloom
+	local sun = ShaderObjects.Sun
+	local depth = ShaderObjects.Depth
+
+	if color then
+		color.Brightness = 0.01 + (0.04 * value)
+		color.Contrast = 0.08 + (0.16 * value)
+		color.Saturation = 0.02 + (0.12 * value)
+	end
+
+	if bloom then
+		bloom.Intensity = 0.16 + (0.42 * value)
+		bloom.Size = 24 + (18 * value)
+		bloom.Threshold = 1.35 - (0.35 * value)
+	end
+
+	if sun then
+		sun.Intensity = 0.025 + (0.08 * value)
+		sun.Spread = 0.72 + (0.18 * value)
+	end
+
+	if depth then
+		depth.FarIntensity = 0.03 + (0.1 * value)
+		depth.FocusDistance = 65
+		depth.InFocusRadius = 60 - (12 * value)
+	end
+end
+
 local function EnableShaders()
 	if next(ShaderObjects) then
+		ApplyShaderStrength()
 		return
 	end
 
+	for _, property in ipairs({
+		"GlobalShadows",
+		"ShadowSoftness",
+		"EnvironmentDiffuseScale",
+		"EnvironmentSpecularScale",
+		"Brightness",
+		"ExposureCompensation"
+	}) do
+		SaveLightingProperty(property)
+	end
+
+	Lighting.GlobalShadows = true
+	Lighting.ShadowSoftness = 0.18
+	Lighting.EnvironmentDiffuseScale = 0.72
+	Lighting.EnvironmentSpecularScale = 1
+	Lighting.Brightness = math.max(Lighting.Brightness, 2.2)
+	Lighting.ExposureCompensation = 0.06
+
 	ShaderObjects.Color = New("ColorCorrectionEffect", {
 		Name = "KuromiColor",
-		Brightness = 0.02,
-		Contrast = 0.14,
-		Saturation = 0.08,
-		TintColor = Color3.fromRGB(235, 220, 255)
+		TintColor = Color3.fromRGB(240, 224, 255)
 	}, Lighting)
 
 	ShaderObjects.Bloom = New("BloomEffect", {
-		Name = "KuromiBloom",
-		Intensity = 0.3,
-		Size = 28,
-		Threshold = 1.15
+		Name = "KuromiBloom"
 	}, Lighting)
 
 	ShaderObjects.Sun = New("SunRaysEffect", {
-		Name = "KuromiSunRays",
-		Intensity = 0.06,
-		Spread = 0.82
+		Name = "KuromiSunRays"
 	}, Lighting)
 
 	ShaderObjects.Depth = New("DepthOfFieldEffect", {
 		Name = "KuromiDepth",
-		FarIntensity = 0.07,
-		FocusDistance = 70,
-		InFocusRadius = 60,
 		NearIntensity = 0
 	}, Lighting)
+
+	ShaderObjects.Atmosphere = New("Atmosphere", {
+		Name = "KuromiAtmosphere",
+		Density = 0.18,
+		Offset = 0.08,
+		Color = Color3.fromRGB(210, 194, 230),
+		Decay = Color3.fromRGB(92, 72, 115),
+		Glare = 0.06,
+		Haze = 0.5
+	}, Lighting)
+
+	for _, object in ipairs(Workspace:GetDescendants()) do
+		if object:IsA("BasePart")
+			and (object.Material == Enum.Material.Metal
+				or object.Material == Enum.Material.Glass
+				or object.Material == Enum.Material.DiamondPlate
+				or object.Material == Enum.Material.Foil) then
+
+			ShaderSaved.parts[object] = object.Reflectance
+
+			if object.Material == Enum.Material.Glass then
+				object.Reflectance = math.max(object.Reflectance, 0.18)
+			else
+				object.Reflectance = math.max(object.Reflectance, 0.1)
+			end
+		end
+	end
+
+	ApplyShaderStrength()
 end
 
 local function DisableShaders()
@@ -970,6 +1306,23 @@ local function DisableShaders()
 		end
 	end
 	table.clear(ShaderObjects)
+
+	for property, value in pairs(ShaderSaved.lighting) do
+		pcall(function()
+			Lighting[property] = value
+		end)
+	end
+
+	for part, value in pairs(ShaderSaved.parts) do
+		if part and part.Parent then
+			part.Reflectance = value
+		end
+	end
+
+	ShaderSaved = {
+		lighting = {},
+		parts = {}
+	}
 end
 
 local function EnableLowGraphics()
@@ -1011,7 +1364,7 @@ local function EnableLowGraphics()
 				property = "Transparency",
 				value = object.Transparency
 			}
-			object.Transparency = math.max(object.Transparency, 0.35)
+			object.Transparency = math.max(object.Transparency, 0.4)
 		end
 	end
 
@@ -1041,7 +1394,9 @@ local function DisableLowGraphics()
 
 	for object, saved in pairs(LowGraphicsSaved.objects) do
 		if object and object.Parent then
-			object[saved.property] = saved.value
+			pcall(function()
+				object[saved.property] = saved.value
+			end)
 		end
 	end
 
@@ -1051,16 +1406,188 @@ local function DisableLowGraphics()
 	}
 end
 
-Section(MainPage, "Player", "Movement and local character controls", 1)
+local function FindTeleportTarget(kind)
+	local exactNames
 
-CreateToggle(MainPage, {
+	if kind == "Map" then
+		exactNames = {
+			"MapSpawn",
+			"MapSpawnLocation",
+			"MapTeleport",
+			"MapTP",
+			"Map"
+		}
+	else
+		exactNames = {
+			"LobbySpawn",
+			"LobbySpawnLocation",
+			"LobbyTeleport",
+			"LobbyTP",
+			"Lobby"
+		}
+	end
+
+	for _, name in ipairs(exactNames) do
+		local object = Workspace:FindFirstChild(name, true)
+		if object and (object:IsA("BasePart") or object:IsA("SpawnLocation") or object:IsA("Model")) then
+			return object
+		end
+	end
+
+	local loweredKind = string.lower(kind)
+
+	for _, object in ipairs(Workspace:GetDescendants()) do
+		if (object:IsA("BasePart") or object:IsA("SpawnLocation") or object:IsA("Model"))
+			and string.find(string.lower(object.Name), loweredKind, 1, true) then
+
+			return object
+		end
+	end
+
+	return nil
+end
+
+local function TeleportToTarget(kind, button)
+	local target = FindTeleportTarget(kind)
+	local character = LocalPlayer.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+
+	if not target or not root then
+		local old = button.Text
+		button.Text = kind:upper() .. " TARGET NOT FOUND"
+		task.delay(1.2, function()
+			if button and button.Parent then
+				button.Text = old
+			end
+		end)
+		return
+	end
+
+	if target:IsA("Model") then
+		root.CFrame = target:GetPivot() + Vector3.new(0, 4, 0)
+	else
+		root.CFrame = target.CFrame + Vector3.new(0, 4, 0)
+	end
+end
+
+Section(InfoPage, "Kuromi Hub", "Runtime information", 1)
+
+local InfoCard = New("Frame", {
+	Size = UDim2.new(1, 0, 0, 132),
+	BackgroundColor3 = Theme.Panel,
+	BorderSizePixel = 0,
+	LayoutOrder = 2,
+	ZIndex = 46
+}, InfoPage)
+Corner(InfoCard, 12)
+Stroke(InfoCard, 0.4)
+
+local InfoIcon = New("ImageLabel", {
+	Size = UDim2.fromOffset(66, 66),
+	Position = UDim2.fromOffset(16, 18),
+	BackgroundColor3 = Theme.Panel3,
+	BorderSizePixel = 0,
+	Image = "rbxassetid://8287008384",
+	ImageColor3 = Theme.White,
+	ZIndex = 47
+}, InfoCard)
+Corner(InfoIcon, 15)
+Stroke(InfoIcon, 0.18, 1, Theme.Purple)
+
+New("TextLabel", {
+	Size = UDim2.new(1, -110, 0, 26),
+	Position = UDim2.fromOffset(98, 18),
+	BackgroundTransparency = 1,
+	Text = "KUROMI HUB!",
+	TextColor3 = Theme.White,
+	TextSize = 18,
+	Font = Enum.Font.GothamBlack,
+	TextXAlignment = Enum.TextXAlignment.Left,
+	ZIndex = 47
+}, InfoCard)
+
+New("TextLabel", {
+	Size = UDim2.new(1, -110, 0, 20),
+	Position = UDim2.fromOffset(98, 48),
+	BackgroundTransparency = 1,
+	Text = LocalPlayer.DisplayName .. "  |  @" .. LocalPlayer.Name,
+	TextColor3 = Theme.Muted,
+	TextSize = 10,
+	Font = Enum.Font.GothamMedium,
+	TextXAlignment = Enum.TextXAlignment.Left,
+	ZIndex = 47
+}, InfoCard)
+
+local InfoFps = New("TextLabel", {
+	Size = UDim2.new(1, -110, 0, 20),
+	Position = UDim2.fromOffset(98, 72),
+	BackgroundTransparency = 1,
+	Text = "FPS 0",
+	TextColor3 = Theme.Pink,
+	TextSize = 10,
+	Font = Enum.Font.GothamBold,
+	TextXAlignment = Enum.TextXAlignment.Left,
+	ZIndex = 47
+}, InfoCard)
+
+New("TextLabel", {
+	Size = UDim2.new(1, -32, 0, 18),
+	Position = UDim2.fromOffset(16, 102),
+	BackgroundTransparency = 1,
+	Text = "CTRL + M TO OPEN OR CLOSE THE PANEL",
+	TextColor3 = Theme.Muted,
+	TextSize = 9,
+	Font = Enum.Font.GothamBold,
+	TextXAlignment = Enum.TextXAlignment.Left,
+	ZIndex = 47
+}, InfoCard)
+
+Section(MainPage, "Session", "Server and destination actions", 1)
+
+local Rejoin = ButtonCard(MainPage, "REJOIN CURRENT SERVER", 2, function()
+end)
+
+Bind(Rejoin.MouseButton1Click, function()
+	Rejoin.Text = "REJOINING..."
+
+	local ok = pcall(function()
+		TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
+	end)
+
+	if not ok then
+		Rejoin.Text = "REJOIN FAILED"
+		task.delay(1.2, function()
+			if Rejoin and Rejoin.Parent then
+				Rejoin.Text = "REJOIN CURRENT SERVER"
+			end
+		end)
+	end
+end)
+
+local TeleportMap = ButtonCard(MainPage, "TELEPORT TO MAP", 3, function()
+end)
+
+Bind(TeleportMap.MouseButton1Click, function()
+	TeleportToTarget("Map", TeleportMap)
+end)
+
+local TeleportLobby = ButtonCard(MainPage, "TELEPORT TO LOBBY", 4, function()
+end)
+
+Bind(TeleportLobby.MouseButton1Click, function()
+	TeleportToTarget("Lobby", TeleportLobby)
+end)
+
+Section(PlayerPage, "Player", "Movement and local character controls", 1)
+
+CreateToggle(PlayerPage, {
 	id = "antiFling",
 	title = "Anti-Fling",
 	subtitle = "Velocity and collision protection",
 	order = 2
 })
 
-CreateToggle(MainPage, {
+CreateToggle(PlayerPage, {
 	id = "noclip",
 	title = "Noclip",
 	subtitle = "Disable collision on your character",
@@ -1072,11 +1599,25 @@ CreateToggle(MainPage, {
 	end
 })
 
-local WalkRow = CreateToggle(MainPage, {
+CreateToggle(PlayerPage, {
+	id = "invisible",
+	title = "Invisible",
+	subtitle = "Local character visibility",
+	order = 4,
+	changed = function(enabled)
+		if enabled then
+			ApplyInvisible()
+		else
+			RestoreInvisible()
+		end
+	end
+})
+
+local WalkRow = CreateToggle(PlayerPage, {
 	id = "walkSpeed",
 	title = "Walk Speed",
 	subtitle = "Editable movement speed",
-	order = 4,
+	order = 5,
 	height = 108,
 	changed = function(enabled)
 		local character = LocalPlayer.Character
@@ -1111,78 +1652,23 @@ CreateEditableSlider(WalkRow, 81, 1, 25, State.walkSpeedValue, function(value)
 	end
 end)
 
-local FlingRow = CreateToggle(MainPage, {
-	id = "fling",
-	title = "Self Fling",
-	subtitle = "Editable local spin force",
-	order = 5,
-	height = 108,
-	changed = function()
-		UpdateFling()
-	end
-})
+Section(VisualPage, "Visual", "Player visibility", 1)
 
-CreateEditableSlider(FlingRow, 81, 10, 220, State.flingForce, function(value)
-	State.flingForce = value
-
-	if FlingAngular then
-		FlingAngular.AngularVelocity = Vector3.new(0, value, 0)
-	end
-end)
-
-local Rejoin = New("TextButton", {
-	Size = UDim2.new(1, 0, 0, 50),
-	BackgroundColor3 = Theme.Panel,
-	BorderSizePixel = 0,
-	Text = "REJOIN CURRENT SERVER",
-	TextColor3 = Theme.White,
-	TextSize = 11,
-	Font = Enum.Font.GothamBold,
-	AutoButtonColor = false,
-	LayoutOrder = 6,
-	ZIndex = 36
-}, MainPage)
-Corner(Rejoin, 12)
-Stroke(Rejoin, 0.4)
-
-Rejoin.MouseEnter:Connect(function()
-	Tween(Rejoin, 0.12, {BackgroundColor3 = Theme.Panel3}, Enum.EasingStyle.Quad)
-end)
-
-Rejoin.MouseLeave:Connect(function()
-	Tween(Rejoin, 0.12, {BackgroundColor3 = Theme.Panel}, Enum.EasingStyle.Quad)
-end)
-
-Rejoin.MouseButton1Click:Connect(function()
-	Rejoin.Text = "REJOINING..."
-
-	local ok = pcall(function()
-		TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
-	end)
-
-	if not ok then
-		Rejoin.Text = "REJOIN FAILED"
-		task.wait(1.2)
-		Rejoin.Text = "REJOIN CURRENT SERVER"
-	end
-end)
-
-Section(VisualsPage, "Visuals", "Player visibility tools", 1)
-
-CreateToggle(VisualsPage, {
+CreateToggle(VisualPage, {
 	id = "esp",
 	title = "Players ESP",
-	subtitle = "Highlight, display name and distance",
+	subtitle = "Name, username, distance and tag-aware color",
 	order = 2
 })
 
-Section(GraphicsPage, "Graphics", "Visual quality and performance", 1)
+Section(GraphicsPage, "Graphics", "Lighting, reflections and performance", 1)
 
-CreateToggle(GraphicsPage, {
+local ShaderRow = CreateToggle(GraphicsPage, {
 	id = "shaders",
-	title = "Visual Enhancement",
-	subtitle = "Bloom, color correction and depth",
+	title = "Enhanced Shaders",
+	subtitle = "Reflections, shadows, bloom, atmosphere and lighting",
 	order = 2,
+	height = 108,
 	changed = function(enabled)
 		if enabled then
 			if State.lowGraphics and ToggleSetters.lowGraphics then
@@ -1195,10 +1681,18 @@ CreateToggle(GraphicsPage, {
 	end
 })
 
+CreateEditableSlider(ShaderRow, 81, 0, 100, State.shaderStrength, function(value)
+	State.shaderStrength = value
+
+	if State.shaders then
+		ApplyShaderStrength()
+	end
+end)
+
 CreateToggle(GraphicsPage, {
 	id = "lowGraphics",
 	title = "Low Graphics",
-	subtitle = "Reduce effects, particles and heavy materials",
+	subtitle = "Reduce effects, materials and particles",
 	order = 3,
 	changed = function(enabled)
 		if enabled then
@@ -1212,15 +1706,15 @@ CreateToggle(GraphicsPage, {
 	end
 })
 
-Section(PanelPage, "Panel Settings", "Interface-only configuration", 1)
+Section(SettingsPage, "Settings", "Panel-only configuration", 1)
 
 local BackgroundCard = New("Frame", {
 	Size = UDim2.new(1, 0, 0, 114),
 	BackgroundColor3 = Theme.Panel,
 	BorderSizePixel = 0,
 	LayoutOrder = 2,
-	ZIndex = 36
-}, PanelPage)
+	ZIndex = 46
+}, SettingsPage)
 Corner(BackgroundCard, 12)
 Stroke(BackgroundCard, 0.4)
 
@@ -1233,7 +1727,7 @@ New("TextLabel", {
 	TextSize = 13,
 	Font = Enum.Font.GothamSemibold,
 	TextXAlignment = Enum.TextXAlignment.Left,
-	ZIndex = 37
+	ZIndex = 47
 }, BackgroundCard)
 
 New("TextLabel", {
@@ -1245,7 +1739,7 @@ New("TextLabel", {
 	TextSize = 10,
 	Font = Enum.Font.Gotham,
 	TextXAlignment = Enum.TextXAlignment.Left,
-	ZIndex = 37
+	ZIndex = 47
 }, BackgroundCard)
 
 local BackgroundBox = New("TextBox", {
@@ -1261,7 +1755,7 @@ local BackgroundBox = New("TextBox", {
 	Font = Enum.Font.Gotham,
 	ClearTextOnFocus = false,
 	TextXAlignment = Enum.TextXAlignment.Left,
-	ZIndex = 37
+	ZIndex = 47
 }, BackgroundCard)
 Corner(BackgroundBox, 9)
 Stroke(BackgroundBox, 0.5)
@@ -1291,19 +1785,19 @@ local function ApplyBackground(value)
 	end
 end
 
-BackgroundBox.FocusLost:Connect(function()
+Bind(BackgroundBox.FocusLost, function()
 	ApplyBackground(BackgroundBox.Text)
 end)
 
-local PanelInfo = New("Frame", {
+local ShortcutCard = New("Frame", {
 	Size = UDim2.new(1, 0, 0, 86),
 	BackgroundColor3 = Theme.Panel,
 	BorderSizePixel = 0,
 	LayoutOrder = 3,
-	ZIndex = 36
-}, PanelPage)
-Corner(PanelInfo, 12)
-Stroke(PanelInfo, 0.4)
+	ZIndex = 46
+}, SettingsPage)
+Corner(ShortcutCard, 12)
+Stroke(ShortcutCard, 0.4)
 
 New("TextLabel", {
 	Size = UDim2.new(1, -30, 0, 22),
@@ -1314,8 +1808,8 @@ New("TextLabel", {
 	TextSize = 13,
 	Font = Enum.Font.GothamSemibold,
 	TextXAlignment = Enum.TextXAlignment.Left,
-	ZIndex = 37
-}, PanelInfo)
+	ZIndex = 47
+}, ShortcutCard)
 
 New("TextLabel", {
 	Size = UDim2.new(1, -30, 0, 22),
@@ -1326,54 +1820,68 @@ New("TextLabel", {
 	TextSize = 12,
 	Font = Enum.Font.GothamBold,
 	TextXAlignment = Enum.TextXAlignment.Left,
-	ZIndex = 37
-}, PanelInfo)
+	ZIndex = 47
+}, ShortcutCard)
 
-local StatusHud = New("Frame", {
+local StatusHud = New("CanvasGroup", {
 	Name = "StatusHud",
-	Size = UDim2.fromOffset(240, 38),
+	Size = UDim2.fromOffset(250, 40),
 	AnchorPoint = Vector2.new(0.5, 0),
 	Position = UDim2.new(0.5, 0, 0, 12),
 	BackgroundColor3 = Theme.Panel,
-	BackgroundTransparency = 0.05,
+	BackgroundTransparency = 0.03,
 	BorderSizePixel = 0,
 	Active = true,
-	ZIndex = 500
+	GroupTransparency = 1,
+	ZIndex = 700
 }, ScreenGui)
 Corner(StatusHud, 10)
-Stroke(StatusHud, 0.15, 1, Theme.PurpleSoft)
+Stroke(StatusHud, 0.12, 1, Theme.PurpleSoft)
 
-local HudAccent = New("Frame", {
-	Size = UDim2.fromOffset(3, 18),
+local HudScale = New("UIScale", {
+	Scale = 0.94
+}, StatusHud)
+
+local HudMarker = New("Frame", {
+	Size = UDim2.fromOffset(3, 20),
 	Position = UDim2.fromOffset(12, 10),
 	BackgroundColor3 = Theme.Pink,
 	BorderSizePixel = 0,
-	ZIndex = 501
+	ZIndex = 701
 }, StatusHud)
-Corner(HudAccent, 2)
+Corner(HudMarker, 2)
 
-local HudTitle = New("TextLabel", {
-	Size = UDim2.fromOffset(105, 20),
+local HudIcon = New("ImageLabel", {
+	Size = UDim2.fromOffset(22, 22),
 	Position = UDim2.fromOffset(25, 9),
+	BackgroundTransparency = 1,
+	Image = "rbxassetid://8287008384",
+	ImageColor3 = Theme.White,
+	ZIndex = 701
+}, StatusHud)
+
+New("TextLabel", {
+	Size = UDim2.fromOffset(105, 20),
+	Position = UDim2.fromOffset(54, 10),
 	BackgroundTransparency = 1,
 	Text = "KUROMI HUB",
 	TextColor3 = Theme.White,
-	TextSize = 10,
+	TextSize = 9,
 	Font = Enum.Font.GothamBold,
 	TextXAlignment = Enum.TextXAlignment.Left,
-	ZIndex = 501
+	ZIndex = 701
 }, StatusHud)
 
 local FpsLabel = New("TextLabel", {
-	Size = UDim2.fromOffset(92, 20),
-	Position = UDim2.new(1, -104, 0, 9),
+	Size = UDim2.fromOffset(76, 20),
+	Position = UDim2.new(1, -88, 0, 10),
 	BackgroundTransparency = 1,
 	Text = "FPS 0",
 	TextColor3 = Theme.Muted,
-	TextSize = 10,
+	TextSize = 9,
 	Font = Enum.Font.GothamBold,
 	TextXAlignment = Enum.TextXAlignment.Right,
-	ZIndex = 501
+	ZIndex = 701
 }, StatusHud)
 
 local function MakeDraggable(handle, target)
@@ -1382,13 +1890,15 @@ local function MakeDraggable(handle, target)
 	local dragStart = nil
 	local startPosition = nil
 
-	handle.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+	Bind(handle.InputBegan, function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch then
+
 			dragging = true
 			dragStart = input.Position
 			startPosition = target.Position
 
-			input.Changed:Connect(function()
+			Bind(input.Changed, function()
 				if input.UserInputState == Enum.UserInputState.End then
 					dragging = false
 				end
@@ -1396,15 +1906,18 @@ local function MakeDraggable(handle, target)
 		end
 	end)
 
-	handle.InputChanged:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+	Bind(handle.InputChanged, function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement
+			or input.UserInputType == Enum.UserInputType.Touch then
+
 			dragInput = input
 		end
 	end)
 
-	UserInputService.InputChanged:Connect(function(input)
+	Bind(UserInputService.InputChanged, function(input)
 		if dragging and input == dragInput then
 			local delta = input.Position - dragStart
+
 			target.Position = UDim2.new(
 				startPosition.X.Scale,
 				startPosition.X.Offset + delta.X,
@@ -1428,21 +1941,21 @@ local function SetMenuVisible(visible)
 	if visible then
 		Main.Visible = true
 		Main.GroupTransparency = 1
-		MainScale.Scale = 0.93
+		MainScale.Scale = 0.9
 
-		Tween(MainScale, 0.28, {
+		Tween(MainScale, 0.34, {
 			Scale = 1
-		}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+		}, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 
-		Tween(Main, 0.24, {
+		Tween(Main, 0.25, {
 			GroupTransparency = 0
-		}, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+		}, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 	else
-		Tween(MainScale, 0.2, {
-			Scale = 0.95
+		Tween(MainScale, 0.22, {
+			Scale = 0.92
 		}, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
 
-		local fade = Tween(Main, 0.18, {
+		local fade = Tween(Main, 0.2, {
 			GroupTransparency = 1
 		}, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 
@@ -1454,27 +1967,35 @@ local function SetMenuVisible(visible)
 	end
 end
 
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
+Bind(UserInputService.InputBegan, function(input, gameProcessed)
 	if WaitingForHotkey then
-		if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.Escape then
+		if input.UserInputType == Enum.UserInputType.Keyboard
+			and input.KeyCode == Enum.KeyCode.Escape then
+
 			local button = HotkeyButtons[WaitingForHotkey]
 			if button then
 				button.Text = FormatHotkey(Hotkeys[WaitingForHotkey])
 				button.TextColor3 = Theme.Muted
 			end
+
 			WaitingForHotkey = nil
 			return
 		end
 
 		if input.UserInputType == Enum.UserInputType.Keyboard
-			and (input.KeyCode == Enum.KeyCode.Backspace or input.KeyCode == Enum.KeyCode.Delete) then
+			and (input.KeyCode == Enum.KeyCode.Backspace
+				or input.KeyCode == Enum.KeyCode.Delete) then
 
 			Hotkeys[WaitingForHotkey] = nil
-		elseif input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode ~= Enum.KeyCode.Unknown then
+
+		elseif input.UserInputType == Enum.UserInputType.Keyboard
+			and input.KeyCode ~= Enum.KeyCode.Unknown then
+
 			Hotkeys[WaitingForHotkey] = {
 				kind = "KeyCode",
 				value = input.KeyCode
 			}
+
 		elseif input.UserInputType == Enum.UserInputType.MouseButton1
 			or input.UserInputType == Enum.UserInputType.MouseButton2
 			or input.UserInputType == Enum.UserInputType.MouseButton3 then
@@ -1523,7 +2044,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	end
 end)
 
-RunService.Stepped:Connect(function()
+Bind(RunService.Stepped, function()
 	local character = LocalPlayer.Character
 
 	if State.noclip and character then
@@ -1538,19 +2059,19 @@ RunService.Stepped:Connect(function()
 	elseif next(SavedLocalCollision) then
 		RestoreLocalCollision()
 	end
+
+	if State.invisible then
+		ApplyInvisible()
+	end
 end)
 
-RunService.Heartbeat:Connect(function()
+Bind(RunService.Heartbeat, function()
 	local character = LocalPlayer.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 	local root = character and character:FindFirstChild("HumanoidRootPart")
 
 	if State.walkSpeed and humanoid then
 		humanoid.WalkSpeed = State.walkSpeedValue
-	end
-
-	if State.fling and FlingAngular then
-		FlingAngular.AngularVelocity = Vector3.new(0, State.flingForce, 0)
 	end
 
 	if State.antiFling and root then
@@ -1597,28 +2118,34 @@ end)
 
 local frameCount = 0
 local elapsed = 0
+local animationTime = 0
 
-RunService.RenderStepped:Connect(function(deltaTime)
+Bind(RunService.RenderStepped, function(deltaTime)
 	frameCount += 1
 	elapsed += deltaTime
+	animationTime += deltaTime
+
+	AccentGradient.Offset = Vector2.new(((animationTime * 0.22) % 2) - 1, 0)
 
 	if elapsed >= 0.5 then
 		local fps = math.floor((frameCount / elapsed) + 0.5)
-		FpsLabel.Text = "FPS " .. tostring(fps)
+		local text = "FPS " .. tostring(fps)
+		FpsLabel.Text = text
+		InfoFps.Text = text
 		frameCount = 0
 		elapsed = 0
 	end
 end)
 
-Players.PlayerRemoving:Connect(function(player)
+Bind(Players.PlayerRemoving, function(player)
 	DestroyEsp(player)
 end)
 
-LocalPlayer.CharacterAdded:Connect(function(character)
+Bind(LocalPlayer.CharacterAdded, function(character)
 	LastSafeCFrame = nil
 	SavedWalkSpeed = nil
 	RestoreLocalCollision()
-	RemoveFling()
+	RestoreInvisible()
 
 	task.spawn(function()
 		local humanoid = character:WaitForChild("Humanoid", 10)
@@ -1628,9 +2155,9 @@ LocalPlayer.CharacterAdded:Connect(function(character)
 			humanoid.WalkSpeed = State.walkSpeedValue
 		end
 
-		if State.fling then
-			task.wait(0.5)
-			UpdateFling()
+		if State.invisible then
+			task.wait(0.2)
+			ApplyInvisible()
 		end
 	end)
 end)
@@ -1649,56 +2176,128 @@ task.spawn(function()
 	end
 end)
 
-SelectPage("Main")
+local function Cleanup()
+	if Destroyed then
+		return
+	end
+
+	Destroyed = true
+	WaitingForHotkey = nil
+
+	State.antiFling = false
+	State.esp = false
+	State.walkSpeed = false
+	State.noclip = false
+	State.invisible = false
+	State.shaders = false
+	State.lowGraphics = false
+
+	local character = LocalPlayer.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+
+	if humanoid and SavedWalkSpeed ~= nil then
+		humanoid.WalkSpeed = SavedWalkSpeed
+	end
+
+	SavedWalkSpeed = nil
+
+	RestoreLocalCollision()
+	RestoreOtherCollision()
+	RestoreInvisible()
+	ClearEsp()
+	DisableShaders()
+	DisableLowGraphics()
+
+	for _, connection in ipairs(Connections) do
+		pcall(function()
+			connection:Disconnect()
+		end)
+	end
+	table.clear(Connections)
+
+	if ScreenGui and ScreenGui.Parent then
+		ScreenGui:Destroy()
+	end
+
+	if _G.KuromiHubCleanup == Cleanup then
+		_G.KuromiHubCleanup = nil
+	end
+end
+
+_G.KuromiHubCleanup = Cleanup
+
+SelectPage("Info")
 
 task.spawn(function()
-	Tween(IntroScale, 0.55, {
+	Tween(IntroScale, 0.5, {
 		Scale = 1
 	}, Enum.EasingStyle.Quint)
 
-	Tween(IntroLineTop, 0.55, {
-		Size = UDim2.fromOffset(390, 1)
-	}, Enum.EasingStyle.Quint)
-
-	task.wait(0.12)
-
-	Tween(IntroTitle, 0.38, {
-		TextTransparency = 0
+	Tween(IntroIcon, 0.34, {
+		ImageTransparency = 0
 	}, Enum.EasingStyle.Quad)
 
 	task.wait(0.1)
 
-	Tween(IntroSubtitle, 0.34, {
+	Tween(IntroLine, 0.52, {
+		Size = UDim2.fromOffset(300, 2)
+	}, Enum.EasingStyle.Quint)
+
+	task.wait(0.08)
+
+	Tween(IntroTitle, 0.34, {
 		TextTransparency = 0
 	}, Enum.EasingStyle.Quad)
 
-	Tween(IntroLineBottom, 0.55, {
-		Size = UDim2.fromOffset(260, 1)
-	}, Enum.EasingStyle.Quint)
+	task.wait(0.08)
 
-	task.wait(0.75)
+	Tween(IntroSub, 0.3, {
+		TextTransparency = 0
+	}, Enum.EasingStyle.Quad)
 
-	Tween(IntroScale, 0.28, {
-		Scale = 1.035
+	task.wait(0.65)
+
+	Tween(IntroScale, 0.22, {
+		Scale = 1.04
 	}, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
 
-	local fade = Tween(Intro, 0.42, {
+	local introFade = Tween(Intro, 0.38, {
 		GroupTransparency = 1
 	}, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 
-	fade.Completed:Wait()
+	introFade.Completed:Wait()
+
+	if Destroyed then
+		return
+	end
+
 	Intro.Visible = false
 
 	Main.Visible = true
 	Main.GroupTransparency = 1
-	MainScale.Scale = 0.92
+	MainScale.Scale = 0.9
+	Main.Position = UDim2.new(0.5, -410, 0.5, -245)
 
 	Tween(MainScale, 0.42, {
 		Scale = 1
 	}, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 
 	Tween(Main, 0.3, {
+		GroupTransparency = 0,
+		Position = UDim2.new(0.5, -410, 0.5, -270)
+	}, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+
+	StatusHud.GroupTransparency = 1
+	HudScale.Scale = 0.92
+
+	task.wait(0.08)
+
+	Tween(HudScale, 0.32, {
+		Scale = 1
+	}, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+
+	Tween(StatusHud, 0.24, {
 		GroupTransparency = 0
-	}, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+	}, Enum.EasingStyle.Quad)
 end)
 
