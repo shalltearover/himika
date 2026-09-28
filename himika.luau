@@ -1,5 +1,3 @@
--- K HUB V6 — PARTE 1/2
-
 if _G.KHubCleanup then
 	pcall(_G.KHubCleanup)
 	_G.KHubCleanup = nil
@@ -52,8 +50,8 @@ pcall(function()
 	end
 end)
 
-local BACKGROUND_ASSET_ID = 10039618753
-local HUB_ICON_ASSET_ID = 11878291148
+local BACKGROUND_ASSET_ID = 111159126434553
+local HUB_ICON_ASSET_ID = 109513615909500
 
 local oldGui =
 	GuiParent:FindFirstChild("KHub")
@@ -116,47 +114,47 @@ local Strings = {
 		tab_esp = "ESP",
 		tab_graphics = "Graphics",
 		tab_fps = "FPS",
-		tab_macros = "Macros",
+		tab_macros = "Macro",
 		tab_status = "Status",
 		tab_settings = "Settings",
 
-		top_subtitle = "utility panel",
+		top_subtitle = "",
 
-		info_subtitle = "Build notes and runtime warnings",
-		info_version = "Development build",
+		info_subtitle = "-",
+		info_version = "Test build",
 		info_runtime = "Runtime features start disabled.",
 
 		note_development_title = "Development",
 		note_development_body =
-			"This build is still being tested. Features and behavior may change.",
+			"Still incomplete; there may be bugs and changes to the implementation.",
 
-		note_performance_title = "Performance",
+		note_performance_title = "Warning",
 		note_performance_body =
-			"Red labels mark heavier options that may reduce performance in large or generated rooms.",
+			"Red labels mark heavier options that may reduce performance in large or generated maps.",
 
-		note_menu_title = "Menu shortcut",
+		note_menu_title = "Menu",
 		note_menu_body =
-			"Ctrl opens or closes the menu by default. You can change it in Settings.",
+			""Ctrl" opens/closes the menu by default. You can change it in Settings.",
 
-		main_title = "Session",
+		main_title = "-",
 		main_subtitle = "Server and spawn controls",
 
-		rejoin = "REJOIN SERVER",
+		rejoin = "rejoin server",
 		rejoin_sub = "Reconnect to this server instance",
 
-		game_tp = "GO TO GAME",
+		game_tp = "tp to game",
 		game_tp_sub = "Teleport to the Game SpawnLocation",
 
-		lobby_tp = "GO TO LOBBY",
+		lobby_tp = "tp to lobby",
 		lobby_tp_sub = "Teleport to the Lobby SpawnLocation",
 
-		respawn = "RESPAWN",
+		respawn = "reset",
 		respawn_sub = "Respawn your character",
 
-		player_title = "Player",
+		player_title = "-",
 		player_subtitle = "Movement and protection",
 
-		anti_fling = "Anti-Fling",
+		anti_fling = "Anti Fling",
 		anti_fling_sub =
 			"Limits unwanted velocity and collision pushes",
 
@@ -209,7 +207,7 @@ local Strings = {
 			"Walk through detected objectives in sequence",
 
 		esp_title =
-			"ESP",
+			"-",
 
 		esp_subtitle =
 			"Players and potentially hostile entities",
@@ -281,7 +279,7 @@ local Strings = {
 			"Highlight tagged objectives, keys and progression targets",
 
 		graphics_title =
-			"Graphics",
+			"-",
 
 		graphics_subtitle =
 			"Visual quality and performance",
@@ -374,7 +372,7 @@ local Strings = {
 			"HEAVY",
 
 		fps_title =
-			"FPS Tools",
+			"-",
 
 		fps_subtitle =
 			"Aim and camera helpers for shooter testing",
@@ -416,7 +414,7 @@ local Strings = {
 			"Aim Smoothness",
 
 		macros_title =
-			"Macros",
+			"-",
 
 		macros_subtitle =
 			"Record inputs and configure hold actions",
@@ -455,7 +453,7 @@ local Strings = {
 			"Clicks Per Second",
 
 		status_title =
-			"Runtime Status",
+			"Status",
 
 		status_subtitle =
 			"Executions and current features",
@@ -473,7 +471,7 @@ local Strings = {
 			"None",
 
 		settings_title =
-			"Settings",
+			"-",
 
 		settings_subtitle =
 			"Interface and interaction",
@@ -536,19 +534,19 @@ local Strings = {
 			"Remove ProximityPrompt hold time",
 
 		teleporting =
-			"TELEPORTING...",
+			"teleporting...",
 
 		teleport_failed =
-			"TELEPORT FAILED",
+			"teleport failed",
 
 		spawn_not_found =
-			"SPAWN NOT FOUND",
+			"spawn not found",
 
 		rejoining =
-			"REJOINING...",
+			"rejoining...",
 
 		rejoin_failed =
-			"REJOIN FAILED",
+			"rejoin failedD",
 
 		press_key =
 			"PRESS A KEY",
@@ -577,7 +575,7 @@ local Strings = {
 			"FPS",
 
 		tab_macros =
-			"Macros",
+			"Macro",
 
 		tab_status =
 			"Status",
@@ -589,10 +587,10 @@ local Strings = {
 			"painel utilitário",
 
 		info_subtitle =
-			"Notas da versão e avisos",
+				"-",
 
 		info_version =
-			"Versão em desenvolvimento",
+			"Versão de teste",
 
 		info_runtime =
 			"Os recursos começam desativados.",
@@ -601,22 +599,22 @@ local Strings = {
 			"Desenvolvimento",
 
 		note_development_body =
-			"Esta versão ainda está em testes. Recursos e comportamentos podem mudar.",
+			"Ainda incompleto, pode haver bugs e mudanças na execução.",
 
 		note_performance_title =
 			"Desempenho",
 
 		note_performance_body =
-			"Rótulos vermelhos indicam opções mais pesadas, que podem reduzir o desempenho em salas grandes ou geradas.",
+			"Nomes em vermelho indicam opções mais pesadas, que podem reduzir o desempenho em salas grandes ou geradas.",
 
 		note_menu_title =
 			"Atalho do menu",
 
 		note_menu_body =
-			"Ctrl abre ou fecha o menu por padrão. Você pode trocar a tecla nos Ajustes.",
+			""Ctrl" abre/fecha o menu por padrão. Você pode trocar a tecla nos Ajustes.",
 
 		main_title =
-			"Sessão",
+			"-",
 
 		main_subtitle =
 			"Controles de servidor e spawn",
@@ -628,25 +626,25 @@ local Strings = {
 			"Reconecta a esta mesma instância",
 
 		game_tp =
-			"IR PARA O JOGO",
+			"teleportar para o jogo",
 
 		game_tp_sub =
 			"Teleporta para o SpawnLocation do jogo",
 
 		lobby_tp =
-			"IR PARA O LOBBY",
+			"teleportar para o mapa",
 
 		lobby_tp_sub =
 			"Teleporta para o SpawnLocation do lobby",
 
 		respawn =
-			"REAPARECER",
+			"resetar",
 
 		respawn_sub =
-			"Faz seu personagem reaparecer",
+			"Faz seu personagem respawnar",
 
 		player_title =
-			"Jogador",
+			"-",
 
 		player_subtitle =
 			"Movimento e proteção",
@@ -712,7 +710,7 @@ local Strings = {
 			"Caminha pelos objetivos detectados na ordem",
 
 		esp_title =
-			"ESP",
+			"-",
 
 		esp_subtitle =
 			"Jogadores e entidades potencialmente hostis",
@@ -784,7 +782,7 @@ local Strings = {
 			"Destaca objetivos, chaves e alvos de progresso",
 
 		graphics_title =
-			"Gráficos",
+			"-",
 
 		graphics_subtitle =
 			"Qualidade visual e desempenho",
@@ -877,7 +875,7 @@ local Strings = {
 			"PESADO",
 
 		fps_title =
-			"Ferramentas FPS",
+			"-",
 
 		fps_subtitle =
 			"Auxílios de mira e câmera para testar jogos de tiro",
@@ -919,7 +917,7 @@ local Strings = {
 			"Suavidade da Mira",
 
 		macros_title =
-			"Macros",
+			"-",
 
 		macros_subtitle =
 			"Grave entradas e configure ações por tecla",
@@ -958,7 +956,7 @@ local Strings = {
 			"Cliques por Segundo",
 
 		status_title =
-			"Status da Execução",
+			"Status",
 
 		status_subtitle =
 			"Execuções e recursos atuais",
@@ -1039,22 +1037,22 @@ local Strings = {
 			"Remove o tempo de segurar do ProximityPrompt",
 
 		teleporting =
-			"TELEPORTANDO...",
+			"teleportando...",
 
 		teleport_failed =
-			"FALHA NO TELEPORTE",
+			"falha no teleporte",
 
 		spawn_not_found =
-			"SPAWN NÃO ENCONTRADO",
+			"spawn não encontrado",
 
 		rejoining =
-			"REENTRANDO...",
+			"reentrando...",
 
 		rejoin_failed =
-			"FALHA AO REENTRAR",
+			"falha ao reentar",
 
 		press_key =
-			"PRESSIONE UMA TECLA",
+			"pressione uma tecla...",
 
 		set =
 			"..."
@@ -1140,20 +1138,20 @@ local State = {
 	rememberSettings = false,
 
 	walkSpeedValue = 16,
-	flySpeed = 30,
-	freecamSpeed = 36,
+	flySpeed = 15,
+	freecamSpeed = 15,
 
 	fovValue = 70,
 	brightnessValue = 2.5,
 
-	aimFov = 160,
-	aimSmooth = 10,
+	aimFov = 200,
+	aimSmooth = 50,
 
 	autoClickCps = 10,
 
 	panelBlur = 90,
-	backgroundBrightness = 34,
-	uiTransparency = 5,
+	backgroundBrightness = 70,
+	uiTransparency = 70,
 	uiScale = 100,
 
 	menuVisible = true
