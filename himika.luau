@@ -1,3 +1,5 @@
+-- K HUB V6 — PARTE 1/2
+
 if _G.KHubCleanup then
 	pcall(_G.KHubCleanup)
 	_G.KHubCleanup = nil
@@ -38,18 +40,6 @@ local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 local Mouse = LocalPlayer:GetMouse()
 local Camera = Workspace.CurrentCamera
 
-if not Camera then
-	repeat
-		task.wait()
-		Camera = Workspace.CurrentCamera
-	until Camera
-end
-
-pcall(function()
-	UserInputService.MouseBehavior = Enum.MouseBehavior.Default
-	UserInputService.MouseIconEnabled = true
-end)
-
 local GuiParent = PlayerGui
 
 pcall(function()
@@ -62,8 +52,8 @@ pcall(function()
 	end
 end)
 
-local BACKGROUND_ASSET_ID = 111159126434553
-local HUB_ICON_ASSET_ID = 109513615909500
+local BACKGROUND_ASSET_ID = 10039618753
+local HUB_ICON_ASSET_ID = 11878291148
 
 local oldGui =
 	GuiParent:FindFirstChild("KHub")
@@ -126,47 +116,47 @@ local Strings = {
 		tab_esp = "ESP",
 		tab_graphics = "Graphics",
 		tab_fps = "FPS",
-		tab_macros = "Macro",
+		tab_macros = "Macros",
 		tab_status = "Status",
 		tab_settings = "Settings",
 
-		top_subtitle = "",
+		top_subtitle = "utility panel",
 
-		info_subtitle = "-",
-		info_version = "Test build",
+		info_subtitle = "Build notes and runtime warnings",
+		info_version = "Development build",
 		info_runtime = "Runtime features start disabled.",
 
 		note_development_title = "Development",
 		note_development_body =
-			"Still incomplete; there may be bugs and changes to the implementation.",
+			"This build is still being tested. Features and behavior may change.",
 
-		note_performance_title = "Warning",
+		note_performance_title = "Performance",
 		note_performance_body =
-			"Red labels mark heavier options that may reduce performance in large or generated maps.",
+			"Red labels mark heavier options that may reduce performance in large or generated rooms.",
 
-		note_menu_title = "Menu",
+		note_menu_title = "Menu shortcut",
 		note_menu_body =
-			""Ctrl" opens/closes the menu by default. You can change it in Settings.",
+			"Ctrl opens or closes the menu by default. You can change it in Settings.",
 
-		main_title = "-",
+		main_title = "Session",
 		main_subtitle = "Server and spawn controls",
 
-		rejoin = "rejoin server",
+		rejoin = "REJOIN SERVER",
 		rejoin_sub = "Reconnect to this server instance",
 
-		game_tp = "tp to game",
+		game_tp = "GO TO GAME",
 		game_tp_sub = "Teleport to the Game SpawnLocation",
 
-		lobby_tp = "tp to lobby",
+		lobby_tp = "GO TO LOBBY",
 		lobby_tp_sub = "Teleport to the Lobby SpawnLocation",
 
-		respawn = "reset",
+		respawn = "RESPAWN",
 		respawn_sub = "Respawn your character",
 
-		player_title = "-",
+		player_title = "Player",
 		player_subtitle = "Movement and protection",
 
-		anti_fling = "Anti Fling",
+		anti_fling = "Anti-Fling",
 		anti_fling_sub =
 			"Limits unwanted velocity and collision pushes",
 
@@ -219,7 +209,7 @@ local Strings = {
 			"Walk through detected objectives in sequence",
 
 		esp_title =
-			"-",
+			"ESP",
 
 		esp_subtitle =
 			"Players and potentially hostile entities",
@@ -291,7 +281,7 @@ local Strings = {
 			"Highlight tagged objectives, keys and progression targets",
 
 		graphics_title =
-			"-",
+			"Graphics",
 
 		graphics_subtitle =
 			"Visual quality and performance",
@@ -384,7 +374,7 @@ local Strings = {
 			"HEAVY",
 
 		fps_title =
-			"-",
+			"FPS Tools",
 
 		fps_subtitle =
 			"Aim and camera helpers for shooter testing",
@@ -426,7 +416,7 @@ local Strings = {
 			"Aim Smoothness",
 
 		macros_title =
-			"-",
+			"Macros",
 
 		macros_subtitle =
 			"Record inputs and configure hold actions",
@@ -465,7 +455,7 @@ local Strings = {
 			"Clicks Per Second",
 
 		status_title =
-			"Status",
+			"Runtime Status",
 
 		status_subtitle =
 			"Executions and current features",
@@ -483,7 +473,7 @@ local Strings = {
 			"None",
 
 		settings_title =
-			"-",
+			"Settings",
 
 		settings_subtitle =
 			"Interface and interaction",
@@ -546,19 +536,19 @@ local Strings = {
 			"Remove ProximityPrompt hold time",
 
 		teleporting =
-			"teleporting...",
+			"TELEPORTING...",
 
 		teleport_failed =
-			"teleport failed",
+			"TELEPORT FAILED",
 
 		spawn_not_found =
-			"spawn not found",
+			"SPAWN NOT FOUND",
 
 		rejoining =
-			"rejoining...",
+			"REJOINING...",
 
 		rejoin_failed =
-			"rejoin failedD",
+			"REJOIN FAILED",
 
 		press_key =
 			"PRESS A KEY",
@@ -587,7 +577,7 @@ local Strings = {
 			"FPS",
 
 		tab_macros =
-			"Macro",
+			"Macros",
 
 		tab_status =
 			"Status",
@@ -599,10 +589,10 @@ local Strings = {
 			"painel utilitário",
 
 		info_subtitle =
-				"-",
+			"Notas da versão e avisos",
 
 		info_version =
-			"Versão de teste",
+			"Versão em desenvolvimento",
 
 		info_runtime =
 			"Os recursos começam desativados.",
@@ -611,22 +601,22 @@ local Strings = {
 			"Desenvolvimento",
 
 		note_development_body =
-			"Ainda incompleto, pode haver bugs e mudanças na execução.",
+			"Esta versão ainda está em testes. Recursos e comportamentos podem mudar.",
 
 		note_performance_title =
 			"Desempenho",
 
 		note_performance_body =
-			"Nomes em vermelho indicam opções mais pesadas, que podem reduzir o desempenho em salas grandes ou geradas.",
+			"Rótulos vermelhos indicam opções mais pesadas, que podem reduzir o desempenho em salas grandes ou geradas.",
 
 		note_menu_title =
 			"Atalho do menu",
 
 		note_menu_body =
-			""Ctrl" abre/fecha o menu por padrão. Você pode trocar a tecla nos Ajustes.",
+			"Ctrl abre ou fecha o menu por padrão. Você pode trocar a tecla nos Ajustes.",
 
 		main_title =
-			"-",
+			"Sessão",
 
 		main_subtitle =
 			"Controles de servidor e spawn",
@@ -638,25 +628,25 @@ local Strings = {
 			"Reconecta a esta mesma instância",
 
 		game_tp =
-			"teleportar para o jogo",
+			"IR PARA O JOGO",
 
 		game_tp_sub =
 			"Teleporta para o SpawnLocation do jogo",
 
 		lobby_tp =
-			"teleportar para o mapa",
+			"IR PARA O LOBBY",
 
 		lobby_tp_sub =
 			"Teleporta para o SpawnLocation do lobby",
 
 		respawn =
-			"resetar",
+			"REAPARECER",
 
 		respawn_sub =
-			"Faz seu personagem respawnar",
+			"Faz seu personagem reaparecer",
 
 		player_title =
-			"-",
+			"Jogador",
 
 		player_subtitle =
 			"Movimento e proteção",
@@ -722,7 +712,7 @@ local Strings = {
 			"Caminha pelos objetivos detectados na ordem",
 
 		esp_title =
-			"-",
+			"ESP",
 
 		esp_subtitle =
 			"Jogadores e entidades potencialmente hostis",
@@ -794,7 +784,7 @@ local Strings = {
 			"Destaca objetivos, chaves e alvos de progresso",
 
 		graphics_title =
-			"-",
+			"Gráficos",
 
 		graphics_subtitle =
 			"Qualidade visual e desempenho",
@@ -887,7 +877,7 @@ local Strings = {
 			"PESADO",
 
 		fps_title =
-			"-",
+			"Ferramentas FPS",
 
 		fps_subtitle =
 			"Auxílios de mira e câmera para testar jogos de tiro",
@@ -929,7 +919,7 @@ local Strings = {
 			"Suavidade da Mira",
 
 		macros_title =
-			"-",
+			"Macros",
 
 		macros_subtitle =
 			"Grave entradas e configure ações por tecla",
@@ -968,7 +958,7 @@ local Strings = {
 			"Cliques por Segundo",
 
 		status_title =
-			"Status",
+			"Status da Execução",
 
 		status_subtitle =
 			"Execuções e recursos atuais",
@@ -1049,22 +1039,22 @@ local Strings = {
 			"Remove o tempo de segurar do ProximityPrompt",
 
 		teleporting =
-			"teleportando...",
+			"TELEPORTANDO...",
 
 		teleport_failed =
-			"falha no teleporte",
+			"FALHA NO TELEPORTE",
 
 		spawn_not_found =
-			"spawn não encontrado",
+			"SPAWN NÃO ENCONTRADO",
 
 		rejoining =
-			"reentrando...",
+			"REENTRANDO...",
 
 		rejoin_failed =
-			"falha ao reentar",
+			"FALHA AO REENTRAR",
 
 		press_key =
-			"pressione uma tecla...",
+			"PRESSIONE UMA TECLA",
 
 		set =
 			"..."
@@ -1150,20 +1140,20 @@ local State = {
 	rememberSettings = false,
 
 	walkSpeedValue = 16,
-	flySpeed = 15,
-	freecamSpeed = 15,
+	flySpeed = 30,
+	freecamSpeed = 36,
 
 	fovValue = 70,
 	brightnessValue = 2.5,
 
-	aimFov = 200,
-	aimSmooth = 50,
+	aimFov = 160,
+	aimSmooth = 10,
 
 	autoClickCps = 10,
 
 	panelBlur = 90,
-	backgroundBrightness = 70,
-	uiTransparency = 70,
+	backgroundBrightness = 34,
+	uiTransparency = 5,
 	uiScale = 100,
 
 	menuVisible = true
@@ -1360,33 +1350,6 @@ local function Bind(signal, callback)
 		Connections,
 		connection
 	)
-
-	return connection
-end
-
-Extra.NormalizeMouseBehavior = function(behavior)
-	if not behavior then
-		return Enum.MouseBehavior.Default
-	end
-
-	local name = behavior.Name
-	if name == "LockCenter" or name == "LockCurrentPosition" then
-		return Enum.MouseBehavior.Default
-	end
-
-	return behavior
-end
-
-Extra.ConnectOnce = function(signal, callback)
-	local connection
-	connection = signal:Connect(function(...)
-		if connection then
-			connection:Disconnect()
-			connection = nil
-		end
-
-		callback(...)
-	end)
 
 	return connection
 end
@@ -2171,7 +2134,7 @@ Extra.LoadSettings =
 		end
 	end
 
-pcall(Extra.LoadSettings)
+Extra.LoadSettings()
 
 local ScreenGui =
 	New(
@@ -2182,7 +2145,9 @@ local ScreenGui =
 			IgnoreGuiInset = true,
 			DisplayOrder = 2147483647,
 			ZIndexBehavior =
-				Enum.ZIndexBehavior.Global
+				Enum.ZIndexBehavior.Global,
+			ScreenInsets =
+				Enum.ScreenInsets.None
 		},
 		GuiParent
 	)
@@ -7276,6 +7241,7 @@ local function EnsureEntityEsp(
 			model
 		] = data
 	end
+
 -- K HUB V6 — PARTE 2/2
 
 	local localCharacter = LocalPlayer.Character
@@ -7480,7 +7446,6 @@ Extra.EnsureGenericEsp = function(store, object, kind)
 		local tint = kind == "item"
 			and Color3.fromRGB(130, 190, 164)
 			or Color3.fromRGB(185, 174, 125)
-
 
 		local highlight = New("Highlight", {
 			Name = kind == "item"
@@ -7750,7 +7715,7 @@ Extra.Toast = function(message, danger)
 				Enum.EasingDirection.In
 			)
 
-			Extra.ConnectOnce(fade.Completed, function()
+			fade.Completed:Once(function()
 				if holder and holder.Parent then
 					holder:Destroy()
 				end
@@ -7964,21 +7929,18 @@ Extra.StopFreecam = function()
 	end
 
 	PreviousMouseBehavior =
-		Extra.NormalizeMouseBehavior(
-			Extra.Freecam.mouseBehavior
-		)
+		Extra.Freecam.mouseBehavior
+		or Enum.MouseBehavior.Default
 
 	PreviousMouseIconEnabled =
-		PreviousMouseBehavior == Enum.MouseBehavior.Default
-			and true
-			or Extra.Freecam.mouseIcon ~= false
+		Extra.Freecam.mouseIcon ~= false
 
 	if not State.menuVisible then
 		UserInputService.MouseBehavior =
-			Enum.MouseBehavior.Default
+			PreviousMouseBehavior
 
 		UserInputService.MouseIconEnabled =
-			true
+			PreviousMouseIconEnabled
 	end
 
 	Extra.Freecam.root = nil
@@ -12763,7 +12725,7 @@ Extra.SetDateVisible = function(visible)
 			Enum.EasingStyle.Quart
 		)
 
-		Extra.ConnectOnce(fade.Completed, function()
+		fade.Completed:Once(function()
 			if not State.dateVisible then
 				Extra.DateUI.Hud.Visible =
 					false
@@ -13009,14 +12971,10 @@ local function SetMenuVisible(visible)
 				UserInputService.MouseBehavior
 
 			PreviousMouseBehavior =
-				Extra.NormalizeMouseBehavior(
-					currentBehavior
-				)
+				currentBehavior
 
 			PreviousMouseIconEnabled =
-				PreviousMouseBehavior == Enum.MouseBehavior.Default
-					and true
-					or UserInputService.MouseIconEnabled
+				UserInputService.MouseIconEnabled
 		end
 
 		UserInputService.MouseBehavior =
@@ -13097,7 +13055,7 @@ local function SetMenuVisible(visible)
 			Enum.EasingDirection.In
 		)
 
-		Extra.ConnectOnce(fade.Completed, function()
+		fade.Completed:Once(function()
 			if id ~= MenuAnimationId
 				or State.menuVisible then
 				return
@@ -13116,20 +13074,10 @@ local function SetMenuVisible(visible)
 					false
 			else
 				UserInputService.MouseBehavior =
-					Enum.MouseBehavior.Default
+					PreviousMouseBehavior
 
 				UserInputService.MouseIconEnabled =
-					true
-
-				task.defer(function()
-					if not State.menuVisible
-						and not (State.freecam and Extra.Freecam.active) then
-						UserInputService.MouseBehavior =
-							Enum.MouseBehavior.Default
-						UserInputService.MouseIconEnabled =
-							true
-					end
-				end)
+					PreviousMouseIconEnabled
 			end
 		end)
 	end
@@ -13193,7 +13141,7 @@ SetFpsVisible = function(visible)
 			Enum.EasingStyle.Quart
 		)
 
-		Extra.ConnectOnce(fade.Completed, function()
+		fade.Completed:Once(function()
 			if id == FpsAnimationId
 				and not State.fpsVisible then
 				HudUI.StatusHud.Visible =
@@ -13254,7 +13202,7 @@ SetClockVisible = function(visible)
 			Enum.EasingStyle.Quart
 		)
 
-		Extra.ConnectOnce(fade.Completed, function()
+		fade.Completed:Once(function()
 			if not State.clockVisible then
 				ClockUI.Hud.Visible =
 					false
@@ -13483,18 +13431,6 @@ Bind(
 
 			Extra.AutoClickToken +=
 				1
-		end
-
-		if input.UserInputType == Enum.UserInputType.MouseButton2
-			and not (State.freecam and Extra.Freecam.active) then
-			task.defer(function()
-				if not State.menuVisible then
-					UserInputService.MouseBehavior =
-						Enum.MouseBehavior.Default
-					UserInputService.MouseIconEnabled =
-						true
-				end
-			end)
 		end
 	end
 )
@@ -14549,10 +14485,10 @@ local function Cleanup()
 	)
 
 	UserInputService.MouseBehavior =
-		Enum.MouseBehavior.Default
+		PreviousMouseBehavior
 
 	UserInputService.MouseIconEnabled =
-		true
+		PreviousMouseIconEnabled
 
 	if ScreenGui
 		and ScreenGui.Parent then
@@ -14569,14 +14505,12 @@ end
 _G.KHubCleanup =
 	Cleanup
 
-pcall(function()
-	SelectPage(
-		"Info"
-	)
-end)
+SelectPage(
+	"Info"
+)
 
-pcall(ApplyPanelBackground)
-pcall(ApplyUITransparency)
+ApplyPanelBackground()
+ApplyUITransparency()
 
 for id, setter in pairs(
 	ToggleSetters
@@ -14600,28 +14534,22 @@ if State.rememberSettings
 	)
 end
 
-pcall(function()
-	SetFpsVisible(
-		State.fpsVisible
-	)
-end)
+SetFpsVisible(
+	State.fpsVisible
+)
 
-pcall(function()
-	SetClockVisible(
-		State.clockVisible
-	)
-end)
+SetClockVisible(
+	State.clockVisible
+)
 
 if Extra.SetDateVisible then
-	pcall(function()
-		Extra.SetDateVisible(
-			State.dateVisible
-		)
-	end)
+	Extra.SetDateVisible(
+		State.dateVisible
+	)
 end
 
-pcall(RefreshStatusPage)
-pcall(ApplyLanguage)
+RefreshStatusPage()
+ApplyLanguage()
 
 task.spawn(function()
 	for _, player in ipairs(
@@ -14964,4 +14892,3 @@ task.spawn(function()
 		)
 	end
 end)
-
