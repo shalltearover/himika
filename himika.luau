@@ -1,4 +1,4 @@
--- K HUB V6 — PARTE 1/2
+-- K HUB V6.1 — PARTE 1/2
 
 if _G.KHubCleanup then
 	pcall(_G.KHubCleanup)
@@ -40,14 +40,17 @@ local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 local Mouse = LocalPlayer:GetMouse()
 local Camera = Workspace.CurrentCamera
 
-while not Camera do
-	Workspace:GetPropertyChangedSignal("CurrentCamera"):Wait()
-	Camera = Workspace.CurrentCamera
-end
-
--- Keep the UI inside PlayerGui. This avoids executor-specific UI parenting
--- during startup and keeps the initial load as close to normal client UI as possible.
 local GuiParent = PlayerGui
+
+pcall(function()
+	if typeof(gethui) == "function" then
+		local candidate = gethui()
+
+		if typeof(candidate) == "Instance" then
+			GuiParent = candidate
+		end
+	end
+end)
 
 local BACKGROUND_ASSET_ID = 10039618753
 local HUB_ICON_ASSET_ID = 11878291148
@@ -117,57 +120,57 @@ local Strings = {
 		tab_status = "Status",
 		tab_settings = "Settings",
 
-		top_subtitle = "utility panel",
+		top_subtitle = "compact utility panel",
 
-		info_subtitle = "Build notes and runtime warnings",
-		info_version = "Development build",
-		info_runtime = "Gameplay features stay disabled until you enable them.",
+		info_subtitle = "Build information and runtime notes",
+		info_version = "K hub · development build",
+		info_runtime = "Features stay off until you enable them.",
 
 		note_development_title = "Development",
 		note_development_body =
-			"This build is still being tested. Features and behavior may change.",
+			"This build is still evolving. Some features may change while they are tested.",
 
 		note_performance_title = "Performance",
 		note_performance_body =
-			"Red labels mark heavier options that may reduce performance in large or generated rooms.",
+			"Options marked HEAVY can use more CPU or GPU time in large and generated maps.",
 
 		note_menu_title = "Menu shortcut",
 		note_menu_body =
 			"Ctrl opens or closes the menu by default. You can change it in Settings.",
 
 		main_title = "Session",
-		main_subtitle = "Server and spawn controls",
+		main_subtitle = "Session, server and spawn controls",
 
 		rejoin = "REJOIN SERVER",
-		rejoin_sub = "Reconnect to this server instance",
+		rejoin_sub = "Reconnect to the current server instance",
 
 		game_tp = "GO TO GAME",
-		game_tp_sub = "Teleport to the Game SpawnLocation",
+		game_tp_sub = "Find and move to the detected game spawn",
 
 		lobby_tp = "GO TO LOBBY",
-		lobby_tp_sub = "Teleport to the Lobby SpawnLocation",
+		lobby_tp_sub = "Find and move to the detected lobby spawn",
 
 		respawn = "RESPAWN",
-		respawn_sub = "Respawn your character",
+		respawn_sub = "Respawn your local character",
 
 		player_title = "Player",
-		player_subtitle = "Movement and protection",
+		player_subtitle = "Movement, camera and protection",
 
 		anti_fling = "Anti-Fling",
 		anti_fling_sub =
-			"Limits unwanted velocity and collision pushes",
+			"Reduces extreme velocity and collision launches",
 
 		noclip = "Noclip",
 		noclip_sub =
-			"Disable collision on your character",
+			"Disable character collisions while enabled",
 
 		walk_speed = "Walk Speed",
 		walk_speed_sub =
-			"Set your movement speed",
+			"Set the humanoid walking speed",
 
 		fly = "Fly",
 		fly_sub =
-			"Move freely through the air",
+			"Move through the air with WASD and Q/E",
 
 		fly_notice =
 			"Fly enabled  ·  Q down  ·  E up",
@@ -176,19 +179,19 @@ local Strings = {
 			"Movement Manipulation",
 
 		speed_manip_sub =
-			"Hold the key to use noclip with WalkSpeed 2",
+			"Hold the key for noclip with WalkSpeed 2",
 
 		fov =
 			"Field of View",
 
 		fov_sub =
-			"Adjust the camera field of view",
+			"Change the camera field of view",
 
 		freecam =
 			"Freecam",
 
 		freecam_sub =
-			"Detach the camera and move it with WASD + Q/E",
+			"Freeze your character and move only the camera",
 
 		freecam_speed =
 			"Freecam Speed",
@@ -197,91 +200,91 @@ local Strings = {
 			"Spectate Player",
 
 		spectate_sub =
-			"Follow another player and switch targets inline",
+			"Watch another player; switch targets with the arrows",
 
 		auto_walk =
 			"Auto Walk",
 
 		auto_walk_sub =
-			"Walk through detected objectives in sequence",
+			"Pathfind through detected objectives in sequence",
 
 		esp_title =
 			"ESP",
 
 		esp_subtitle =
-			"Players and potentially hostile entities",
+			"Player, friend, entity, gear and objective overlays",
 
 		player_esp =
 			"Player ESP",
 
 		player_esp_sub =
-			"Show names and distance for players",
+			"Show player names and distance",
 
 		friend_esp =
 			"Friend ESP",
 
 		friend_esp_sub =
-			"Add a star and green styling to friends on the normal player label",
+			"Mark Roblox friends with a green outline and ★ on the normal label",
 
 		entity_esp =
 			"Entity ESP",
 
 		entity_esp_sub =
-			"Highlight detected NPCs and entities",
+			"Highlight detected NPCs and hostile entities",
 
 		esp_filters =
 			"ESP Filters",
 
 		esp_filters_sub =
-			"Choose what ESP elements are rendered",
+			"Choose which details each ESP renders",
 
 		esp_names =
 			"Names",
 
 		esp_names_sub =
-			"Show names above ESP targets",
+			"Show names above detected targets",
 
 		esp_distance =
 			"Distance",
 
 		esp_distance_sub =
-			"Show distance from your character",
+			"Show distance from your character to each target",
 
 		esp_highlight =
 			"Highlight",
 
 		esp_highlight_sub =
-			"Render an outline through walls",
+			"Draw an outline on detected targets",
 
 		entity_hostile_only =
 			"Hostile Entities Only",
 
 		entity_hostile_only_sub =
-			"Ignore neutral NPCs when possible",
+			"Prefer entities detected as hostile",
 
 		entity_spawn_warning =
 			"Entity Spawn Warning",
 
 		entity_spawn_warning_sub =
-			"Show a warning when a hostile entity appears",
+			"Show a small alert when a hostile entity is detected",
 
 		item_esp =
 			"Gear ESP",
 
 		item_esp_sub =
-			"Show only world Tools that can be picked up as gear",
+			"Show only Tools in the world that can become inventory gear",
 
 		objective_esp =
 			"Objective ESP",
 
 		objective_esp_sub =
-			"Highlight tagged objectives, keys and progression targets",
+			"Highlight detected objectives and progression targets",
 
 		graphics_title =
 			"Graphics",
 
 		graphics_subtitle =
-			"Visual quality and performance",
+			"Visibility and performance controls",
 
 		graphics_boost =
 			"Enhanced Graphics",
@@ -329,43 +332,43 @@ local Strings = {
 			"FPS Counter",
 
 		fps_display_sub =
-			"Numeric FPS counter updated at up to 30 Hz",
+			"Show a compact live FPS counter",
 
 		clock_display =
 			"Clock",
 
 		clock_display_sub =
-			"Show your local time on screen",
+			"Show your local time beside the FPS counter",
 
 		date_display =
 			"Date",
 
 		date_display_sub =
-			"Show the date to the left of the FPS counter",
+			"Show the local date to the left of the FPS counter",
 
 		no_fog =
 			"No Fog",
 
 		no_fog_sub =
-			"Remove distance fog and atmosphere haze",
+			"Reduce fog and atmosphere haze for clearer visibility",
 
 		brightness =
 			"Brightness",
 
 		brightness_sub =
-			"Override Lighting brightness while enabled",
+			"Set the game brightness while this option is enabled",
 
 		hide_particles =
 			"Hide Particles",
 
 		hide_particles_sub =
-			"Disable particles, trails, beams and emitters",
+			"Hide particles, trails, beams and similar effects",
 
 		performance_mode =
 			"Performance Mode",
 
 		performance_mode_sub =
-			"Reduce expensive effects, materials and shadows",
+			"Reduce shadows, effects and expensive materials",
 
 		heavy =
 			"HEAVY",
@@ -374,37 +377,37 @@ local Strings = {
 			"FPS Tools",
 
 		fps_subtitle =
-			"Aim and camera helpers for shooter testing",
+			"Aim and camera tools for shooter-style games",
 
 		aimbot =
 			"Aimbot",
 
 		aimbot_sub =
-			"Aim at the closest valid player while the aim key is held",
+			"Aim toward the closest valid player while the aim key is held",
 
 		aim_key =
 			"Aim Key",
 
 		aim_key_sub =
-			"Hold this key to engage the aimbot",
+			"Hold this key to use the aim helper",
 
 		aim_wall_check =
 			"Wall Check",
 
 		aim_wall_check_sub =
-			"Ignore targets hidden behind geometry",
+			"Ignore targets blocked by map geometry",
 
 		aim_ignore_friends =
 			"Ignore Friends",
 
 		aim_ignore_friends_sub =
-			"Never select Roblox friends as aim targets",
+			"Exclude Roblox friends from aim targets",
 
 		aim_team_check =
 			"Team Check",
 
 		aim_team_check_sub =
-			"Ignore players on your current team",
+			"Exclude players on your current team",
 
 		aim_fov =
 			"Aim FOV",
@@ -416,13 +419,13 @@ local Strings = {
 			"Macros",
 
 		macros_subtitle =
-			"Record inputs and configure hold actions",
+			"Record input sequences and configure repeated actions",
 
 		macro_recorder =
 			"Macro Recorder",
 
 		macro_recorder_sub =
-			"Record keyboard and mouse timing; playback uses simulated input",
+			"Record keyboard and mouse inputs with their timing",
 
 		macro_record =
 			"RECORD",
@@ -440,13 +443,13 @@ local Strings = {
 			"Auto Clicker",
 
 		auto_clicker_sub =
-			"Simulate repeated clicks only while the assigned key is held",
+			"Repeat left clicks while the assigned key is held",
 
 		auto_click_key =
 			"Auto Click Key",
 
 		auto_click_key_sub =
-			"Hold this key while Auto Clicker is enabled",
+			"Hold this key to run the Auto Clicker",
 
 		clicks_per_second =
 			"Clicks Per Second",
@@ -455,7 +458,7 @@ local Strings = {
 			"Runtime Status",
 
 		status_subtitle =
-			"Executions and current features",
+			"Current session and enabled features",
 
 		executions =
 			"Executions",
@@ -473,13 +476,13 @@ local Strings = {
 			"Settings",
 
 		settings_subtitle =
-			"Interface and interaction",
+			"Interface, language and interaction",
 
 		menu_hotkey =
 			"Menu Shortcut",
 
 		menu_hotkey_sub =
-			"Key used to open and close the menu",
+			"Choose the key used to open and close K hub",
 
 		panel_blur =
 			"Panel Blur",
@@ -491,25 +494,25 @@ local Strings = {
 			"Background Brightness",
 
 		background_brightness_sub =
-			"Adjust the menu artwork brightness",
+			"Adjust the brightness of the menu background",
 
 		ui_transparency =
 			"Interface Transparency",
 
 		ui_transparency_sub =
-			"Adjust cards, option surfaces and buttons",
+			"Adjust the transparency of cards and controls",
 
 		ui_scale =
 			"UI Scale",
 
 		ui_scale_sub =
-			"Resize the whole K hub interface",
+			"Scale the entire K hub interface",
 
 		remember_settings =
 			"Remember Settings",
 
 		remember_settings_sub =
-			"Keep language, keybinds and UI preferences for re-executions in this session",
+			"Restore your saved K hub setup on the next execution",
 
 		search =
 			"Search this tab...",
@@ -518,7 +521,7 @@ local Strings = {
 			"Language",
 
 		language_sub =
-			"Switch between ENG and PT-BR",
+			"Switch the interface between English and PT-BR",
 
 		english =
 			"ENG",
@@ -530,7 +533,7 @@ local Strings = {
 			"Instant Interact",
 
 		instant_interact_sub =
-			"Remove ProximityPrompt hold time",
+			"Remove the hold delay from ProximityPrompt interactions",
 
 		teleporting =
 			"TELEPORTING...",
@@ -583,28 +586,28 @@ local Strings = {
 			"Ajustes",
 
 		top_subtitle =
-			"painel utilitário",
+			"painel utilitário compacto",
 
 		info_subtitle =
-			"Notas da versão e avisos",
+			"Informações da versão e avisos",
 
 		info_version =
-			"Versão em desenvolvimento",
+			"K hub · versão em desenvolvimento",
 
 		info_runtime =
-			"Os recursos de gameplay ficam desativados até você ativá-los.",
+			"Os recursos ficam desligados até você ativá-los.",
 
 		note_development_title =
 			"Desenvolvimento",
 
 		note_development_body =
-			"Esta versão ainda está em testes. Recursos e comportamentos podem mudar.",
+			"Esta versão ainda está evoluindo. Alguns recursos podem mudar durante os testes.",
 
 		note_performance_title =
 			"Desempenho",
 
 		note_performance_body =
-			"Rótulos vermelhos indicam opções mais pesadas, que podem reduzir o desempenho em salas grandes ou geradas.",
+			"Opções marcadas como PESADO podem usar mais CPU ou GPU em mapas grandes ou gerados.",
 
 		note_menu_title =
 			"Atalho do menu",
@@ -616,61 +619,61 @@ local Strings = {
 			"Sessão",
 
 		main_subtitle =
-			"Controles de servidor e spawn",
+			"Controles de sessão, servidor e spawn",
 
 		rejoin =
 			"REENTRAR NO SERVIDOR",
 
 		rejoin_sub =
-			"Reconecta a esta mesma instância",
+			"Reconecta à instância atual do servidor",
 
 		game_tp =
 			"IR PARA O JOGO",
 
 		game_tp_sub =
-			"Teleporta para o SpawnLocation do jogo",
+			"Encontra e vai até o spawn detectado do jogo",
 
 		lobby_tp =
 			"IR PARA O LOBBY",
 
 		lobby_tp_sub =
-			"Teleporta para o SpawnLocation do lobby",
+			"Encontra e vai até o spawn detectado do lobby",
 
 		respawn =
 			"REAPARECER",
 
 		respawn_sub =
-			"Faz seu personagem reaparecer",
+			"Faz o seu personagem reaparecer",
 
 		player_title =
 			"Jogador",
 
 		player_subtitle =
-			"Movimento e proteção",
+			"Movimento, câmera e proteção",
 
 		anti_fling =
 			"Anti-Fling",
 
 		anti_fling_sub =
-			"Limita impulsos de velocidade e colisões",
+			"Reduz velocidades extremas e lançamentos por colisão",
 
 		noclip =
 			"Noclip",
 
 		noclip_sub =
-			"Desativa a colisão do seu personagem",
+			"Desativa as colisões do personagem enquanto estiver ativo",
 
 		walk_speed =
 			"Velocidade",
 
 		walk_speed_sub =
-			"Define a velocidade de movimento",
+			"Define a velocidade de caminhada do Humanoid",
 
 		fly =
 			"Voo",
 
 		fly_sub =
-			"Permite se mover livremente pelo ar",
+			"Permite voar com WASD e Q/E",
 
 		fly_notice =
 			"Voo ativado  ·  Q desce  ·  E sobe",
@@ -685,13 +688,13 @@ local Strings = {
 			"Campo de Visão",
 
 		fov_sub =
-			"Ajusta o campo de visão da câmera",
+			"Altera o campo de visão da câmera",
 
 		freecam =
 			"Câmera Livre",
 
 		freecam_sub =
-			"Solta a câmera e move com WASD + Q/E",
+			"Congela o personagem e move apenas a câmera",
 
 		freecam_speed =
 			"Velocidade da Câmera",
@@ -700,19 +703,19 @@ local Strings = {
 			"Observar Jogador",
 
 		spectate_sub =
-			"Acompanha outro jogador e troca o alvo na própria opção",
+			"Observa outro jogador; troque o alvo pelas setas",
 
 		auto_walk =
 			"Auto Walk",
 
 		auto_walk_sub =
-			"Caminha pelos objetivos detectados na ordem",
+			"Usa pathfinding pelos objetivos detectados em sequência",
 
 		esp_title =
 			"ESP",
 
 		esp_subtitle =
-			"Jogadores e entidades potencialmente hostis",
+			"ESP de jogadores, amigos, entidades, gears e objetivos",
 
 		player_esp =
 			"ESP de Jogadores",
@@ -724,67 +727,67 @@ local Strings = {
 			"ESP de Amigos",
 
 		friend_esp_sub =
-			"Adiciona uma estrela e destaque verde ao nome normal dos amigos",
+			"Marca amigos do Roblox com contorno verde e ★ no nome normal",
 
 		entity_esp =
 			"ESP de Entidades",
 
 		entity_esp_sub =
-			"Destaca NPCs e entidades detectadas",
+			"Destaca NPCs e entidades hostis detectadas",
 
 		esp_filters =
 			"Filtros do ESP",
 
 		esp_filters_sub =
-			"Escolha quais elementos aparecem no ESP",
+			"Escolha quais detalhes cada ESP mostra",
 
 		esp_names =
 			"Nomes",
 
 		esp_names_sub =
-			"Mostra o nome acima dos alvos",
+			"Mostra nomes acima dos alvos detectados",
 
 		esp_distance =
 			"Distância",
 
 		esp_distance_sub =
-			"Mostra a distância até o personagem",
+			"Mostra a distância do seu personagem até cada alvo",
 
 		esp_highlight =
 			"Contorno",
 
 		esp_highlight_sub =
-			"Mostra o contorno através das paredes",
+			"Desenha um contorno nos alvos detectados",
 
 		entity_hostile_only =
 			"Somente Entidades Hostis",
 
 		entity_hostile_only_sub =
-			"Ignora NPCs neutros quando possível",
+			"Prioriza entidades detectadas como hostis",
 
 		entity_spawn_warning =
 			"Aviso de Spawn de Entidade",
 
 		entity_spawn_warning_sub =
-			"Mostra um aviso quando uma entidade hostil aparece",
+			"Mostra um pequeno aviso quando uma entidade hostil é detectada",
 
 		item_esp =
 			"ESP de Gears",
 
 		item_esp_sub =
-			"Mostra apenas Tools do mapa que podem ser pegas como gear",
+			"Mostra apenas Tools no mapa que podem virar gear no inventário",
 
 		objective_esp =
 			"ESP de Objetivos",
 
 		objective_esp_sub =
-			"Destaca objetivos, chaves e alvos de progresso",
+			"Destaca objetivos e alvos de progresso detectados",
 
 		graphics_title =
 			"Gráficos",
 
 		graphics_subtitle =
-			"Qualidade visual e desempenho",
+			"Controles de visibilidade e desempenho",
 
 		graphics_boost =
 			"Gráficos Aprimorados",
@@ -832,43 +835,43 @@ local Strings = {
 			"Contador de FPS",
 
 		fps_display_sub =
-			"Mostra apenas o FPS, atualizado em até 30 Hz",
+			"Mostra um contador compacto de FPS em tempo real",
 
 		clock_display =
 			"Relógio",
 
 		clock_display_sub =
-			"Mostra sua hora local na tela",
+			"Mostra a hora local ao lado do contador de FPS",
 
 		date_display =
 			"Data",
 
 		date_display_sub =
-			"Mostra a data à esquerda do contador de FPS",
+			"Mostra a data local à esquerda do contador de FPS",
 
 		no_fog =
 			"Sem Neblina",
 
 		no_fog_sub =
-			"Remove a neblina distante e a névoa da atmosfera",
+			"Reduz neblina e névoa para melhorar a visibilidade",
 
 		brightness =
 			"Brilho",
 
 		brightness_sub =
-			"Substitui o brilho do Lighting enquanto estiver ativo",
+			"Define o brilho do jogo enquanto a opção estiver ativa",
 
 		hide_particles =
 			"Ocultar Partículas",
 
 		hide_particles_sub =
-			"Desativa partículas, trails, beams e emissores",
+			"Oculta partículas, trails, beams e efeitos semelhantes",
 
 		performance_mode =
 			"Modo Desempenho",
 
 		performance_mode_sub =
-			"Reduz efeitos, materiais e sombras pesadas",
+			"Reduz sombras, efeitos e materiais mais pesados",
 
 		heavy =
 			"PESADO",
@@ -877,37 +880,37 @@ local Strings = {
 			"Ferramentas FPS",
 
 		fps_subtitle =
-			"Auxílios de mira e câmera para testar jogos de tiro",
+			"Ferramentas de mira e câmera para jogos de tiro",
 
 		aimbot =
 			"Aimbot",
 
 		aimbot_sub =
-			"Mira no jogador válido mais próximo enquanto a tecla de mira estiver pressionada",
+			"Mira no jogador válido mais próximo enquanto a tecla estiver pressionada",
 
 		aim_key =
 			"Tecla de Mira",
 
 		aim_key_sub =
-			"Segure esta tecla para ativar a mira automática",
+			"Segure esta tecla para usar o auxílio de mira",
 
 		aim_wall_check =
 			"Verificar Paredes",
 
 		aim_wall_check_sub =
-			"Ignora jogadores escondidos atrás do cenário",
+			"Ignora jogadores bloqueados pelo cenário",
 
 		aim_ignore_friends =
 			"Ignorar Amigos",
 
 		aim_ignore_friends_sub =
-			"Nunca escolhe amigos do Roblox como alvo",
+			"Exclui amigos do Roblox dos alvos de mira",
 
 		aim_team_check =
 			"Verificar Time",
 
 		aim_team_check_sub =
-			"Ignora jogadores do mesmo time",
+			"Exclui jogadores do mesmo time",
 
 		aim_fov =
 			"FOV da Mira",
@@ -919,13 +922,13 @@ local Strings = {
 			"Macros",
 
 		macros_subtitle =
-			"Grave entradas e configure ações por tecla",
+			"Grave sequências de entrada e configure ações repetidas",
 
 		macro_recorder =
 			"Gravador de Macro",
 
 		macro_recorder_sub =
-			"Grava teclado e mouse; a reprodução usa entrada simulada",
+			"Grava teclado e mouse preservando o tempo entre ações",
 
 		macro_record =
 			"GRAVAR",
@@ -943,13 +946,13 @@ local Strings = {
 			"Auto Clicker",
 
 		auto_clicker_sub =
-			"Simula cliques repetidos apenas enquanto a tecla definida estiver pressionada",
+			"Repete cliques enquanto a tecla definida estiver pressionada",
 
 		auto_click_key =
 			"Tecla do Auto Click",
 
 		auto_click_key_sub =
-			"Segure esta tecla com o Auto Clicker ativado",
+			"Segure esta tecla para executar o Auto Clicker",
 
 		clicks_per_second =
 			"Cliques por Segundo",
@@ -958,7 +961,7 @@ local Strings = {
 			"Status da Execução",
 
 		status_subtitle =
-			"Execuções e recursos atuais",
+			"Sessão atual e recursos ativados",
 
 		executions =
 			"Execuções",
@@ -976,13 +979,13 @@ local Strings = {
 			"Ajustes",
 
 		settings_subtitle =
-			"Interface e interação",
+			"Interface, idioma e interação",
 
 		menu_hotkey =
 			"Atalho do Menu",
 
 		menu_hotkey_sub =
-			"Tecla usada para abrir e fechar o menu",
+			"Escolha a tecla usada para abrir e fechar o K hub",
 
 		panel_blur =
 			"Desfoque do Painel",
@@ -994,13 +997,13 @@ local Strings = {
 			"Brilho do Fundo",
 
 		background_brightness_sub =
-			"Ajusta o brilho da arte do menu",
+			"Ajusta o brilho do fundo do menu",
 
 		ui_transparency =
 			"Transparência da Interface",
 
 		ui_transparency_sub =
-			"Ajusta cartões, opções e botões",
+			"Ajusta a transparência dos cartões e controles",
 
 		ui_scale =
 			"Escala da Interface",
@@ -1012,7 +1015,7 @@ local Strings = {
 			"Lembrar Ajustes",
 
 		remember_settings_sub =
-			"Mantém idioma, atalhos e preferências da interface ao reexecutar nesta sessão",
+			"Restaura a configuração salva na próxima execução",
 
 		search =
 			"Buscar nesta aba...",
@@ -1021,7 +1024,7 @@ local Strings = {
 			"Idioma",
 
 		language_sub =
-			"Alterna entre ENG e PT-BR",
+			"Alterna a interface entre inglês e PT-BR",
 
 		english =
 			"ENG",
@@ -1033,7 +1036,7 @@ local Strings = {
 			"Interação Instantânea",
 
 		instant_interact_sub =
-			"Remove o tempo de segurar do ProximityPrompt",
+			"Remove a espera de segurar nas interações ProximityPrompt",
 
 		teleporting =
 			"TELEPORTANDO...",
@@ -1285,7 +1288,8 @@ local Extra = {
 	AutoWalkToken = 0,
 	AutoWalkVisited = {},
 
-	SettingsFile = "khub_settings.json"
+	SettingsFile = "khub_settings.json",
+	ContextActionService = game:GetService("ContextActionService")
 }
 
 local Connections = {}
@@ -1333,6 +1337,43 @@ local PreviousMouseBehavior =
 
 local PreviousMouseIconEnabled =
 	true
+
+Extra.RightMouseDown = false
+
+Extra.NormalizeMouseBehavior = function(behavior)
+	if behavior == Enum.MouseBehavior.LockCenter
+		or behavior == Enum.MouseBehavior.LockCurrentPosition then
+		return Enum.MouseBehavior.Default
+	end
+	return behavior or Enum.MouseBehavior.Default
+end
+
+Extra.ReleaseCameraMouse = function(forceVisible)
+	if State.freecam and Extra.Freecam.active and not State.menuVisible then
+		return
+	end
+	UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+	if forceVisible or State.menuVisible then
+		UserInputService.MouseIconEnabled = true
+	end
+end
+
+Extra.SetMenuInputBlock = function(enabled)
+	pcall(function()
+		Extra.ContextActionService:UnbindAction("KHubMenuRMB")
+		if enabled then
+			Extra.ContextActionService:BindActionAtPriority(
+				"KHubMenuRMB",
+				function()
+					return Enum.ContextActionResult.Sink
+				end,
+				false,
+				3000,
+				Enum.UserInputType.MouseButton2
+			)
+		end
+	end)
+end
 
 local SetFpsVisible
 local SetClockVisible
@@ -1964,12 +2005,6 @@ Extra.DecodeBinding =
 		return nil
 	end
 
-Extra.SafeRememberKeys = {
-	backgroundBrightness = true,
-	uiTransparency = true,
-	uiScale = true
-}
-
 Extra.SaveSettings =
 	function()
 		if not State.rememberSettings then
@@ -1977,19 +2012,26 @@ Extra.SaveSettings =
 		end
 
 		local data = {
-			version = 6,
+			version = 5,
 			language = Language,
-			state = {
-				rememberSettings = true
-			},
+			state = {},
 			bindings = {}
 		}
 
-		for key in pairs(
-			Extra.SafeRememberKeys
-		) do
-			data.state[key] =
-				State[key]
+		for key, value
+			in pairs(State)
+		do
+			if
+				key ~= "menuVisible"
+				and (
+					type(value) == "boolean"
+					or type(value) == "number"
+					or type(value) == "string"
+				)
+			then
+				data.state[key] =
+					value
+			end
 		end
 
 		for id, binding
@@ -2001,22 +2043,75 @@ Extra.SaveSettings =
 				)
 		end
 
-		-- Deliberately session-only. No readfile/writefile/isfile/delfile calls
-		-- happen during startup in this build.
 		_G.KHubRemembered =
 			data
+
+		pcall(function()
+			if
+				typeof(writefile)
+				== "function"
+			then
+				writefile(
+					Extra.SettingsFile,
+					game:GetService(
+						"HttpService"
+					):JSONEncode(
+						data
+					)
+				)
+			end
+		end)
 	end
 
 Extra.ClearSavedSettings =
 	function()
 		_G.KHubRemembered =
 			nil
+
+		pcall(function()
+			if
+				typeof(delfile)
+					== "function"
+				and typeof(isfile)
+					== "function"
+				and isfile(
+					Extra.SettingsFile
+				)
+			then
+				delfile(
+					Extra.SettingsFile
+				)
+			end
+		end)
 	end
 
 Extra.LoadSettings =
 	function()
 		local data =
 			_G.KHubRemembered
+
+		if type(data) ~= "table" then
+			pcall(function()
+				if
+					typeof(readfile)
+						== "function"
+					and typeof(isfile)
+						== "function"
+					and isfile(
+						Extra.SettingsFile
+					)
+				then
+					data =
+						game:GetService(
+							"HttpService"
+						):JSONDecode(
+							readfile(
+								Extra.SettingsFile
+							)
+						)
+				end
+			end)
+		end
 
 		if
 			type(data) ~= "table"
@@ -2028,23 +2123,17 @@ Extra.LoadSettings =
 			return
 		end
 
-		-- Only interface preferences are restored automatically.
-		-- Runtime/gameplay toggles intentionally stay at their safe defaults.
-		for key in pairs(
-			Extra.SafeRememberKeys
-		) do
-			local value =
-				data.state[key]
-
+		for key, value
+			in pairs(data.state)
+		do
 			if
-				value ~= nil
-				and State[key] ~= nil
+				State[key] ~= nil
+				and key ~= "menuVisible"
 			then
 				State[key] = value
 			end
 		end
 
-		State.rememberSettings = true
 		State.panelBlur = 90
 
 		if
@@ -2814,10 +2903,41 @@ IntroParts.SparkB =
 		Intro
 	)
 
+
 Corner(
 	IntroParts.SparkB,
 	2
 )
+
+-- Keep the intro on one clean vertical rhythm so title/status never overlap.
+IntroParts.Glow.Position = UDim2.new(0.5, 0, 0.5, -48)
+IntroParts.IconBox.Position = UDim2.new(0.5, 0, 0.5, -48)
+IntroParts.RingOuter.Position = UDim2.new(0.5, 0, 0.5, -48)
+IntroParts.RingInner.Position = UDim2.new(0.5, 0, 0.5, -48)
+
+IntroParts.K.Size = UDim2.fromOffset(220, 34)
+IntroParts.K.AnchorPoint = Vector2.new(0.5, 0.5)
+IntroParts.K.Position = UDim2.new(0.5, 0, 0.5, 42)
+IntroParts.K.Text = "K hub"
+IntroParts.K.TextXAlignment = Enum.TextXAlignment.Center
+IntroParts.K.TextSize = 24
+IntroParts.Hub.Visible = false
+
+IntroParts.Tagline.Size = UDim2.fromOffset(340, 18)
+IntroParts.Tagline.Position = UDim2.new(0.5, 0, 0.5, 72)
+IntroParts.Tagline.Text = Language == "ptbr"
+	and "leve, discreto e direto"
+	or "lightweight, quiet and focused"
+
+IntroParts.Status.Size = UDim2.fromOffset(260, 18)
+IntroParts.Status.Position = UDim2.new(0.5, 0, 0.5, 108)
+
+IntroParts.Progress.Size = UDim2.fromOffset(220, 3)
+IntroParts.Progress.Position = UDim2.new(0.5, 0, 0.5, 136)
+
+IntroParts.Dot.Position = UDim2.new(0.5, -110, 0.5, 136)
+IntroParts.SparkA.Position = UDim2.new(0.5, -82, 0.5, -82)
+IntroParts.SparkB.Position = UDim2.new(0.5, 76, 0.5, -12)
 
 local Main =
 	New(
@@ -7191,8 +7311,6 @@ local function EnsureEntityEsp(
 		] = data
 	end
 
--- K HUB V6 — PARTE 2/2
-
 	local localCharacter = LocalPlayer.Character
 	local localRoot = localCharacter and localCharacter:FindFirstChild("HumanoidRootPart")
 	local distance = 0
@@ -7497,6 +7615,9 @@ Extra.EnsureGenericEsp = function(store, object, kind)
 	)
 end
 
+
+-- K HUB V6.1 — PARTE 2/2
+
 Extra.RefreshGenericEsp = function(kind)
 	local store = kind == "item"
 		and Extra.ItemEspObjects
@@ -7548,7 +7669,6 @@ Extra.RefreshGenericEsp = function(kind)
 end
 
 Extra.ClearGenericEsp = function(kind)
-
 	local store = kind == "item"
 		and Extra.ItemEspObjects
 		or Extra.ObjectiveEspObjects
@@ -7791,7 +7911,9 @@ Extra.StartFreecam = function()
 	Extra.Freecam.yaw = y
 
 	Extra.Freecam.mouseBehavior =
-		UserInputService.MouseBehavior
+		Extra.NormalizeMouseBehavior(
+			UserInputService.MouseBehavior
+		)
 
 	Extra.Freecam.mouseIcon =
 		UserInputService.MouseIconEnabled
@@ -7879,15 +8001,16 @@ Extra.StopFreecam = function()
 	end
 
 	PreviousMouseBehavior =
-		Extra.Freecam.mouseBehavior
-		or Enum.MouseBehavior.Default
+		Extra.NormalizeMouseBehavior(
+			Extra.Freecam.mouseBehavior
+		)
 
 	PreviousMouseIconEnabled =
 		Extra.Freecam.mouseIcon ~= false
 
 	if not State.menuVisible then
 		UserInputService.MouseBehavior =
-			PreviousMouseBehavior
+			Enum.MouseBehavior.Default
 
 		UserInputService.MouseIconEnabled =
 			PreviousMouseIconEnabled
@@ -8343,28 +8466,16 @@ end
 
 Extra.VirtualInput = nil
 
-Extra.GetVirtualInput = function()
-	if Extra.VirtualInput then
-		return Extra.VirtualInput
-	end
-
-	local ok, service =
-		pcall(function()
-			return game:GetService(
-				"VirtualInputManager"
-			)
-		end)
-
-	if ok then
-		Extra.VirtualInput = service
-	end
-
-	return Extra.VirtualInput
-end
+pcall(function()
+	Extra.VirtualInput =
+		game:GetService(
+			"VirtualInputManager"
+		)
+end)
 
 Extra.SendMacroEvent = function(event)
 	local vim =
-		Extra.GetVirtualInput()
+		Extra.VirtualInput
 
 	if not vim or not event then
 		return false
@@ -8567,19 +8678,15 @@ Extra.StartAutoClicker = function()
 			and Extra.AutoClickHeld
 			and State.autoClickerEnabled do
 
-			local virtualInput =
-				(not State.menuVisible)
-				and Extra.GetVirtualInput()
-				or nil
-
-			if virtualInput then
+			if not State.menuVisible
+				and Extra.VirtualInput then
 
 				local pos =
 					UserInputService:
 						GetMouseLocation()
 
 				pcall(function()
-					virtualInput:
+					Extra.VirtualInput:
 						SendMouseButtonEvent(
 							pos.X,
 							pos.Y,
@@ -8589,7 +8696,7 @@ Extra.StartAutoClicker = function()
 							0
 						)
 
-					virtualInput:
+					Extra.VirtualInput:
 						SendMouseButtonEvent(
 							pos.X,
 							pos.Y,
@@ -12928,6 +13035,8 @@ local function SetMenuVisible(visible)
 	State.menuVisible =
 		visible
 
+	Extra.SetMenuInputBlock(visible)
+
 	if visible then
 		if not (
 			State.freecam
@@ -12937,11 +13046,15 @@ local function SetMenuVisible(visible)
 				UserInputService.MouseBehavior
 
 			PreviousMouseBehavior =
-				currentBehavior
+				Extra.NormalizeMouseBehavior(
+					currentBehavior
+				)
 
 			PreviousMouseIconEnabled =
 				UserInputService.MouseIconEnabled
 		end
+
+		Extra.RightMouseDown = false
 
 		UserInputService.MouseBehavior =
 			Enum.MouseBehavior.Default
@@ -13040,7 +13153,7 @@ local function SetMenuVisible(visible)
 					false
 			else
 				UserInputService.MouseBehavior =
-					PreviousMouseBehavior
+					Enum.MouseBehavior.Default
 
 				UserInputService.MouseIconEnabled =
 					PreviousMouseIconEnabled
@@ -13184,6 +13297,10 @@ Bind(
 			input,
 			true
 		)
+
+		if input.UserInputType == Enum.UserInputType.MouseButton2 then
+			Extra.RightMouseDown = true
+		end
 
 		if Capture then
 			if input.UserInputType
@@ -13372,6 +13489,18 @@ Bind(
 			input,
 			false
 		)
+
+		if input.UserInputType == Enum.UserInputType.MouseButton2 then
+			Extra.RightMouseDown = false
+			task.defer(function()
+				if not (State.freecam and Extra.Freecam.active) then
+					UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+					if State.menuVisible then
+						UserInputService.MouseIconEnabled = true
+					end
+				end
+			end)
+		end
 
 		if BindingMatches(
 			Bindings.speedManipulation,
@@ -13789,6 +13918,16 @@ local RuntimeCounters = {
 Bind(
 	RunService.RenderStepped,
 	function(deltaTime)
+		local currentCamera = Workspace.CurrentCamera
+		if currentCamera then
+			Camera = currentCamera
+		end
+
+		if State.menuVisible then
+			UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+			UserInputService.MouseIconEnabled = true
+		end
+
 		RuntimeCounters.frameCount += 1
 		RuntimeCounters.frameElapsed += deltaTime
 		RuntimeCounters.fpsAccumulator += deltaTime
@@ -14450,11 +14589,13 @@ local function Cleanup()
 		Connections
 	)
 
+	Extra.SetMenuInputBlock(false)
+
 	UserInputService.MouseBehavior =
-		PreviousMouseBehavior
+		Enum.MouseBehavior.Default
 
 	UserInputService.MouseIconEnabled =
-		PreviousMouseIconEnabled
+		true
 
 	if ScreenGui
 		and ScreenGui.Parent then
@@ -14516,6 +14657,10 @@ end
 
 RefreshStatusPage()
 ApplyLanguage()
+
+-- Block Roblox RMB camera capture while the intro/menu owns the cursor.
+Extra.SetMenuInputBlock(true)
+Extra.ReleaseCameraMouse(true)
 
 task.spawn(function()
 	for _, player in ipairs(
@@ -14858,3 +15003,4 @@ task.spawn(function()
 		)
 	end
 end)
+
