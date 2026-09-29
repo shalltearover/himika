@@ -38,6 +38,18 @@ local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 local Mouse = LocalPlayer:GetMouse()
 local Camera = Workspace.CurrentCamera
 
+if not Camera then
+	repeat
+		task.wait()
+		Camera = Workspace.CurrentCamera
+	until Camera
+end
+
+pcall(function()
+	UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+	UserInputService.MouseIconEnabled = true
+end)
+
 local GuiParent = PlayerGui
 
 pcall(function()
@@ -1352,6 +1364,33 @@ local function Bind(signal, callback)
 	return connection
 end
 
+Extra.NormalizeMouseBehavior = function(behavior)
+	if not behavior then
+		return Enum.MouseBehavior.Default
+	end
+
+	local name = behavior.Name
+	if name == "LockCenter" or name == "LockCurrentPosition" then
+		return Enum.MouseBehavior.Default
+	end
+
+	return behavior
+end
+
+Extra.ConnectOnce = function(signal, callback)
+	local connection
+	connection = signal:Connect(function(...)
+		if connection then
+			connection:Disconnect()
+			connection = nil
+		end
+
+		callback(...)
+	end)
+
+	return connection
+end
+
 local function New(
 	className,
 	properties,
@@ -2132,7 +2171,7 @@ Extra.LoadSettings =
 		end
 	end
 
-Extra.LoadSettings()
+pcall(Extra.LoadSettings)
 
 local ScreenGui =
 	New(
@@ -2143,9 +2182,7 @@ local ScreenGui =
 			IgnoreGuiInset = true,
 			DisplayOrder = 2147483647,
 			ZIndexBehavior =
-				Enum.ZIndexBehavior.Global,
-			ScreenInsets =
-				Enum.ScreenInsets.None
+				Enum.ZIndexBehavior.Global
 		},
 		GuiParent
 	)
@@ -7444,6 +7481,7 @@ Extra.EnsureGenericEsp = function(store, object, kind)
 			and Color3.fromRGB(130, 190, 164)
 			or Color3.fromRGB(185, 174, 125)
 
+
 		local highlight = New("Highlight", {
 			Name = kind == "item"
 				and "KHubItemESP"
@@ -7712,7 +7750,7 @@ Extra.Toast = function(message, danger)
 				Enum.EasingDirection.In
 			)
 
-			fade.Completed:Once(function()
+			Extra.ConnectOnce(fade.Completed, function()
 				if holder and holder.Parent then
 					holder:Destroy()
 				end
@@ -7926,18 +7964,21 @@ Extra.StopFreecam = function()
 	end
 
 	PreviousMouseBehavior =
-		Extra.Freecam.mouseBehavior
-		or Enum.MouseBehavior.Default
+		Extra.NormalizeMouseBehavior(
+			Extra.Freecam.mouseBehavior
+		)
 
 	PreviousMouseIconEnabled =
-		Extra.Freecam.mouseIcon ~= false
+		PreviousMouseBehavior == Enum.MouseBehavior.Default
+			and true
+			or Extra.Freecam.mouseIcon ~= false
 
 	if not State.menuVisible then
 		UserInputService.MouseBehavior =
-			PreviousMouseBehavior
+			Enum.MouseBehavior.Default
 
 		UserInputService.MouseIconEnabled =
-			PreviousMouseIconEnabled
+			true
 	end
 
 	Extra.Freecam.root = nil
@@ -12722,7 +12763,7 @@ Extra.SetDateVisible = function(visible)
 			Enum.EasingStyle.Quart
 		)
 
-		fade.Completed:Once(function()
+		Extra.ConnectOnce(fade.Completed, function()
 			if not State.dateVisible then
 				Extra.DateUI.Hud.Visible =
 					false
@@ -12968,10 +13009,14 @@ local function SetMenuVisible(visible)
 				UserInputService.MouseBehavior
 
 			PreviousMouseBehavior =
-				currentBehavior
+				Extra.NormalizeMouseBehavior(
+					currentBehavior
+				)
 
 			PreviousMouseIconEnabled =
-				UserInputService.MouseIconEnabled
+				PreviousMouseBehavior == Enum.MouseBehavior.Default
+					and true
+					or UserInputService.MouseIconEnabled
 		end
 
 		UserInputService.MouseBehavior =
@@ -13052,7 +13097,7 @@ local function SetMenuVisible(visible)
 			Enum.EasingDirection.In
 		)
 
-		fade.Completed:Once(function()
+		Extra.ConnectOnce(fade.Completed, function()
 			if id ~= MenuAnimationId
 				or State.menuVisible then
 				return
@@ -13071,10 +13116,20 @@ local function SetMenuVisible(visible)
 					false
 			else
 				UserInputService.MouseBehavior =
-					PreviousMouseBehavior
+					Enum.MouseBehavior.Default
 
 				UserInputService.MouseIconEnabled =
-					PreviousMouseIconEnabled
+					true
+
+				task.defer(function()
+					if not State.menuVisible
+						and not (State.freecam and Extra.Freecam.active) then
+						UserInputService.MouseBehavior =
+							Enum.MouseBehavior.Default
+						UserInputService.MouseIconEnabled =
+							true
+					end
+				end)
 			end
 		end)
 	end
@@ -13138,7 +13193,7 @@ SetFpsVisible = function(visible)
 			Enum.EasingStyle.Quart
 		)
 
-		fade.Completed:Once(function()
+		Extra.ConnectOnce(fade.Completed, function()
 			if id == FpsAnimationId
 				and not State.fpsVisible then
 				HudUI.StatusHud.Visible =
@@ -13199,7 +13254,7 @@ SetClockVisible = function(visible)
 			Enum.EasingStyle.Quart
 		)
 
-		fade.Completed:Once(function()
+		Extra.ConnectOnce(fade.Completed, function()
 			if not State.clockVisible then
 				ClockUI.Hud.Visible =
 					false
@@ -13428,6 +13483,18 @@ Bind(
 
 			Extra.AutoClickToken +=
 				1
+		end
+
+		if input.UserInputType == Enum.UserInputType.MouseButton2
+			and not (State.freecam and Extra.Freecam.active) then
+			task.defer(function()
+				if not State.menuVisible then
+					UserInputService.MouseBehavior =
+						Enum.MouseBehavior.Default
+					UserInputService.MouseIconEnabled =
+						true
+				end
+			end)
 		end
 	end
 )
@@ -14482,10 +14549,10 @@ local function Cleanup()
 	)
 
 	UserInputService.MouseBehavior =
-		PreviousMouseBehavior
+		Enum.MouseBehavior.Default
 
 	UserInputService.MouseIconEnabled =
-		PreviousMouseIconEnabled
+		true
 
 	if ScreenGui
 		and ScreenGui.Parent then
@@ -14502,12 +14569,14 @@ end
 _G.KHubCleanup =
 	Cleanup
 
-SelectPage(
-	"Info"
-)
+pcall(function()
+	SelectPage(
+		"Info"
+	)
+end)
 
-ApplyPanelBackground()
-ApplyUITransparency()
+pcall(ApplyPanelBackground)
+pcall(ApplyUITransparency)
 
 for id, setter in pairs(
 	ToggleSetters
@@ -14531,22 +14600,28 @@ if State.rememberSettings
 	)
 end
 
-SetFpsVisible(
-	State.fpsVisible
-)
+pcall(function()
+	SetFpsVisible(
+		State.fpsVisible
+	)
+end)
 
-SetClockVisible(
-	State.clockVisible
-)
+pcall(function()
+	SetClockVisible(
+		State.clockVisible
+	)
+end)
 
 if Extra.SetDateVisible then
-	Extra.SetDateVisible(
-		State.dateVisible
-	)
+	pcall(function()
+		Extra.SetDateVisible(
+			State.dateVisible
+		)
+	end)
 end
 
-RefreshStatusPage()
-ApplyLanguage()
+pcall(RefreshStatusPage)
+pcall(ApplyLanguage)
 
 task.spawn(function()
 	for _, player in ipairs(
@@ -14889,3 +14964,4 @@ task.spawn(function()
 		)
 	end
 end)
+
